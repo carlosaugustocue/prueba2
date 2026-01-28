@@ -10,6 +10,7 @@ use App\Modules\Core\Traits\HasUuid;
 use App\Modules\Core\Traits\Searchable;
 use App\Modules\Patients\Enums\DocumentType;
 use App\Modules\Patients\Enums\PatientType;
+use App\Modules\Patients\Enums\RelationshipType;
 
 class Patient extends Model
 {
@@ -28,6 +29,7 @@ class Patient extends Model
         'eps_id',
         'patient_type',
         'holder_id',
+        'relationship_type',
         'birth_date',
         'notes',
         'created_by',
@@ -47,6 +49,7 @@ class Patient extends Model
         return [
             'document_type' => DocumentType::class,
             'patient_type' => PatientType::class,
+            'relationship_type' => RelationshipType::class,
             'birth_date' => 'date',
         ];
     }

@@ -26,6 +26,12 @@ class PatientResource extends JsonResource
             'address' => $this->address,
             'patient_type' => $this->patient_type?->value,
             'patient_type_label' => $this->patient_type?->label(),
+            'is_holder' => $this->patient_type?->value === 'cotizante',
+            'is_beneficiary' => $this->patient_type?->value === 'beneficiario',
+            'holder_id' => $this->holder_id,
+            'relationship_type' => $this->relationship_type?->value,
+            'relationship_type_label' => $this->relationship_type?->label(),
+            'relationship_type_short' => $this->relationship_type?->shortLabel(),
             'birth_date' => $this->birth_date?->format('Y-m-d'),
             'notes' => $this->notes,
             'eps' => $this->whenLoaded('eps', fn() => [
@@ -33,11 +39,30 @@ class PatientResource extends JsonResource
                 'name' => $this->eps->name,
                 'code' => $this->eps->code,
             ]),
-            'holder' => $this->whenLoaded('holder', fn() => [
+            'eps_id' => $this->eps_id,
+            'holder' => $this->whenLoaded('holder', fn() => $this->holder ? [
                 'id' => $this->holder->id,
                 'full_name' => $this->holder->full_name,
-            ]),
-            'beneficiaries' => $this->whenLoaded('beneficiaries'),
+                'document_type_abbreviation' => $this->holder->document_type?->abbreviation(),
+                'document_number' => $this->holder->document_number,
+                'phone' => $this->holder->phone,
+                'whatsapp' => $this->holder->whatsapp,
+            ] : null),
+            'beneficiaries' => $this->whenLoaded('beneficiaries', fn() => 
+                $this->beneficiaries->map(fn($b) => [
+                    'id' => $b->id,
+                    'full_name' => $b->full_name,
+                    'document_type_abbreviation' => $b->document_type?->abbreviation(),
+                    'document_number' => $b->document_number,
+                    'phone' => $b->phone,
+                    'whatsapp' => $b->whatsapp,
+                    'birth_date' => $b->birth_date?->format('Y-m-d'),
+                    'relationship_type' => $b->relationship_type?->value,
+                    'relationship_type_label' => $b->relationship_type?->label(),
+                    'relationship_type_short' => $b->relationship_type?->shortLabel(),
+                ])
+            ),
+            'beneficiaries_count' => $this->whenLoaded('beneficiaries', fn() => $this->beneficiaries->count()),
             'appointments' => $this->whenLoaded('appointments'),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
         ];

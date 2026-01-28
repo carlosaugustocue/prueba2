@@ -50,7 +50,7 @@ const appointments = computed(() => props.appointments?.data || []);
                     <h1 class="text-2xl font-bold text-gray-900">Gestión de Citas</h1>
                     <p class="mt-1 text-sm text-gray-500">Administra todas las citas médicas</p>
                 </div>
-                <Link href="/appointments/create" class="inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors">
+                <Link href="/appointments/create" class="inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors">
                     ➕ Nueva Cita
                 </Link>
             </div>
@@ -59,9 +59,9 @@ const appointments = computed(() => props.appointments?.data || []);
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="flex flex-col sm:flex-row gap-4">
                     <div class="flex-1">
-                        <input v-model="search" type="text" placeholder="🔍 Buscar por paciente, doctor..." class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" />
+                        <input v-model="search" type="text" placeholder="🔍 Buscar por paciente, doctor..." class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                     </div>
-                    <select v-model="status" @change="applyFilters" class="block w-full sm:w-48 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                    <select v-model="status" @change="applyFilters" class="block w-full sm:w-48 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="">Todos los estados</option>
                         <option v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</option>
                     </select>
@@ -96,7 +96,7 @@ const appointments = computed(() => props.appointments?.data || []);
                             <td class="px-6 py-4"><span :class="[apt.priority_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">{{ apt.priority_label }}</span></td>
                             <td class="px-6 py-4 text-right space-x-2">
                                 <Link :href="`/appointments/${apt.id}`" class="text-gray-400 hover:text-gray-600">👁️</Link>
-                                <Link :href="`/appointments/${apt.id}/edit`" class="text-gray-400 hover:text-green-600">✏️</Link>
+                                <Link :href="`/appointments/${apt.id}/edit`" class="text-gray-400 hover:text-brand-600">✏️</Link>
                             </td>
                         </tr>
                         <tr v-if="appointments.length === 0">

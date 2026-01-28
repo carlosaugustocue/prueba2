@@ -54,7 +54,7 @@ const deleteAppointment = () => {
                     <button 
                         v-if="apt.can_send_confirmation" 
                         @click="sendConfirmation"
-                        class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        class="inline-flex items-center px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
                     >
                         📱 Enviar WhatsApp
                     </button>
@@ -184,7 +184,7 @@ const deleteAppointment = () => {
                                         <!-- Punto del timeline con icono -->
                                         <div :class="[
                                             'absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm',
-                                            item.action_color === 'green' ? 'bg-green-100 ring-2 ring-green-300' : '',
+                                            item.action_color === 'green' ? 'bg-brand-100 ring-2 ring-green-300' : '',
                                             item.action_color === 'blue' ? 'bg-blue-100 ring-2 ring-blue-300' : '',
                                             item.action_color === 'purple' ? 'bg-purple-100 ring-2 ring-purple-300' : '',
                                             item.action_color === 'emerald' ? 'bg-emerald-100 ring-2 ring-emerald-300' : '',
@@ -208,7 +208,7 @@ const deleteAppointment = () => {
                                                         <div class="inline-flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
                                                             <span class="text-red-600 line-through">{{ item.old_value }}</span>
                                                             <span class="text-gray-400">→</span>
-                                                            <span class="text-green-600 font-medium">{{ item.new_value }}</span>
+                                                            <span class="text-brand-600 font-medium">{{ item.new_value }}</span>
                                                         </div>
                                                     </div>
                                                     
@@ -255,8 +255,8 @@ const deleteAppointment = () => {
                         </div>
                         <div class="p-6">
                             <div class="flex items-center space-x-4 mb-4">
-                                <div class="h-14 w-14 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                                    <span class="text-green-700 font-bold text-xl">{{ patient.first_name?.charAt(0) || '?' }}{{ patient.last_name?.charAt(0) || '' }}</span>
+                                <div class="h-14 w-14 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+                                    <span class="text-brand-700 font-bold text-xl">{{ patient.first_name?.charAt(0) || '?' }}{{ patient.last_name?.charAt(0) || '' }}</span>
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-lg font-semibold text-gray-900 truncate">{{ patient.full_name || 'Sin nombre' }}</p>
@@ -280,7 +280,7 @@ const deleteAppointment = () => {
                             </dl>
 
                             <div class="mt-4 pt-4 border-t border-gray-200">
-                                <Link :href="`/patients/${patient.id}`" class="text-sm text-green-600 hover:text-green-700 font-medium">
+                                <Link :href="`/patients/${patient.id}`" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
                                     Ver perfil del paciente →
                                 </Link>
                             </div>

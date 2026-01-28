@@ -21,6 +21,7 @@
         "@headlessui/vue": "^1.7.17",
         "@heroicons/vue": "^2.1.1",
         "@inertiajs/vue3": "^2.0.0",
-        "dayjs": "^1.11.10"
+        "dayjs": "^1.11.10",
+        "lucide-vue-next": "^0.563.0"
     }
 }

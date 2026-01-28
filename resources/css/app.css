@@ -1,29 +1,180 @@
 @import "tailwindcss";
 
-/* Custom CSS variables */
-:root {
-    --color-serviconli-50: #f0fdf4;
-    --color-serviconli-100: #dcfce7;
-    --color-serviconli-500: #22c55e;
-    --color-serviconli-600: #16a34a;
-    --color-serviconli-700: #15803d;
+/* Serviconli Brand Colors Theme */
+@theme {
+    /* Font family */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    /* Primary palette - Cyan/Teal */
+    --color-brand-50: #e6faf8;
+    --color-brand-100: #ccf5f1;
+    --color-brand-200: #99ebe4;
+    --color-brand-300: #66e1d6;
+    --color-brand-400: #33d7c9;
+    --color-brand-500: #00CBBC;  /* Strong Cyan - Primary */
+    --color-brand-600: #00C096;  /* Mint Leaf */
+    --color-brand-700: #009a78;
+    --color-brand-800: #006b53;
+    --color-brand-900: #00353D;  /* Dark Teal */
+    --color-brand-950: #001a1e;
+
+    /* Accent - Tropical Mint */
+    --color-accent-300: #66f4ce;
+    --color-accent-400: #33f0be;
+    --color-accent-500: #00EDAE;  /* Tropical Mint */
+    --color-accent-600: #00c996;
 }
 
-/* Scrollbar */
+/* Custom CSS variables for legacy support */
+:root {
+    --color-serviconli-50: #e6faf8;
+    --color-serviconli-100: #ccf5f1;
+    --color-serviconli-500: #00CBBC;
+    --color-serviconli-600: #00C096;
+    --color-serviconli-700: #009a78;
+    --color-serviconli-900: #00353D;
+}
+
+/* ================================
+   FOCUS STYLES - Enhanced visibility
+   ================================ */
+
+/* Base transition for all form elements */
+input,
+select,
+textarea,
+button {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Enhanced focus ring for inputs, selects, and textareas */
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #00CBBC;
+    box-shadow: 
+        0 0 0 3px rgba(0, 203, 188, 0.15),
+        0 0 0 1px rgba(0, 203, 188, 0.4),
+        0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Specific styles for different input types */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus {
+    border-color: #00CBBC;
+    box-shadow: 
+        0 0 0 4px rgba(0, 203, 188, 0.12),
+        0 0 0 2px rgba(0, 203, 188, 0.25),
+        0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Select elements with enhanced focus */
+select:focus {
+    border-color: #00CBBC;
+    box-shadow: 
+        0 0 0 4px rgba(0, 203, 188, 0.12),
+        0 0 0 2px rgba(0, 203, 188, 0.25),
+        0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Checkbox and radio button focus */
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+    outline: none;
+    box-shadow: 
+        0 0 0 3px rgba(0, 203, 188, 0.2),
+        0 0 0 1px rgba(0, 203, 188, 0.5);
+}
+
+/* Button focus states */
+button:focus,
+[type="button"]:focus,
+[type="submit"]:focus {
+    outline: none;
+    box-shadow: 
+        0 0 0 3px rgba(0, 203, 188, 0.3),
+        0 0 0 1px rgba(0, 203, 188, 0.5);
+}
+
+/* Focus visible for better keyboard navigation */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+    outline: none;
+    box-shadow: 
+        0 0 0 4px rgba(0, 203, 188, 0.15),
+        0 0 0 2px rgba(0, 203, 188, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Link focus */
+a:focus-visible {
+    outline: 2px solid #00CBBC;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Error state focus */
+input.border-red-300:focus,
+select.border-red-300:focus,
+textarea.border-red-300:focus {
+    border-color: #ef4444;
+    box-shadow: 
+        0 0 0 4px rgba(239, 68, 68, 0.1),
+        0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* ================================
+   Scrollbar
+   ================================ */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: #e6faf8;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #00CBBC;
     border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #00C096;
+}
+
+/* ================================
+   Additional UI Improvements
+   ================================ */
+
+/* Smooth hover transitions for interactive elements */
+.hover\:bg-brand-50:hover,
+.hover\:bg-brand-100:hover,
+.hover\:bg-gray-50:hover {
+    transition: background-color 0.15s ease-in-out;
+}
+
+/* Better placeholder styling */
+::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+/* Selection color */
+::selection {
+    background-color: rgba(0, 203, 188, 0.2);
+    color: #00353D;
 }

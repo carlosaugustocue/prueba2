@@ -61,8 +61,8 @@ const submit = () => {
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
-                        <div class="h-14 w-14 rounded-full bg-green-100 flex items-center justify-center">
-                            <span class="text-green-700 font-bold text-xl">
+                        <div class="h-14 w-14 rounded-full bg-brand-100 flex items-center justify-center">
+                            <span class="text-brand-700 font-bold text-xl">
                                 {{ patient.first_name?.charAt(0) || '?' }}{{ patient.last_name?.charAt(0) || '' }}
                             </span>
                         </div>
@@ -119,19 +119,19 @@ const submit = () => {
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de cita *</label>
-                            <select v-model="form.type" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                            <select v-model="form.type" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                 <option v-for="t in types" :key="t.value" :value="t.value">{{ t.label }}</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Prioridad *</label>
-                            <select v-model="form.priority" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                            <select v-model="form.priority" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                 <option v-for="p in priorities" :key="p.value" :value="p.value">{{ p.label }}</option>
                             </select>
                         </div>
                         <div v-if="form.type === 'specialist'">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
-                            <input v-model="form.specialty" type="text" placeholder="Ej: Cardiología" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="form.specialty" type="text" placeholder="Ej: Cardiología" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                     </div>
                 </div>
@@ -144,15 +144,15 @@ const submit = () => {
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                            <input v-model="form.appointment_date" type="date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="form.appointment_date" type="date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
-                            <input v-model="form.appointment_time" type="time" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="form.appointment_time" type="time" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Doctor / Profesional</label>
-                            <input v-model="form.doctor_name" type="text" placeholder="Nombre del profesional" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="form.doctor_name" type="text" placeholder="Nombre del profesional" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                     </div>
                 </div>
@@ -165,15 +165,15 @@ const submit = () => {
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del lugar</label>
-                            <input v-model="form.location_name" type="text" placeholder="Centro médico, clínica..." class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="form.location_name" type="text" placeholder="Centro médico, clínica..." class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-                            <input v-model="form.location_address" type="text" placeholder="Dirección completa" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="form.location_address" type="text" placeholder="Dirección completa" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Número de autorización</label>
-                            <input v-model="form.authorization_number" type="text" placeholder="Número de autorización EPS" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="form.authorization_number" type="text" placeholder="Número de autorización EPS" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                     </div>
                 </div>
@@ -188,13 +188,13 @@ const submit = () => {
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Especificaciones para el paciente
                             </label>
-                            <textarea v-model="form.specifications" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="Ej: Ayuno de 8 horas..."></textarea>
+                            <textarea v-model="form.specifications" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: Ayuno de 8 horas..."></textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Notas internas
                             </label>
-                            <textarea v-model="form.internal_notes" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="Notas para el equipo..."></textarea>
+                            <textarea v-model="form.internal_notes" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Notas para el equipo..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -204,7 +204,7 @@ const submit = () => {
                     <Link :href="`/appointments/${appointmentData.id}`" class="inline-flex items-center justify-center px-6 py-3 font-medium rounded-lg bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors">
                         Cancelar
                     </Link>
-                    <button type="submit" :disabled="form.processing" class="inline-flex items-center justify-center px-8 py-3 font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50">
+                    <button type="submit" :disabled="form.processing" class="inline-flex items-center justify-center px-8 py-3 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50">
                         {{ form.processing ? '⏳ Guardando...' : '✅ Guardar Cambios' }}
                     </button>
                 </div>
