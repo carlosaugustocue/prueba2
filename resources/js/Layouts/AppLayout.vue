@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle } from 'lucide-vue-next';
+import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList } from 'lucide-vue-next';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -11,6 +11,7 @@ const sidebarOpen = ref(false);
 
 const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList },
     { name: 'Citas', href: '/appointments', icon: CalendarDays },
     { name: 'Pacientes', href: '/patients', icon: Users },
 ];

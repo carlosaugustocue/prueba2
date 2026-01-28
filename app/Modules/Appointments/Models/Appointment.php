@@ -20,10 +20,12 @@ class Appointment extends Model
 
     protected $fillable = [
         'uuid', 'patient_id', 'created_by', 'assigned_to',
+        'appointment_request_id',
         'type', 'status', 'priority', 'specialty',
         'appointment_date', 'appointment_time', 'doctor_name',
         'location_name', 'location_address', 'authorization_number',
         'specifications', 'internal_notes',
+        'requested_at', 'processed_at',
         'confirmation_sent_at', 'reminder_sent_at', 'completed_at',
     ];
 
@@ -40,6 +42,8 @@ class Appointment extends Model
             'priority' => Priority::class,
             'appointment_date' => 'date',
             // appointment_time se maneja como string para evitar problemas de timezone
+            'requested_at' => 'datetime',
+            'processed_at' => 'datetime',
             'confirmation_sent_at' => 'datetime',
             'reminder_sent_at' => 'datetime',
             'completed_at' => 'datetime',
@@ -53,6 +57,11 @@ class Appointment extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(\App\Modules\Patients\Models\Patient::class);
+    }
+
+    public function appointmentRequest(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\AppointmentRequests\Models\AppointmentRequest::class);
     }
 
     public function creator(): BelongsTo
@@ -84,6 +93,11 @@ class Appointment extends Model
         $oldStatus = $this->status;
         $this->status = $newStatus;
 
+        // Registrar fecha de procesamiento cuando se confirma o se pone en progreso
+        if (in_array($newStatus, [AppointmentStatus::CONFIRMED, AppointmentStatus::IN_PROGRESS]) && !$this->processed_at) {
+            $this->processed_at = now();
+        }
+
         if ($newStatus === AppointmentStatus::COMPLETED) {
             $this->completed_at = now();
         }
@@ -95,6 +109,45 @@ class Appointment extends Model
         }
 
         return $saved;
+    }
+
+    /**
+     * Calcular tiempo de trámite en horas
+     */
+    public function getProcessingTimeHoursAttribute(): ?float
+    {
+        if (!$this->requested_at || !$this->processed_at) {
+            return null;
+        }
+        return round($this->requested_at->diffInMinutes($this->processed_at) / 60, 1);
+    }
+
+    /**
+     * Calcular tiempo de trámite formateado
+     */
+    public function getProcessingTimeFormattedAttribute(): ?string
+    {
+        if (!$this->requested_at || !$this->processed_at) {
+            return null;
+        }
+        
+        $minutes = $this->requested_at->diffInMinutes($this->processed_at);
+        
+        if ($minutes < 60) {
+            return "{$minutes} min";
+        }
+        
+        $hours = floor($minutes / 60);
+        $remainingMinutes = $minutes % 60;
+        
+        if ($hours < 24) {
+            return $remainingMinutes > 0 ? "{$hours}h {$remainingMinutes}min" : "{$hours}h";
+        }
+        
+        $days = floor($hours / 24);
+        $remainingHours = $hours % 24;
+        
+        return $remainingHours > 0 ? "{$days}d {$remainingHours}h" : "{$days}d";
     }
 
     public function canSendConfirmation(): bool

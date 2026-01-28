@@ -17,14 +17,15 @@ const props = defineProps({
     epsList: Array,
     documentTypes: Array,
     patientTypes: Array,
+    fromRequest: Object, // Datos precargados de una solicitud
 });
 
 // Form principal de cita
 const form = useForm({
-    patient_id: '',
-    type: 'general',
-    priority: 'medium',
-    specialty: '',
+    patient_id: props.fromRequest?.patient?.id || '',
+    type: props.fromRequest?.type || 'general',
+    priority: props.fromRequest?.priority || 'medium',
+    specialty: props.fromRequest?.specialty || '',
     appointment_date: '',
     appointment_time: '',
     doctor_name: '',
@@ -32,9 +33,14 @@ const form = useForm({
     location_address: '',
     authorization_number: '',
     specifications: '',
-    internal_notes: '',
+    internal_notes: props.fromRequest?.client_notes ? `Notas del cliente: ${props.fromRequest.client_notes}` : '',
     send_confirmation: true,
+    requested_at: props.fromRequest?.requested_at || new Date().toISOString().slice(0, 16),
+    appointment_request_id: props.fromRequest?.id || null,
 });
+
+// Si viene de una solicitud, precargar el paciente
+const selectedPatient = ref(props.fromRequest?.patient || null);
 
 // Iconos para tipos de cita
 const typeIcons = {
@@ -126,7 +132,7 @@ const formattedSelectedDate = computed(() => {
 // Búsqueda de pacientes
 const patientSearch = ref('');
 const patientResults = ref([]);
-const selectedPatient = ref(null);
+// selectedPatient ya está definido arriba (puede venir de fromRequest)
 const isSearching = ref(false);
 const showNoResults = ref(false);
 
@@ -380,6 +386,46 @@ const submit = () => {
                             <div>
                                 <h2 class="text-xl font-bold">Paso 2: Datos de la Cita</h2>
                                 <p class="text-brand-100 text-sm">Configure los detalles de la cita médica</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info de Solicitud (cuando viene de una solicitud) -->
+                    <div v-if="fromRequest" class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <Clock class="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-blue-900">
+                                    Creando cita desde solicitud #{{ fromRequest.id }}
+                                </p>
+                                <p class="text-sm text-blue-700">
+                                    Solicitada el {{ fromRequest.requested_at }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fecha de Solicitud (solo cuando NO viene de una solicitud) -->
+                    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-start gap-4">
+                            <div class="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+                                <Clock class="h-5 w-5 text-amber-600" />
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-sm font-semibold text-gray-900 mb-1">
+                                    Fecha de Solicitud del Cliente
+                                </label>
+                                <p class="text-sm text-gray-500 mb-3">
+                                    ¿Cuándo solicitó el cliente esta cita a Serviconli? (para medir tiempo de trámite)
+                                </p>
+                                <input 
+                                    v-model="form.requested_at" 
+                                    type="datetime-local" 
+                                    class="block w-full sm:w-auto rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                />
+                                <p v-if="form.errors.requested_at" class="mt-1 text-sm text-red-600">{{ form.errors.requested_at }}</p>
                             </div>
                         </div>
                     </div>

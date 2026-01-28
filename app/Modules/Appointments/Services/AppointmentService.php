@@ -6,6 +6,7 @@ use App\Modules\Appointments\Models\Appointment;
 use App\Modules\Appointments\Models\AppointmentHistory;
 use App\Modules\Appointments\Enums\AppointmentStatus;
 use App\Modules\Appointments\Jobs\SendConfirmationJob;
+use App\Modules\AppointmentRequests\Models\AppointmentRequest;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -69,11 +70,27 @@ class AppointmentService
 
         $appointment = Appointment::create($data);
 
+        // Si viene de una solicitud, marcarla como completada
+        if (!empty($data['appointment_request_id'])) {
+            $this->completeAppointmentRequest($data['appointment_request_id'], $appointment->id);
+        }
+
         if (config('services.appointments.confirmation_auto_send') && ! empty($data['send_confirmation']) && $appointment->canSendConfirmation()) {
             SendConfirmationJob::dispatch($appointment);
         }
 
         return $appointment;
+    }
+
+    /**
+     * Marcar una solicitud como completada cuando se crea la cita
+     */
+    protected function completeAppointmentRequest(int $requestId, int $appointmentId): void
+    {
+        $request = AppointmentRequest::find($requestId);
+        if ($request) {
+            $request->markAsCompleted($appointmentId);
+        }
     }
 
     public function update(Appointment $appointment, array $data): bool
