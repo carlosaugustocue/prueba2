@@ -63,7 +63,24 @@ class PatientResource extends JsonResource
                 ])
             ),
             'beneficiaries_count' => $this->whenLoaded('beneficiaries', fn() => $this->beneficiaries->count()),
-            'appointments' => $this->whenLoaded('appointments'),
+            'appointments' => $this->whenLoaded('appointments', fn() => 
+                $this->appointments->map(fn($apt) => [
+                    'id' => $apt->id,
+                    'type' => $apt->type?->value,
+                    'type_label' => $apt->type?->label(),
+                    'status' => $apt->status?->value,
+                    'status_label' => $apt->status?->label(),
+                    'status_badge_class' => $apt->status?->badgeClass(),
+                    'priority' => $apt->priority?->value,
+                    'priority_label' => $apt->priority?->label(),
+                    'appointment_date' => $apt->appointment_date?->format('Y-m-d'),
+                    'appointment_date_formatted' => $apt->appointment_date?->format('d/m/Y'),
+                    'appointment_time' => $apt->appointment_time ? substr($apt->appointment_time, 0, 5) : null,
+                    'formatted_datetime' => $apt->formatted_datetime,
+                    'doctor_name' => $apt->doctor_name,
+                    'location_name' => $apt->location_name,
+                ])
+            ),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
         ];
     }

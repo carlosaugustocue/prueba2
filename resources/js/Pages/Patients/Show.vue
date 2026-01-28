@@ -185,9 +185,12 @@ const holder = computed(() => patient.value.holder);
                                 :href="`/appointments/${apt.id}`" 
                                 class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
                             >
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ apt.type_label }}</p>
-                                    <p class="text-sm text-gray-500">{{ apt.formatted_datetime || 'Sin fecha' }}</p>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-1 rounded">#{{ apt.id }}</span>
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ apt.type_label }}</p>
+                                        <p class="text-sm text-gray-500">{{ apt.formatted_datetime || 'Sin fecha' }}</p>
+                                    </div>
                                 </div>
                                 <span :class="[apt.status_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">
                                     {{ apt.status_label }}
