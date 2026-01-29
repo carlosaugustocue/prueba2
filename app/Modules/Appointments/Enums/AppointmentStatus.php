@@ -2,23 +2,21 @@
 
 namespace App\Modules\Appointments\Enums;
 
+/**
+ * Estados simplificados para citas.
+ * 
+ * La cita se crea cuando la EPS/IPS la confirma, por lo que
+ * solo necesitamos saber si está confirmada o fue cancelada.
+ */
 enum AppointmentStatus: string
 {
-    case PENDING = 'pending';
-    case IN_PROGRESS = 'in_progress';
-    case CONFIRMED = 'confirmed';
-    case SENT = 'sent';
-    case COMPLETED = 'completed';
-    case CANCELLED = 'cancelled';
+    case CONFIRMED = 'confirmed';   // Cita programada/confirmada por la EPS/IPS
+    case CANCELLED = 'cancelled';   // Cancelada (por la EPS/IPS o el paciente)
 
     public function label(): string
     {
         return match($this) {
-            self::PENDING => 'Pendiente',
-            self::IN_PROGRESS => 'En Progreso',
             self::CONFIRMED => 'Confirmada',
-            self::SENT => 'Enviada',
-            self::COMPLETED => 'Completada',
             self::CANCELLED => 'Cancelada',
         };
     }
@@ -26,11 +24,7 @@ enum AppointmentStatus: string
     public function color(): string
     {
         return match($this) {
-            self::PENDING => 'yellow',
-            self::IN_PROGRESS => 'blue',
-            self::CONFIRMED => 'indigo',
-            self::SENT => 'purple',
-            self::COMPLETED => 'green',
+            self::CONFIRMED => 'green',
             self::CANCELLED => 'red',
         };
     }
@@ -38,11 +32,7 @@ enum AppointmentStatus: string
     public function badgeClass(): string
     {
         return match($this) {
-            self::PENDING => 'bg-yellow-100 text-yellow-800',
-            self::IN_PROGRESS => 'bg-blue-100 text-blue-800',
-            self::CONFIRMED => 'bg-indigo-100 text-indigo-800',
-            self::SENT => 'bg-purple-100 text-purple-800',
-            self::COMPLETED => 'bg-green-100 text-green-800',
+            self::CONFIRMED => 'bg-green-100 text-green-800',
             self::CANCELLED => 'bg-red-100 text-red-800',
         };
     }
@@ -50,12 +40,8 @@ enum AppointmentStatus: string
     public function allowedTransitions(): array
     {
         return match($this) {
-            self::PENDING => [self::IN_PROGRESS, self::CANCELLED],
-            self::IN_PROGRESS => [self::PENDING, self::CONFIRMED, self::CANCELLED],
-            self::CONFIRMED => [self::PENDING, self::SENT, self::CANCELLED],
-            self::SENT => [self::PENDING, self::COMPLETED, self::CANCELLED],
-            self::COMPLETED => [],
-            self::CANCELLED => [self::PENDING],
+            self::CONFIRMED => [self::CANCELLED],
+            self::CANCELLED => [self::CONFIRMED], // Por si se reactiva
         };
     }
 
@@ -76,6 +62,6 @@ enum AppointmentStatus: string
 
     public static function activeStatuses(): array
     {
-        return [self::PENDING, self::IN_PROGRESS, self::CONFIRMED, self::SENT];
+        return [self::CONFIRMED];
     }
 }

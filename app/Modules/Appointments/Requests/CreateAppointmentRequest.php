@@ -27,8 +27,6 @@ class CreateAppointmentRequest extends FormRequest
             'specifications' => ['nullable', 'string', 'max:500'],
             'internal_notes' => ['nullable', 'string', 'max:500'],
             'send_confirmation' => ['boolean'],
-            // Fecha de solicitud del cliente
-            'requested_at' => ['nullable', 'date'],
             // Solicitud de origen (si viene de una solicitud)
             'appointment_request_id' => ['nullable', 'exists:appointment_requests,id'],
         ];

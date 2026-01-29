@@ -35,7 +35,6 @@ const form = useForm({
     specifications: '',
     internal_notes: props.fromRequest?.client_notes ? `Notas del cliente: ${props.fromRequest.client_notes}` : '',
     send_confirmation: true,
-    requested_at: props.fromRequest?.requested_at || new Date().toISOString().slice(0, 16),
     appointment_request_id: props.fromRequest?.id || null,
 });
 
@@ -403,29 +402,6 @@ const submit = () => {
                                 <p class="text-sm text-blue-700">
                                     Solicitada el {{ fromRequest.requested_at }}
                                 </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Fecha de Solicitud (solo cuando NO viene de una solicitud) -->
-                    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-start gap-4">
-                            <div class="p-2 bg-amber-100 rounded-lg flex-shrink-0">
-                                <Clock class="h-5 w-5 text-amber-600" />
-                            </div>
-                            <div class="flex-1">
-                                <label class="block text-sm font-semibold text-gray-900 mb-1">
-                                    Fecha de Solicitud del Cliente
-                                </label>
-                                <p class="text-sm text-gray-500 mb-3">
-                                    ¿Cuándo solicitó el cliente esta cita a Serviconli? (para medir tiempo de trámite)
-                                </p>
-                                <input 
-                                    v-model="form.requested_at" 
-                                    type="datetime-local" 
-                                    class="block w-full sm:w-auto rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                                />
-                                <p v-if="form.errors.requested_at" class="mt-1 text-sm text-red-600">{{ form.errors.requested_at }}</p>
                             </div>
                         </div>
                     </div>

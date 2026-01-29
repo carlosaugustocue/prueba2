@@ -48,7 +48,7 @@ class AppointmentService
         return Appointment::query()
             ->with(['patient.eps'])
             ->today()
-            ->active()
+            ->confirmed()
             ->orderBy('appointment_time')
             ->get();
     }
@@ -56,17 +56,17 @@ class AppointmentService
     public function getDashboardStats(): array
     {
         return [
-            'today' => Appointment::today()->active()->count(),
-            'pending' => Appointment::pending()->count(),
-            'urgent' => Appointment::active()->where('priority', 'urgent')->count(),
-            'to_confirm' => Appointment::active()->whereNull('confirmation_sent_at')->whereNotNull('appointment_date')->count(),
+            'today' => Appointment::today()->confirmed()->count(),
+            'pending_requests' => \App\Modules\AppointmentRequests\Models\AppointmentRequest::where('status', 'pending')->count(),
+            'urgent_requests' => \App\Modules\AppointmentRequests\Models\AppointmentRequest::whereIn('status', ['pending', 'in_progress'])->where('priority', 'urgent')->count(),
+            'confirmed' => Appointment::confirmed()->count(),
         ];
     }
 
     public function create(array $data): Appointment
     {
         $data['created_by'] = Auth::id();
-        $data['status'] = $data['status'] ?? AppointmentStatus::PENDING->value;
+        $data['status'] = $data['status'] ?? AppointmentStatus::CONFIRMED->value;
 
         $appointment = Appointment::create($data);
 

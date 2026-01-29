@@ -116,20 +116,12 @@ class AppointmentResource extends JsonResource
             'specifications' => $this->specifications,
             'internal_notes' => $this->internal_notes,
             
-            // Seguimiento de solicitud (para medir eficiencia)
-            'requested_at' => $this->requested_at?->format('Y-m-d H:i:s'),
-            'requested_at_formatted' => $this->requested_at?->format('d/m/Y H:i'),
-            'processed_at' => $this->processed_at?->format('Y-m-d H:i:s'),
-            'processed_at_formatted' => $this->processed_at?->format('d/m/Y H:i'),
-            'processing_time_hours' => $this->processing_time_hours,
-            'processing_time_formatted' => $this->processing_time_formatted,
-            
             // Mensajes enviados
             'confirmation_sent_at' => $this->confirmation_sent_at ? $this->confirmation_sent_at->format('d/m/Y H:i') : null,
             'reminder_sent_at' => $this->reminder_sent_at ? $this->reminder_sent_at->format('d/m/Y H:i') : null,
             
             // Capacidades
-            'can_send_confirmation' => $statusEnum && in_array($statusEnum, [AppointmentStatus::CONFIRMED, AppointmentStatus::IN_PROGRESS]),
+            'can_send_confirmation' => $statusEnum === AppointmentStatus::CONFIRMED,
             'allowed_status_transitions' => $statusEnum ? collect($statusEnum->allowedTransitions())->map(fn($s) => [
                 'value' => $s->value,
                 'label' => $s->label()

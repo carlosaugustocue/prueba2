@@ -5,7 +5,6 @@ namespace App\Modules\Appointments\Jobs;
 use App\Modules\Appointments\Models\Appointment;
 use App\Modules\Appointments\Models\Reminder;
 use App\Modules\Appointments\Models\AppointmentHistory;
-use App\Modules\Appointments\Enums\AppointmentStatus;
 use App\Modules\Core\Contracts\NotificationChannelInterface;
 use App\Modules\Integrations\WhatsApp\Templates\ConfirmationTemplate;
 use Illuminate\Bus\Queueable;
@@ -58,7 +57,6 @@ class SendConfirmationJob implements ShouldQueue
 
             $appointment->update([
                 'confirmation_sent_at' => now(),
-                'status' => AppointmentStatus::SENT,
             ]);
 
             AppointmentHistory::log($appointment, AppointmentHistory::ACTION_CONFIRMATION_SENT, description: 'Confirmación enviada por WhatsApp');

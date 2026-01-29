@@ -314,41 +314,6 @@ const deleteAppointment = () => {
                         </div>
                     </div>
 
-                    <!-- Seguimiento del Trámite -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white">
-                            <h2 class="text-lg font-semibold text-gray-900">⏱️ Seguimiento del Trámite</h2>
-                        </div>
-                        <div class="p-6 space-y-4 text-sm">
-                            <div>
-                                <p class="text-gray-500">Fecha de solicitud</p>
-                                <p class="font-medium text-gray-900">{{ apt.requested_at_formatted || 'No registrada' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-gray-500">Fecha de tramitación</p>
-                                <p class="font-medium text-gray-900">{{ apt.processed_at_formatted || 'Pendiente de tramitar' }}</p>
-                            </div>
-                            <div v-if="apt.processing_time_formatted" class="pt-3 border-t border-gray-200">
-                                <p class="text-gray-500">Tiempo de trámite</p>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span :class="[
-                                        'inline-flex items-center px-3 py-1 rounded-full text-sm font-bold',
-                                        apt.processing_time_hours <= 24 ? 'bg-green-100 text-green-700' : '',
-                                        apt.processing_time_hours > 24 && apt.processing_time_hours <= 48 ? 'bg-yellow-100 text-yellow-700' : '',
-                                        apt.processing_time_hours > 48 ? 'bg-red-100 text-red-700' : ''
-                                    ]">
-                                        {{ apt.processing_time_formatted }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div v-else-if="apt.requested_at && !apt.processed_at" class="pt-3 border-t border-gray-200">
-                                <p class="text-amber-600 text-sm font-medium">
-                                    ⏳ Pendiente de tramitar
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Información adicional -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">

@@ -47,11 +47,11 @@ const appointments = computed(() => props.appointments?.data || []);
         <div class="space-y-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Gestión de Citas</h1>
-                    <p class="mt-1 text-sm text-gray-500">Administra todas las citas médicas</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Citas Registradas</h1>
+                    <p class="mt-1 text-sm text-gray-500">Historial de citas obtenidas de las EPS/IPS</p>
                 </div>
-                <Link href="/appointments/create" class="inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors">
-                    ➕ Nueva Cita
+                <Link href="/appointment-requests" class="inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors">
+                    📋 Ver Solicitudes
                 </Link>
             </div>
 
