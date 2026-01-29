@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
+import { alertDialog } from '@/Utils/swal';
 import { 
     Search, UserPlus, X, Loader2, AlertTriangle, ChevronRight,
     Stethoscope, Heart, Brain, Bone, Eye as EyeIcon, Baby, FlaskConical, Scan,
@@ -18,11 +19,12 @@ const props = defineProps({
     documentTypes: Array,
     patientTypes: Array,
     fromRequest: Object, // Datos precargados de una solicitud
+    preselectedPatient: Object, // Datos precargados desde perfil del paciente
 });
 
 // Form principal de cita
 const form = useForm({
-    patient_id: props.fromRequest?.patient?.id || '',
+    patient_id: props.fromRequest?.patient?.id || props.preselectedPatient?.data?.id || props.preselectedPatient?.id || '',
     type: props.fromRequest?.type || 'general',
     priority: props.fromRequest?.priority || 'medium',
     specialty: props.fromRequest?.specialty || '',
@@ -39,7 +41,7 @@ const form = useForm({
 });
 
 // Si viene de una solicitud, precargar el paciente
-const selectedPatient = ref(props.fromRequest?.patient || null);
+const selectedPatient = ref(props.fromRequest?.patient || (props.preselectedPatient?.data || props.preselectedPatient) || null);
 
 // Iconos para tipos de cita
 const typeIcons = {
@@ -236,7 +238,7 @@ const createPatient = async () => {
                 patientForm.setError(key, errors[key][0]);
             });
         } else {
-            alert('Error al crear el paciente. Intente nuevamente.');
+            alertDialog({ title: 'Error', text: 'Error al crear el paciente. Intente nuevamente.', icon: 'error' });
         }
     }
 };
@@ -256,7 +258,7 @@ const requiresDetails = computed(() => props.types?.find(t => t.value === form.t
 
 const submit = () => {
     if (!form.patient_id) {
-        alert('Debe seleccionar o crear un paciente primero.');
+        alertDialog({ title: 'Paciente requerido', text: 'Debe seleccionar o crear un paciente primero.' });
         return;
     }
     form.post('/appointments');

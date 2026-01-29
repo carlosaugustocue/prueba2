@@ -34,9 +34,17 @@ const clearFilters = () => {
 };
 
 const startRequest = (request) => {
-    if (confirm('¿Desea tomar esta solicitud para tramitarla?')) {
-        router.post(`/appointment-requests/${request.id}/start`);
-    }
+    // Se confirma desde UI más bonita (SweetAlert)
+    import('@/Utils/swal').then(({ confirmDialog }) => {
+        confirmDialog({
+            title: 'Tomar solicitud',
+            text: '¿Desea tomar esta solicitud para tramitarla?',
+            confirmButtonText: 'Tomar',
+        }).then((ok) => {
+            if (!ok) return;
+            router.post(`/appointment-requests/${request.id}/start`);
+        });
+    });
 };
 
 const statusIcon = (status) => {

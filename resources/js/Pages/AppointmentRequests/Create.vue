@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
+import { alertDialog } from '@/Utils/swal';
 import {
     ChevronLeft, User, Search, Loader2, X, Check,
     Stethoscope, Heart, FlaskConical, Scan, ClipboardList,
@@ -99,7 +100,7 @@ watch(patientSearch, () => {
 
 const submit = () => {
     if (!form.patient_id) {
-        alert('Debe seleccionar un paciente.');
+        alertDialog({ title: 'Paciente requerido', text: 'Debe seleccionar un paciente.' });
         return;
     }
     form.post('/appointment-requests');

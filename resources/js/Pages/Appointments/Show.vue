@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ArrowLeft, MessageCircle, RotateCcw, Loader2, Pencil, Trash2, PhoneCall, CalendarDays, MapPin, ClipboardList, Lock, ScrollText, Info, ArrowRight, User, Check } from 'lucide-vue-next';
+import { alertDialog, confirmDialog } from '@/Utils/swal';
 
 const props = defineProps({
     appointment: Object,
@@ -22,21 +23,37 @@ onMounted(() => {
 });
 
 const changeStatus = (newStatus) => {
-    if (confirm(`¿Cambiar estado a "${newStatus}"?`)) {
+    confirmDialog({
+        title: 'Cambiar estado',
+        text: `¿Cambiar estado a "${newStatus}"?`,
+        confirmButtonText: 'Cambiar',
+    }).then((ok) => {
+        if (!ok) return;
         router.patch(`/appointments/${apt.value.id}/status`, { status: newStatus });
-    }
+    });
 };
 
 const sendConfirmation = () => {
-    if (confirm('¿Enviar confirmación por WhatsApp al paciente?')) {
+    confirmDialog({
+        title: 'Enviar WhatsApp',
+        text: '¿Enviar confirmación por WhatsApp al paciente?',
+        confirmButtonText: 'Enviar',
+    }).then((ok) => {
+        if (!ok) return;
         router.post(`/appointments/${apt.value.id}/send-confirmation`);
-    }
+    });
 };
 
 const deleteAppointment = () => {
-    if (confirm('¿Está seguro de eliminar esta cita? Esta acción no se puede deshacer.')) {
+    confirmDialog({
+        title: 'Eliminar cita',
+        text: '¿Está seguro de eliminar esta cita? Esta acción no se puede deshacer.',
+        icon: 'warning',
+        confirmButtonText: 'Eliminar',
+    }).then((ok) => {
+        if (!ok) return;
         router.delete(`/appointments/${apt.value.id}`);
-    }
+    });
 };
 
 const whatsappStatus = computed(() => apt.value.whatsapp_confirmation_status || 'not_sent');
@@ -61,7 +78,7 @@ const phoneCategoryLabel = (value) => {
 };
 const savePhoneCommunication = () => {
     if (!phoneCategory.value) {
-        alert('Seleccione una categoría.');
+        alertDialog({ title: 'Categoría requerida', text: 'Seleccione una categoría.' });
         return;
     }
     router.post(`/appointments/${apt.value.id}/communications/phone`, {

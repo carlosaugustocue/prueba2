@@ -2,6 +2,7 @@
 import { ref, computed, watchEffect } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { confirmDialog } from '@/Utils/swal';
 import {
     ChevronLeft, Clock, User, Calendar, Play, XCircle, AlertTriangle,
     CheckCircle, Phone, Mail, Building2, FileText, MessageSquare, ArrowRight
@@ -45,9 +46,14 @@ const showCancelModal = ref(false);
 const cancelReason = ref('');
 
 const startProcessing = () => {
-    if (confirm('¿Desea tomar esta solicitud para tramitarla?')) {
+    confirmDialog({
+        title: 'Tomar solicitud',
+        text: '¿Desea tomar esta solicitud para tramitarla?',
+        confirmButtonText: 'Tomar',
+    }).then((ok) => {
+        if (!ok) return;
         router.post(`/appointment-requests/${request.value.id}/start`);
-    }
+    });
 };
 
 const markAsFailed = () => {
@@ -65,9 +71,15 @@ const cancelRequest = () => {
 };
 
 const deleteRequest = () => {
-    if (confirm('¿Está seguro de eliminar esta solicitud? Esta acción no se puede deshacer.')) {
+    confirmDialog({
+        title: 'Eliminar solicitud',
+        text: '¿Está seguro de eliminar esta solicitud? Esta acción no se puede deshacer.',
+        icon: 'warning',
+        confirmButtonText: 'Eliminar',
+    }).then((ok) => {
+        if (!ok) return;
         router.delete(`/appointment-requests/${request.value.id}`);
-    }
+    });
 };
 
 const saveNotes = () => {

@@ -4,6 +4,7 @@ import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import { UserCog, UserPlus, Search, Pencil, Power, Trash2, Filter, X } from 'lucide-vue-next';
+import { confirmDialog } from '@/Utils/swal';
 
 const props = defineProps({
     users: Object,
@@ -43,15 +44,27 @@ const clearFilters = () => {
 };
 
 const toggleActive = (u) => {
-    if (confirm(`¿${u.is_active ? 'Desactivar' : 'Activar'} a ${u.name}?`)) {
+    confirmDialog({
+        title: u.is_active ? 'Desactivar usuario' : 'Activar usuario',
+        text: `¿${u.is_active ? 'Desactivar' : 'Activar'} a ${u.name}?`,
+        confirmButtonText: u.is_active ? 'Desactivar' : 'Activar',
+        icon: 'warning',
+    }).then((ok) => {
+        if (!ok) return;
         router.patch(`/admin/usuarios/${u.id}/toggle-active`, {}, { preserveScroll: true });
-    }
+    });
 };
 
 const destroyUser = (u) => {
-    if (confirm(`¿Eliminar a ${u.name}? Esta acción no se puede deshacer.`)) {
+    confirmDialog({
+        title: 'Eliminar usuario',
+        text: `¿Eliminar a ${u.name}? Esta acción no se puede deshacer.`,
+        confirmButtonText: 'Eliminar',
+        icon: 'warning',
+    }).then((ok) => {
+        if (!ok) return;
         router.delete(`/admin/usuarios/${u.id}`, { preserveScroll: true });
-    }
+    });
 };
 </script>
 

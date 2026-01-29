@@ -13,6 +13,8 @@ use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
 use App\Modules\Appointments\Enums\PhoneCommunicationCategory;
 use App\Modules\Patients\Models\Eps;
+use App\Modules\Patients\Models\Patient;
+use App\Modules\Patients\Resources\PatientResource;
 use App\Modules\Patients\Enums\DocumentType;
 use App\Modules\Patients\Enums\PatientType;
 use Illuminate\Http\Request;
@@ -51,6 +53,14 @@ class AppointmentController extends Controller
 
     public function create(Request $request): Response
     {
+        $preselectedPatient = null;
+        if ($request->filled('patient_id')) {
+            $patient = Patient::with('eps:id,name,code')->find($request->integer('patient_id'));
+            if ($patient) {
+                $preselectedPatient = new PatientResource($patient);
+            }
+        }
+
         return Inertia::render('Appointments/Create', [
             'statuses' => AppointmentStatus::toArray(),
             'types' => AppointmentType::toArray(),
@@ -58,6 +68,7 @@ class AppointmentController extends Controller
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'documentTypes' => DocumentType::toArray(),
             'patientTypes' => PatientType::toArray(),
+            'preselectedPatient' => $preselectedPatient,
         ]);
     }
 

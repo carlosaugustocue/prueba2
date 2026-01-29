@@ -45,7 +45,7 @@ const holder = computed(() => patient.value.holder);
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <Link href="/appointments/create" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-xl hover:bg-brand-600 transition-colors">
+                    <Link :href="`/appointments/create?patient_id=${patient.id}`" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-xl hover:bg-brand-600 transition-colors">
                         <CalendarPlus class="h-5 w-5" />
                         Nueva Cita
                     </Link>
@@ -174,7 +174,7 @@ const holder = computed(() => patient.value.holder);
                                 <Calendar class="h-5 w-5 text-brand-600" />
                                 Historial de Citas
                             </h3>
-                            <Link href="/appointments/create" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
+                            <Link :href="`/appointments?patient_id=${patient.id}`" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
                                 Ver todas →
                             </Link>
                         </div>
