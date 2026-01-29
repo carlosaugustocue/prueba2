@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
     appointments: Object,
@@ -105,6 +106,8 @@ const appointments = computed(() => props.appointments?.data || []);
                     </tbody>
                 </table>
             </div>
+
+            <Pagination :links="props.appointments?.links" />
         </div>
     </AppLayout>
 </template>

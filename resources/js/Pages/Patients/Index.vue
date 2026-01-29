@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
     patients: Object,
@@ -79,6 +80,8 @@ watch(search, () => {
                     </tbody>
                 </table>
             </div>
+
+            <Pagination :links="patients?.links" />
         </div>
     </AppLayout>
 </template>

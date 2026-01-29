@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Download, Filter, FileText } from 'lucide-vue-next';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
     filters: Object,
@@ -126,18 +127,8 @@ const csvUrl = computed(() => {
                     </table>
                 </div>
 
-                <div v-if="items?.links?.length > 3" class="px-6 py-4 border-t border-gray-200 flex flex-wrap gap-2">
-                    <Link
-                        v-for="link in items.links"
-                        :key="link.label"
-                        :href="link.url || ''"
-                        v-html="link.label"
-                        :class="[
-                            'px-3 py-2 text-sm rounded-lg',
-                            link.active ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-                            !link.url ? 'opacity-50 pointer-events-none' : ''
-                        ]"
-                    />
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <Pagination :links="items?.links" />
                 </div>
             </div>
 

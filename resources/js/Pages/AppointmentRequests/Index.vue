@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 import {
     Plus, Search, Clock, CheckCircle, AlertCircle, Filter,
     User, Calendar, ChevronRight, Play, XCircle, Loader2
@@ -261,19 +262,7 @@ const getPriorityClass = (priority) => {
             </div>
 
             <!-- Pagination -->
-            <div v-if="requests.links?.length > 3" class="flex justify-center gap-1">
-                <Link 
-                    v-for="link in requests.links" 
-                    :key="link.label"
-                    :href="link.url"
-                    :class="[
-                        'px-3 py-2 text-sm rounded-lg transition-colors',
-                        link.active ? 'bg-brand-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200',
-                        !link.url ? 'opacity-50 cursor-not-allowed' : ''
-                    ]"
-                    v-html="link.label"
-                />
-            </div>
+            <Pagination :links="requests?.links" />
         </div>
     </AppLayout>
 </template>

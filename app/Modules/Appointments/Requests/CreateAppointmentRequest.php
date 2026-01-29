@@ -39,4 +39,26 @@ class CreateAppointmentRequest extends FormRequest
             'appointment_date.after_or_equal' => 'La fecha debe ser hoy o una fecha futura.',
         ];
     }
+
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $validator->after(function (\Illuminate\Validation\Validator $validator) {
+            $date = $this->input('appointment_date');
+            $time = $this->input('appointment_time');
+
+            if (! $date || ! $time) {
+                return;
+            }
+
+            try {
+                $selected = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$date} {$time}", config('app.timezone'));
+            } catch (\Throwable) {
+                return;
+            }
+
+            if ($selected->isPast()) {
+                $validator->errors()->add('appointment_time', 'La hora debe ser actual o futura.');
+            }
+        });
+    }
 }

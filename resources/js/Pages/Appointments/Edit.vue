@@ -2,6 +2,11 @@
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { computed, onMounted } from 'vue';
+import {
+    ArrowLeft, User, Building2, Phone, BadgeInfo,
+    ClipboardList, CalendarDays, MapPin, FileText,
+    Save, Loader2, X
+} from 'lucide-vue-next';
 
 const props = defineProps({
     appointment: Object,
@@ -51,8 +56,9 @@ const submit = () => {
         <div class="max-w-4xl mx-auto">
             <!-- Header -->
             <div class="mb-6">
-                <Link :href="`/appointments/${appointmentData.id}`" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-2">
-                    ← Volver al detalle
+                <Link :href="`/appointments/${appointmentData.id}`" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-brand-700 mb-2">
+                    <ArrowLeft class="h-4 w-4" />
+                    Volver al detalle
                 </Link>
                 <h1 class="text-2xl font-bold text-gray-900">Editar Cita #{{ appointmentData.id }}</h1>
             </div>
@@ -73,9 +79,16 @@ const submit = () => {
                             <p class="text-sm text-gray-600">
                                 {{ patient.document_type_abbreviation || '' }} {{ patient.document_number || '' }}
                             </p>
-                            <p class="text-sm text-gray-500">
-                                {{ patient.eps?.name || 'Sin EPS' }} • {{ patient.whatsapp_number || patient.phone || 'Sin teléfono' }}
-                            </p>
+                            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+                                <span class="inline-flex items-center gap-1">
+                                    <Building2 class="h-4 w-4 text-gray-400" />
+                                    {{ patient.eps?.name || 'Sin EPS' }}
+                                </span>
+                                <span class="inline-flex items-center gap-1">
+                                    <Phone class="h-4 w-4 text-gray-400" />
+                                    {{ patient.whatsapp_number || patient.phone || 'Sin teléfono' }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div class="text-right">
@@ -88,24 +101,29 @@ const submit = () => {
             </div>
 
             <!-- Datos actuales -->
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                <h3 class="font-semibold text-blue-800 mb-2">📋 Datos actuales de la cita</h3>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                    <div>
-                        <span class="text-blue-600">Fecha:</span>
-                        <span class="ml-1 font-medium">{{ appointmentData.appointment_date_formatted || 'No definida' }}</span>
+            <div class="bg-brand-50 border border-brand-200 rounded-xl p-4 mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="h-9 w-9 rounded-lg bg-brand-100 flex items-center justify-center">
+                        <BadgeInfo class="h-5 w-5 text-brand-700" />
                     </div>
-                    <div>
-                        <span class="text-blue-600">Hora:</span>
-                        <span class="ml-1 font-medium">{{ appointmentData.appointment_time || 'No definida' }}</span>
+                    <h3 class="font-semibold text-brand-900">Datos actuales de la cita</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                    <div class="bg-white border border-brand-100 rounded-lg p-3">
+                        <p class="text-xs font-medium text-gray-500">Fecha</p>
+                        <p class="mt-1 font-semibold text-gray-900">{{ appointmentData.appointment_date_formatted || 'No definida' }}</p>
                     </div>
-                    <div>
-                        <span class="text-blue-600">Doctor:</span>
-                        <span class="ml-1 font-medium">{{ appointmentData.doctor_name || 'No definido' }}</span>
+                    <div class="bg-white border border-brand-100 rounded-lg p-3">
+                        <p class="text-xs font-medium text-gray-500">Hora</p>
+                        <p class="mt-1 font-semibold text-gray-900">{{ appointmentData.appointment_time || 'No definida' }}</p>
                     </div>
-                    <div>
-                        <span class="text-blue-600">Lugar:</span>
-                        <span class="ml-1 font-medium">{{ appointmentData.location_name || 'No definido' }}</span>
+                    <div class="bg-white border border-brand-100 rounded-lg p-3">
+                        <p class="text-xs font-medium text-gray-500">Profesional</p>
+                        <p class="mt-1 font-semibold text-gray-900">{{ appointmentData.doctor_name || 'No definido' }}</p>
+                    </div>
+                    <div class="bg-white border border-brand-100 rounded-lg p-3">
+                        <p class="text-xs font-medium text-gray-500">Lugar</p>
+                        <p class="mt-1 font-semibold text-gray-900">{{ appointmentData.location_name || 'No definido' }}</p>
                     </div>
                 </div>
             </div>
@@ -113,8 +131,9 @@ const submit = () => {
             <form @submit.prevent="submit" class="space-y-6">
                 <!-- Tipo y Prioridad -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h2 class="text-lg font-semibold text-gray-900">📋 Tipo y Prioridad</h2>
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                        <ClipboardList class="h-5 w-5 text-brand-600" />
+                        <h2 class="text-lg font-semibold text-gray-900">Tipo y Prioridad</h2>
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
@@ -138,8 +157,9 @@ const submit = () => {
 
                 <!-- Fecha, Hora y Doctor -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h2 class="text-lg font-semibold text-gray-900">📅 Fecha y Profesional</h2>
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                        <CalendarDays class="h-5 w-5 text-brand-600" />
+                        <h2 class="text-lg font-semibold text-gray-900">Fecha y Profesional</h2>
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
@@ -159,8 +179,9 @@ const submit = () => {
 
                 <!-- Ubicación -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h2 class="text-lg font-semibold text-gray-900">📍 Ubicación</h2>
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                        <MapPin class="h-5 w-5 text-brand-600" />
+                        <h2 class="text-lg font-semibold text-gray-900">Ubicación</h2>
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -180,8 +201,9 @@ const submit = () => {
 
                 <!-- Especificaciones y Notas -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h2 class="text-lg font-semibold text-gray-900">📝 Especificaciones y Notas</h2>
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                        <FileText class="h-5 w-5 text-brand-600" />
+                        <h2 class="text-lg font-semibold text-gray-900">Especificaciones y Notas</h2>
                     </div>
                     <div class="px-6 py-4 space-y-4">
                         <div>
@@ -201,11 +223,14 @@ const submit = () => {
 
                 <!-- Botones -->
                 <div class="flex flex-col sm:flex-row sm:justify-between gap-4 pt-4">
-                    <Link :href="`/appointments/${appointmentData.id}`" class="inline-flex items-center justify-center px-6 py-3 font-medium rounded-lg bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors">
+                    <Link :href="`/appointments/${appointmentData.id}`" class="inline-flex items-center gap-2 justify-center px-6 py-3 font-medium rounded-lg bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors">
+                        <X class="h-4 w-4" />
                         Cancelar
                     </Link>
-                    <button type="submit" :disabled="form.processing" class="inline-flex items-center justify-center px-8 py-3 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50">
-                        {{ form.processing ? '⏳ Guardando...' : '✅ Guardar Cambios' }}
+                    <button type="submit" :disabled="form.processing" class="inline-flex items-center gap-2 justify-center px-8 py-3 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50">
+                        <Loader2 v-if="form.processing" class="h-5 w-5 animate-spin" />
+                        <Save v-else class="h-5 w-5" />
+                        {{ form.processing ? 'Guardando...' : 'Guardar cambios' }}
                     </button>
                 </div>
             </form>

@@ -25,7 +25,7 @@ class PatientService
             $query->where('patient_type', $filters['patient_type']);
         }
 
-        return $query->orderBy('first_name')->orderBy('last_name')->paginate($perPage);
+        return $query->orderBy('first_name')->orderBy('last_name')->paginate($perPage)->withQueryString();
     }
 
     public function searchForAutocomplete(string $term, int $limit = 10): Collection
