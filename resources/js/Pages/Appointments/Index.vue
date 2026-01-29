@@ -83,6 +83,7 @@ const appointments = computed(() => props.appointments?.data || []);
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cita</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha / Hora</th>
@@ -93,6 +94,10 @@ const appointments = computed(() => props.appointments?.data || []);
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <tr v-for="apt in appointments" :key="apt.id" class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-semibold text-gray-900">#{{ apt.id }}</div>
+                                <div class="text-xs text-gray-500">Cita</div>
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm font-medium text-gray-900">{{ apt.patient?.full_name }}</div>
                                 <div class="text-sm text-gray-500">{{ apt.patient?.document_type_abbreviation }} {{ apt.patient?.document_number }}</div>
@@ -111,7 +116,7 @@ const appointments = computed(() => props.appointments?.data || []);
                             </td>
                         </tr>
                         <tr v-if="appointments.length === 0">
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">No se encontraron citas</td>
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">No se encontraron citas</td>
                         </tr>
                     </tbody>
                 </table>

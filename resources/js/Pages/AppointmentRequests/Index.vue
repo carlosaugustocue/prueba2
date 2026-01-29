@@ -201,6 +201,9 @@ const getPriorityClass = (priority) => {
                             <!-- Info -->
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                        Solicitud #{{ request.id }}
+                                    </span>
                                     <Link :href="`/appointment-requests/${request.id}`" class="font-semibold text-gray-900 hover:text-brand-600">
                                         {{ request.patient?.full_name || 'Sin paciente' }}
                                     </Link>
@@ -260,7 +263,7 @@ const getPriorityClass = (priority) => {
                                     class="inline-flex items-center gap-1 px-3 py-2 bg-brand-50 text-brand-700 text-sm font-medium rounded-lg hover:bg-brand-100 transition-colors"
                                 >
                                     <CheckCircle class="h-4 w-4" />
-                                    Ver Cita
+                                    Ver Cita #{{ request.appointment_id }}
                                 </Link>
                                 <Link :href="`/appointment-requests/${request.id}`" class="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
                                     <ChevronRight class="h-5 w-5" />
