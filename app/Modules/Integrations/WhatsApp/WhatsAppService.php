@@ -11,12 +11,14 @@ class WhatsAppService implements NotificationChannelInterface
     protected string $apiUrl;
     protected string $phoneNumberId;
     protected string $accessToken;
+    protected string $defaultLanguage;
 
     public function __construct()
     {
         $this->apiUrl = config('services.whatsapp.api_url', 'https://graph.facebook.com/v18.0');
         $this->phoneNumberId = config('services.whatsapp.phone_number_id', '');
         $this->accessToken = config('services.whatsapp.access_token', '');
+        $this->defaultLanguage = config('services.whatsapp.language', 'es_CO');
     }
 
     public function send(string $recipient, string $message, array $options = []): array
@@ -35,13 +37,7 @@ class WhatsAppService implements NotificationChannelInterface
 
         $url = "{$this->apiUrl}/{$this->phoneNumberId}/messages";
 
-        $payload = [
-            'messaging_product' => 'whatsapp',
-            'recipient_type' => 'individual',
-            'to' => $recipient,
-            'type' => 'text',
-            'text' => ['preview_url' => false, 'body' => $message],
-        ];
+        $payload = $this->buildPayload($recipient, $message, $options);
 
         try {
             $response = Http::withToken($this->accessToken)->post($url, $payload);
@@ -80,5 +76,62 @@ class WhatsAppService implements NotificationChannelInterface
             $phone = '57' . $phone;
         }
         return $phone;
+    }
+
+    /**
+     * Construir payload para WhatsApp Cloud API.
+     *
+     * Soporta:
+     * - Texto libre: default
+     * - Template message: options['type']='template' + template_name + parameters[]
+     */
+    protected function buildPayload(string $recipient, string $message, array $options = []): array
+    {
+        $type = $options['type'] ?? 'text';
+
+        if ($type === 'template') {
+            $templateName = $options['template_name'] ?? $options['template'] ?? null;
+            $language = $options['language'] ?? $options['language_code'] ?? $this->defaultLanguage;
+            $parameters = $options['parameters'] ?? $options['template_parameters'] ?? [];
+
+            if (! $templateName) {
+                throw new \InvalidArgumentException('template_name is required for template WhatsApp messages');
+            }
+
+            $components = [];
+            if (! empty($parameters)) {
+                $components[] = [
+                    'type' => 'body',
+                    'parameters' => array_map(
+                        fn ($value) => ['type' => 'text', 'text' => (string) $value],
+                        $parameters
+                    ),
+                ];
+            }
+
+            return [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $recipient,
+                'type' => 'template',
+                'template' => [
+                    'name' => $templateName,
+                    'language' => ['code' => $language],
+                    ...(! empty($components) ? ['components' => $components] : []),
+                ],
+            ];
+        }
+
+        // Texto libre (solo funciona en ventana de 24h si el usuario inició conversación)
+        return [
+            'messaging_product' => 'whatsapp',
+            'recipient_type' => 'individual',
+            'to' => $recipient,
+            'type' => 'text',
+            'text' => [
+                'preview_url' => false,
+                'body' => $message,
+            ],
+        ];
     }
 }

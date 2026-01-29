@@ -39,6 +39,11 @@ return [
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
+        'language' => env('WHATSAPP_LANGUAGE', 'es_CO'),
+        'templates' => [
+            'confirmation' => env('WHATSAPP_TEMPLATE_CONFIRMATION', 'serviconli_cita_confirmada'),
+            'reminder_morning' => env('WHATSAPP_TEMPLATE_REMINDER_MORNING', 'serviconli_recordatorio_cita_manana'),
+        ],
     ],
 
     /*
@@ -49,6 +54,9 @@ return [
     'appointments' => [
         'reminder_hours_before' => env('REMINDER_HOURS_BEFORE', 24),
         'confirmation_auto_send' => env('CONFIRMATION_AUTO_SEND', true),
+        // Recordatorio "mañana anterior" (D-1) a hora fija
+        'reminder_send_time' => env('REMINDER_SEND_TIME', '08:00'),
+        'reminder_timezone' => env('REMINDER_TIMEZONE', 'America/Bogota'),
     ],
 
 ];

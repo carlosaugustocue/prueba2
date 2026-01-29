@@ -1,11 +1,12 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
     appointment: Object,
     statuses: Array,
+    phoneCategories: Array,
 });
 
 // Los datos pueden venir envueltos en "data" por el Resource
@@ -36,6 +37,42 @@ const deleteAppointment = () => {
         router.delete(`/appointments/${apt.value.id}`);
     }
 };
+
+const whatsappStatus = computed(() => apt.value.whatsapp_confirmation_status || 'not_sent');
+const whatsappStatusLabel = computed(() => {
+    if (whatsappStatus.value === 'sent') return 'Enviado';
+    if (whatsappStatus.value === 'pending') return 'Pendiente';
+    if (whatsappStatus.value === 'failed') return 'Error';
+    return 'No enviado';
+});
+const whatsappStatusClass = computed(() => {
+    if (whatsappStatus.value === 'sent') return 'bg-green-100 text-green-800';
+    if (whatsappStatus.value === 'pending') return 'bg-yellow-100 text-yellow-800';
+    if (whatsappStatus.value === 'failed') return 'bg-red-100 text-red-800';
+    return 'bg-gray-100 text-gray-800';
+});
+
+const phoneCategory = ref('');
+const phoneNote = ref('');
+const phoneCategoryLabel = (value) => {
+    const found = props.phoneCategories?.find(c => c.value === value);
+    return found?.label || value;
+};
+const savePhoneCommunication = () => {
+    if (!phoneCategory.value) {
+        alert('Seleccione una categoría.');
+        return;
+    }
+    router.post(`/appointments/${apt.value.id}/communications/phone`, {
+        category: phoneCategory.value,
+        note: phoneNote.value || null,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            phoneNote.value = '';
+        }
+    });
+};
 </script>
 
 <template>
@@ -51,12 +88,32 @@ const deleteAppointment = () => {
                     <p class="text-gray-500 mt-1">Creada el {{ apt.created_at_formatted }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
+                    <div class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg">
+                        <span class="text-sm text-gray-600">WhatsApp:</span>
+                        <span :class="[whatsappStatusClass, 'text-xs font-semibold px-2 py-0.5 rounded-full']">
+                            {{ whatsappStatusLabel }}
+                        </span>
+                    </div>
                     <button 
                         v-if="apt.can_send_confirmation" 
                         @click="sendConfirmation"
                         class="inline-flex items-center px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
                     >
                         📱 Enviar WhatsApp
+                    </button>
+                    <button
+                        v-else-if="whatsappStatus === 'failed' && apt.status === 'confirmed'"
+                        @click="sendConfirmation"
+                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                        🔁 Reintentar WhatsApp
+                    </button>
+                    <button
+                        v-else-if="whatsappStatus === 'pending'"
+                        disabled
+                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-600 rounded-lg cursor-not-allowed"
+                    >
+                        ⏳ Enviando...
                     </button>
                     <Link :href="`/appointments/${apt.id}/edit`" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                         ✏️ Editar
@@ -100,6 +157,50 @@ const deleteAppointment = () => {
                                 >
                                     → {{ transition.label }}
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comunicación telefónica -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                            <h2 class="text-lg font-semibold text-gray-900">📞 Comunicación telefónica</h2>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                                    <select v-model="phoneCategory" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                        <option value="">Seleccione...</option>
+                                        <option v-for="c in phoneCategories" :key="c.value" :value="c.value">{{ c.label }}</option>
+                                    </select>
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nota (opcional)</label>
+                                    <textarea v-model="phoneNote" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: No contesta, volver a llamar en la tarde..." />
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button @click="savePhoneCommunication" type="button" class="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                                    Registrar llamada
+                                </button>
+                            </div>
+
+                            <div v-if="apt.communications?.length" class="pt-4 border-t border-gray-200">
+                                <p class="text-sm font-medium text-gray-500 mb-3">Historial</p>
+                                <div class="space-y-2">
+                                    <div v-for="c in apt.communications" :key="c.id" class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <p class="font-medium text-gray-900">
+                                                {{ c.created_at_formatted }} • {{ c.user }}
+                                            </p>
+                                            <span class="text-xs bg-white border border-gray-200 rounded-full px-2 py-0.5 text-gray-700">
+                                                {{ phoneCategoryLabel(c.category) }}
+                                            </span>
+                                        </div>
+                                        <p v-if="c.note" class="text-gray-700 mt-1 whitespace-pre-line">{{ c.note }}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

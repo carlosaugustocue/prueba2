@@ -14,6 +14,7 @@ class Reminder extends Model
     public const CHANNEL_EMAIL = 'email';
 
     public const STATUS_PENDING = 'pending';
+    public const STATUS_PROCESSING = 'processing';
     public const STATUS_SENT = 'sent';
     public const STATUS_FAILED = 'failed';
     public const STATUS_CANCELLED = 'cancelled';
@@ -54,7 +55,14 @@ class Reminder extends Model
         return $this->update([
             'status' => self::STATUS_FAILED,
             'error_message' => $error,
-            'attempts' => $this->attempts + 1,
+            'attempts' => ($this->attempts ?? 0) + 1,
+        ]);
+    }
+
+    public function markAsProcessing(): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_PROCESSING,
         ]);
     }
 

@@ -11,6 +11,7 @@ use App\Modules\Appointments\Resources\AppointmentResource;
 use App\Modules\Appointments\Enums\AppointmentStatus;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
+use App\Modules\Appointments\Enums\PhoneCommunicationCategory;
 use App\Modules\Patients\Models\Eps;
 use App\Modules\Patients\Enums\DocumentType;
 use App\Modules\Patients\Enums\PatientType;
@@ -80,6 +81,7 @@ class AppointmentController extends Controller
         return Inertia::render('Appointments/Show', [
             'appointment' => new AppointmentResource($appointmentWithDetails),
             'statuses' => AppointmentStatus::toArray(),
+            'phoneCategories' => PhoneCommunicationCategory::toArray(),
         ]);
     }
 
@@ -140,6 +142,28 @@ class AppointmentController extends Controller
         if (request()->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Confirmación enviada.']);
         }
-        return back()->with('success', 'Confirmación enviada correctamente.');
+        return back()->with('success', 'Confirmación encolada para envío por WhatsApp.');
+    }
+
+    public function logPhoneCommunication(Request $request, Appointment $appointment): RedirectResponse|JsonResponse
+    {
+        $request->validate([
+            'category' => ['required', 'string'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $category = PhoneCommunicationCategory::from($request->input('category'));
+
+        $appointment->communications()->create([
+            'user_id' => auth()->id(),
+            'channel' => 'phone',
+            'category' => $category->value,
+            'note' => $request->input('note'),
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Comunicación registrada.']);
+        }
+        return back()->with('success', 'Comunicación telefónica registrada.');
     }
 }

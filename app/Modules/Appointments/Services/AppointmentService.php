@@ -6,10 +6,13 @@ use App\Modules\Appointments\Models\Appointment;
 use App\Modules\Appointments\Models\AppointmentHistory;
 use App\Modules\Appointments\Enums\AppointmentStatus;
 use App\Modules\Appointments\Jobs\SendConfirmationJob;
+use App\Modules\Appointments\Models\Reminder;
+use App\Modules\Appointments\Jobs\SendReminderJob;
 use App\Modules\AppointmentRequests\Models\AppointmentRequest;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AppointmentService
@@ -76,8 +79,11 @@ class AppointmentService
         }
 
         if (config('services.appointments.confirmation_auto_send') && ! empty($data['send_confirmation']) && $appointment->canSendConfirmation()) {
-            SendConfirmationJob::dispatch($appointment);
+            $this->queueWhatsAppConfirmation($appointment);
         }
+
+        // Programar recordatorio (mañana anterior) si aplica
+        $this->scheduleWhatsAppReminderMorning($appointment);
 
         return $appointment;
     }
@@ -107,12 +113,30 @@ class AppointmentService
             }
         }
 
+        if ($updated) {
+            // Reprogramar recordatorio si cambió fecha u hora
+            if (array_key_exists('appointment_date', $data) || array_key_exists('appointment_time', $data)) {
+                $this->scheduleWhatsAppReminderMorning($appointment, reschedule: true);
+            }
+        }
+
         return $updated;
     }
 
     public function changeStatus(Appointment $appointment, AppointmentStatus $newStatus): bool
     {
-        return $appointment->changeStatus($newStatus);
+        $changed = $appointment->changeStatus($newStatus);
+
+        if ($changed) {
+            if ($newStatus === AppointmentStatus::CANCELLED) {
+                $this->cancelPendingReminders($appointment);
+            }
+            if ($newStatus === AppointmentStatus::CONFIRMED) {
+                $this->scheduleWhatsAppReminderMorning($appointment);
+            }
+        }
+
+        return $changed;
     }
 
     public function sendConfirmation(Appointment $appointment): bool
@@ -120,12 +144,136 @@ class AppointmentService
         if (! $appointment->canSendConfirmation()) {
             return false;
         }
-        SendConfirmationJob::dispatch($appointment);
+        $this->queueWhatsAppConfirmation($appointment, force: true);
         return true;
+    }
+
+    /**
+     * Encolar confirmación por WhatsApp (Cloud API template) y registrar evidencia en reminders.
+     */
+    protected function queueWhatsAppConfirmation(Appointment $appointment, bool $force = false): void
+    {
+        $appointment->loadMissing('patient');
+
+        if (! $force && $appointment->confirmation_sent_at) {
+            return;
+        }
+
+        $recipient = $appointment->patient?->getWhatsAppNumber();
+        if (! $recipient) {
+            return;
+        }
+
+        // Si ya existe una confirmación enviada, no duplicar
+        $alreadySent = Reminder::query()
+            ->where('appointment_id', $appointment->id)
+            ->where('type', Reminder::TYPE_CONFIRMATION)
+            ->where('channel', Reminder::CHANNEL_WHATSAPP)
+            ->where('status', Reminder::STATUS_SENT)
+            ->exists();
+
+        if ($alreadySent && ! $force) {
+            return;
+        }
+
+        $reminder = Reminder::create([
+            'appointment_id' => $appointment->id,
+            'type' => Reminder::TYPE_CONFIRMATION,
+            'channel' => Reminder::CHANNEL_WHATSAPP,
+            'recipient' => $recipient,
+            'message' => null,
+            'scheduled_at' => now(),
+            'status' => Reminder::STATUS_PENDING,
+        ]);
+
+        SendConfirmationJob::dispatch($reminder->id);
+    }
+
+    /**
+     * Programar recordatorio por WhatsApp para la mañana del día anterior.
+     */
+    protected function scheduleWhatsAppReminderMorning(Appointment $appointment, bool $reschedule = false): void
+    {
+        $appointment->refresh();
+        $appointment->loadMissing('patient');
+
+        if (! $appointment->appointment_date || ! $appointment->appointment_time) {
+            return;
+        }
+
+        $recipient = $appointment->patient?->getWhatsAppNumber();
+        if (! $recipient) {
+            // Sin WhatsApp: no se programa recordatorio automático
+            return;
+        }
+
+        if ($appointment->status === AppointmentStatus::CANCELLED) {
+            $this->cancelPendingReminders($appointment);
+            return;
+        }
+
+        // Si la cita es hoy, no se programa recordatorio.
+        if ($appointment->appointment_date->isSameDay(today())) {
+            $this->cancelPendingReminders($appointment);
+            return;
+        }
+
+        $tz = config('services.appointments.reminder_timezone', config('app.timezone', 'UTC'));
+        $sendTime = config('services.appointments.reminder_send_time', '08:00');
+
+        $date = $appointment->appointment_date->format('Y-m-d');
+        $scheduledLocal = Carbon::createFromFormat('Y-m-d H:i', "{$date} {$sendTime}", $tz)
+            ->subDay();
+
+        // Si ya pasó la hora programada pero la cita aún es futura, enviar lo antes posible
+        if ($scheduledLocal->lessThanOrEqualTo(now($tz)) && $appointment->appointment_date->isAfter(today())) {
+            $scheduledLocal = now($tz)->addMinute();
+        }
+
+        $scheduledAt = $scheduledLocal->clone()->setTimezone(config('app.timezone', 'UTC'));
+
+        if ($reschedule) {
+            $this->cancelPendingReminders($appointment);
+        }
+
+        // Evitar duplicados si ya existe un reminder pendiente en la misma hora
+        $exists = Reminder::query()
+            ->where('appointment_id', $appointment->id)
+            ->where('type', Reminder::TYPE_REMINDER_24H)
+            ->where('channel', Reminder::CHANNEL_WHATSAPP)
+            ->whereIn('status', [Reminder::STATUS_PENDING, Reminder::STATUS_PROCESSING])
+            ->where('scheduled_at', $scheduledAt)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        Reminder::create([
+            'appointment_id' => $appointment->id,
+            'type' => Reminder::TYPE_REMINDER_24H,
+            'channel' => Reminder::CHANNEL_WHATSAPP,
+            'recipient' => $recipient,
+            'message' => null,
+            'scheduled_at' => $scheduledAt,
+            'status' => Reminder::STATUS_PENDING,
+        ]);
+    }
+
+    protected function cancelPendingReminders(Appointment $appointment): void
+    {
+        Reminder::query()
+            ->where('appointment_id', $appointment->id)
+            ->where('type', Reminder::TYPE_REMINDER_24H)
+            ->whereIn('status', [Reminder::STATUS_PENDING, Reminder::STATUS_PROCESSING])
+            ->update([
+                'status' => Reminder::STATUS_CANCELLED,
+                'error_message' => 'Recordatorio cancelado por actualización de la cita',
+            ]);
     }
 
     public function getWithDetails(Appointment $appointment): Appointment
     {
-        return $appointment->load(['patient.eps', 'patient.holder', 'creator', 'assignee', 'history.user', 'reminders']);
+        return $appointment->load(['patient.eps', 'patient.holder', 'creator', 'assignee', 'history.user', 'reminders', 'communications.user']);
     }
 }

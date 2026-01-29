@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3 } from 'lucide-vue-next';
+import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText } from 'lucide-vue-next';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -19,6 +19,7 @@ const navigation = computed(() => {
 
     if (user.value?.role === 'admin') {
         items.push({ name: 'Métricas', href: '/admin/metricas/operadores', icon: BarChart3 });
+        items.push({ name: 'Comunicaciones', href: '/admin/comunicaciones', icon: MessageSquareText });
     }
 
     return items;

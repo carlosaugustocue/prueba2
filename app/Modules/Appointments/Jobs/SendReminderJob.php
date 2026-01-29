@@ -5,7 +5,7 @@ namespace App\Modules\Appointments\Jobs;
 use App\Modules\Appointments\Models\Reminder;
 use App\Modules\Appointments\Models\AppointmentHistory;
 use App\Modules\Core\Contracts\NotificationChannelInterface;
-use App\Modules\Integrations\WhatsApp\Templates\ConfirmationTemplate;
+use App\Modules\Integrations\WhatsApp\Templates\ReminderTemplate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,7 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class SendConfirmationJob implements ShouldQueue
+class SendReminderJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -32,32 +32,26 @@ class SendConfirmationJob implements ShouldQueue
         }
 
         // Evitar duplicados
-        if ($reminder->status === Reminder::STATUS_SENT) {
+        if ($reminder->status === Reminder::STATUS_SENT || $reminder->status === Reminder::STATUS_CANCELLED) {
             return;
         }
 
         $appointment = $reminder->appointment;
         $patient = $appointment->patient;
 
-        if (! $appointment->canSendConfirmation()) {
-            return;
-        }
-
-        $recipient = $patient->getWhatsAppNumber();
-
+        $recipient = $patient?->getWhatsAppNumber();
         if (! $recipient) {
-            Log::warning('Patient has no WhatsApp number', ['appointment_id' => $appointment->id, 'reminder_id' => $reminder->id]);
+            Log::warning('Patient has no WhatsApp number for reminder', ['appointment_id' => $appointment->id, 'reminder_id' => $reminder->id]);
             return;
         }
 
         try {
-            $template = new ConfirmationTemplate();
+            $template = new ReminderTemplate();
             $message = $template->build($appointment);
-            $templateName = config('services.whatsapp.templates.confirmation', 'serviconli_cita_confirmada');
+            $templateName = config('services.whatsapp.templates.reminder_morning', 'serviconli_recordatorio_cita_manana');
             $language = config('services.whatsapp.language', 'es_CO');
             $parameters = $template->templateParameters($appointment);
 
-            // Asegurar que el record guarde el contenido que se intentó enviar
             $reminder->update([
                 'recipient' => $recipient,
                 'message' => $message,
@@ -69,19 +63,19 @@ class SendConfirmationJob implements ShouldQueue
                 'language' => $language,
                 'parameters' => $parameters,
             ]);
+
             $reminder->markAsSent($response);
 
             $appointment->update([
-                'confirmation_sent_at' => now(),
+                'reminder_sent_at' => now(),
             ]);
 
-            AppointmentHistory::log($appointment, AppointmentHistory::ACTION_CONFIRMATION_SENT, description: 'Confirmación enviada por WhatsApp');
-
+            AppointmentHistory::log($appointment, AppointmentHistory::ACTION_REMINDER_SENT, description: 'Recordatorio enviado por WhatsApp');
         } catch (\Exception $e) {
-            // Marcar como fallido (permitirá reintento manual / por cola)
             $reminder->markAsFailed($e->getMessage());
-            Log::error('Failed to send confirmation', ['appointment_id' => $appointment->id, 'reminder_id' => $reminder->id, 'error' => $e->getMessage()]);
+            Log::error('Failed to send reminder', ['appointment_id' => $appointment->id, 'reminder_id' => $reminder->id, 'error' => $e->getMessage()]);
             throw $e;
         }
     }
 }
+

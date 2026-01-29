@@ -12,5 +12,6 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('appointments/{appointment}')->group(function () {
         Route::patch('status', [AppointmentController::class, 'changeStatus'])->name('appointments.change-status');
         Route::post('send-confirmation', [AppointmentController::class, 'sendConfirmation'])->name('appointments.send-confirmation');
+        Route::post('communications/phone', [AppointmentController::class, 'logPhoneCommunication'])->name('appointments.communications.phone');
     });
 });

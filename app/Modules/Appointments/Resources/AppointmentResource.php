@@ -78,6 +78,26 @@ class AppointmentResource extends JsonResource
             $formattedDateTime .= ' ' . $timeValue;
         }
 
+        $confirmationReminderStatus = null;
+        $confirmationReminderError = null;
+        if ($this->resource->relationLoaded('reminders')) {
+            $last = $this->reminders
+                ->where('type', \App\Modules\Appointments\Models\Reminder::TYPE_CONFIRMATION)
+                ->where('channel', \App\Modules\Appointments\Models\Reminder::CHANNEL_WHATSAPP)
+                ->sortByDesc('created_at')
+                ->first();
+
+            if ($last) {
+                $confirmationReminderStatus = $last->status;
+                $confirmationReminderError = $last->error_message;
+            }
+        }
+
+        $whatsappConfirmationStatus =
+            $this->confirmation_sent_at ? 'sent' :
+            ($confirmationReminderStatus === \App\Modules\Appointments\Models\Reminder::STATUS_FAILED ? 'failed' :
+            (in_array($confirmationReminderStatus, [\App\Modules\Appointments\Models\Reminder::STATUS_PENDING, \App\Modules\Appointments\Models\Reminder::STATUS_PROCESSING], true) ? 'pending' : 'not_sent'));
+
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
@@ -119,9 +139,13 @@ class AppointmentResource extends JsonResource
             // Mensajes enviados
             'confirmation_sent_at' => $this->confirmation_sent_at ? $this->confirmation_sent_at->format('d/m/Y H:i') : null,
             'reminder_sent_at' => $this->reminder_sent_at ? $this->reminder_sent_at->format('d/m/Y H:i') : null,
+
+            // WhatsApp (operativo)
+            'whatsapp_confirmation_status' => $whatsappConfirmationStatus,
+            'whatsapp_confirmation_error' => $whatsappConfirmationStatus === 'failed' ? $confirmationReminderError : null,
             
             // Capacidades
-            'can_send_confirmation' => $statusEnum === AppointmentStatus::CONFIRMED,
+            'can_send_confirmation' => $statusEnum === AppointmentStatus::CONFIRMED && $whatsappConfirmationStatus !== 'sent' && $whatsappConfirmationStatus !== 'pending',
             'allowed_status_transitions' => $statusEnum ? collect($statusEnum->allowedTransitions())->map(fn($s) => [
                 'value' => $s->value,
                 'label' => $s->label()
@@ -184,6 +208,18 @@ class AppointmentResource extends JsonResource
                     'created_at' => $h->created_at?->format('d/m/Y H:i:s'),
                     'created_at_relative' => $h->created_at?->diffForHumans(),
                     'ip_address' => $h->ip_address,
+                ])->toArray();
+            }),
+
+            // Comunicaciones (ej. teléfono)
+            'communications' => $this->whenLoaded('communications', function () {
+                return $this->communications->map(fn ($c) => [
+                    'id' => $c->id,
+                    'channel' => $c->channel,
+                    'category' => $c->category,
+                    'note' => $c->note,
+                    'user' => $c->user?->name ?? 'Sistema',
+                    'created_at_formatted' => $c->created_at?->format('d/m/Y H:i'),
                 ])->toArray();
             }),
             

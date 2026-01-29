@@ -80,6 +80,11 @@ class Appointment extends Model
         return $this->hasMany(Reminder::class);
     }
 
+    public function communications(): HasMany
+    {
+        return $this->hasMany(AppointmentCommunication::class)->orderByDesc('created_at');
+    }
+
     public function changeStatus(AppointmentStatus $newStatus): bool
     {
         if (! $this->status->canTransitionTo($newStatus)) {

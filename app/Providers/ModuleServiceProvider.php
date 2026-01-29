@@ -16,6 +16,7 @@ class ModuleServiceProvider extends ServiceProvider
         'AppointmentRequests',
         'Appointments',
         'AdminMetrics',
+        'AdminCommunications',
         'Integrations',
     ];
 
