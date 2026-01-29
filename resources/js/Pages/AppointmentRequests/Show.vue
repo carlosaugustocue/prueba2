@@ -1,11 +1,14 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { ref, computed, watchEffect } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
     ChevronLeft, Clock, User, Calendar, Play, XCircle, AlertTriangle,
     CheckCircle, Phone, Mail, Building2, FileText, MessageSquare, ArrowRight
 } from 'lucide-vue-next';
+
+const page = usePage();
+const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 
 const props = defineProps({
     appointmentRequest: Object,
@@ -16,6 +19,22 @@ const props = defineProps({
 
 const request = computed(() => props.appointmentRequest?.data || props.appointmentRequest || {});
 const patient = computed(() => request.value.patient || {});
+
+const notesDraft = ref('');
+const savingNotes = ref(false);
+const canEditNotes = computed(() => {
+    const userId = page.props.auth?.user?.id;
+    if (!userId) return false;
+    if (isAdmin.value) return true;
+    if (!request.value?.is_active) return false;
+    // Solo la operadora asignada (si existe) puede editar
+    if (request.value?.assignee?.id && request.value.assignee.id !== userId) return false;
+    return true;
+});
+
+watchEffect(() => {
+    notesDraft.value = request.value?.operator_notes || '';
+});
 
 // Modal para marcar como fallida
 const showFailedModal = ref(false);
@@ -51,6 +70,19 @@ const deleteRequest = () => {
     }
 };
 
+const saveNotes = () => {
+    if (!canEditNotes.value) return;
+    savingNotes.value = true;
+    router.post(`/appointment-requests/${request.value.id}/notes`, {
+        operator_notes: notesDraft.value,
+    }, {
+        preserveScroll: true,
+        onFinish: () => {
+            savingNotes.value = false;
+        }
+    });
+};
+
 const getTimeClass = (minutes) => {
     if (!minutes) return 'bg-gray-100 text-gray-700';
     if (minutes <= 60) return 'bg-green-100 text-green-700';
@@ -70,7 +102,8 @@ const getTimeClass = (minutes) => {
                         Volver a solicitudes
                     </Link>
                     <h1 class="text-2xl font-bold text-gray-900 mt-2">Solicitud #{{ request.id }}</h1>
-                    <p class="text-gray-500 mt-1">{{ request.requested_at_relative }}</p>
+                    <p v-if="isAdmin && request.requested_at_relative" class="text-gray-500 mt-1">{{ request.requested_at_relative }}</p>
+                    <p v-else class="text-gray-500 mt-1">Registrada el {{ request.created_at_formatted }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <!-- Acciones según estado -->
@@ -143,24 +176,24 @@ const getTimeClass = (minutes) => {
                             </div>
                         </div>
 
-                        <!-- Línea de tiempo de trámite -->
-                        <div class="border-t border-gray-200 pt-6">
+                        <!-- Línea de tiempo de trámite (solo admin) -->
+                        <div v-if="isAdmin" class="border-t border-gray-200 pt-6">
                             <h3 class="text-sm font-semibold text-gray-900 mb-4">⏱️ Tiempos del Trámite</h3>
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div class="bg-gray-50 rounded-lg p-4">
                                     <p class="text-xs text-gray-500 mb-1">Solicitud del Cliente</p>
-                                    <p class="font-semibold text-gray-900">{{ request.requested_at_formatted }}</p>
+                                    <p class="font-semibold text-gray-900">{{ request.requested_at_formatted || '-' }}</p>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4">
                                     <p class="text-xs text-gray-500 mb-1">Inicio de Trámite</p>
-                                    <p class="font-semibold text-gray-900">{{ request.started_at_formatted || 'Pendiente' }}</p>
+                                    <p class="font-semibold text-gray-900">{{ request.started_at_formatted || '-' }}</p>
                                     <p v-if="request.waiting_time_formatted" :class="[getTimeClass(request.waiting_time_minutes), 'text-xs px-2 py-0.5 rounded mt-1 inline-block']">
                                         Espera: {{ request.waiting_time_formatted }}
                                     </p>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4">
                                     <p class="text-xs text-gray-500 mb-1">Finalización</p>
-                                    <p class="font-semibold text-gray-900">{{ request.completed_at_formatted || 'En proceso' }}</p>
+                                    <p class="font-semibold text-gray-900">{{ request.completed_at_formatted || '-' }}</p>
                                     <p v-if="request.processing_time_formatted" :class="[getTimeClass(request.processing_time_minutes), 'text-xs px-2 py-0.5 rounded mt-1 inline-block']">
                                         Total: {{ request.processing_time_formatted }}
                                     </p>
@@ -197,13 +230,33 @@ const getTimeClass = (minutes) => {
                                 </div>
                             </div>
 
-                            <!-- Notas de la operadora -->
-                            <div v-if="request.operator_notes" class="mt-6 pt-6 border-t border-gray-200">
+                            <!-- Anotaciones internas -->
+                            <div v-if="canEditNotes || request.operator_notes" class="mt-6 pt-6 border-t border-gray-200">
                                 <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
                                     <FileText class="h-4 w-4" />
-                                    Notas de la Operadora
+                                    Anotaciones internas
                                 </h3>
-                                <div class="bg-gray-50 border border-gray-100 rounded-lg p-4">
+
+                                <div v-if="canEditNotes" class="space-y-3">
+                                    <textarea
+                                        v-model="notesDraft"
+                                        rows="4"
+                                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                        placeholder="Ej: IPS no responde, agenda llena, volver a llamar mañana..."
+                                    />
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            @click="saveNotes"
+                                            :disabled="savingNotes"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50"
+                                        >
+                                            {{ savingNotes ? 'Guardando…' : 'Guardar anotaciones' }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div v-else class="bg-gray-50 border border-gray-100 rounded-lg p-4">
                                     <p class="text-gray-700 whitespace-pre-line">{{ request.operator_notes }}</p>
                                 </div>
                             </div>

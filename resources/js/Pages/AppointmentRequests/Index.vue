@@ -1,11 +1,14 @@
 <script setup>
 import { computed } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
     Plus, Search, Clock, CheckCircle, AlertCircle, Filter,
     User, Calendar, ChevronRight, Play, XCircle, Loader2
 } from 'lucide-vue-next';
+
+const page = usePage();
+const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 
 const props = defineProps({
     requests: Object,
@@ -191,11 +194,17 @@ const getPriorityClass = (priority) => {
                                     <span v-if="request.specialty"> • {{ request.specialty }}</span>
                                 </p>
                                 <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                                    <span class="flex items-center gap-1">
+                                    <span
+                                        v-if="isAdmin && request.requested_at_formatted"
+                                        class="flex items-center gap-1"
+                                    >
                                         <Clock class="h-3 w-3" />
                                         Solicitado: {{ request.requested_at_formatted }}
                                     </span>
-                                    <span v-if="request.elapsed_time_formatted" class="flex items-center gap-1">
+                                    <span
+                                        v-if="isAdmin && request.elapsed_time_formatted"
+                                        class="flex items-center gap-1"
+                                    >
                                         ⏱️ {{ request.elapsed_time_formatted }}
                                     </span>
                                     <span v-if="request.assignee" class="flex items-center gap-1">

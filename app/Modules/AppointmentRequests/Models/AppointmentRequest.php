@@ -26,6 +26,7 @@ class AppointmentRequest extends Model
         'requested_at',
         'started_at',
         'completed_at',
+        'tiempo_total_gestion',
         'client_notes',
         'operator_notes',
         'appointment_id',
@@ -104,6 +105,7 @@ class AppointmentRequest extends Model
         $this->status = RequestStatus::COMPLETED;
         $this->completed_at = now();
         $this->appointment_id = $appointmentId;
+        $this->tiempo_total_gestion = $this->requested_at ? $this->requested_at->diffInMinutes($this->completed_at) : null;
 
         return $this->save();
     }
@@ -115,6 +117,7 @@ class AppointmentRequest extends Model
     {
         $this->status = RequestStatus::FAILED;
         $this->completed_at = now();
+        $this->tiempo_total_gestion = $this->requested_at ? $this->requested_at->diffInMinutes($this->completed_at) : null;
         
         if ($reason) {
             $this->operator_notes = ($this->operator_notes ? $this->operator_notes . "\n" : '') . "Motivo: " . $reason;
@@ -130,6 +133,7 @@ class AppointmentRequest extends Model
     {
         $this->status = RequestStatus::CANCELLED;
         $this->completed_at = now();
+        $this->tiempo_total_gestion = $this->requested_at ? $this->requested_at->diffInMinutes($this->completed_at) : null;
         
         if ($reason) {
             $this->operator_notes = ($this->operator_notes ? $this->operator_notes . "\n" : '') . "Cancelación: " . $reason;

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList } from 'lucide-vue-next';
+import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3 } from 'lucide-vue-next';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -9,12 +9,20 @@ const flash = computed(() => page.props.flash);
 
 const sidebarOpen = ref(false);
 
-const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList },
-    { name: 'Citas', href: '/appointments', icon: CalendarDays },
-    { name: 'Pacientes', href: '/patients', icon: Users },
-];
+const navigation = computed(() => {
+    const items = [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList },
+        { name: 'Citas', href: '/appointments', icon: CalendarDays },
+        { name: 'Pacientes', href: '/patients', icon: Users },
+    ];
+
+    if (user.value?.role === 'admin') {
+        items.push({ name: 'Métricas', href: '/admin/metricas/operadores', icon: BarChart3 });
+    }
+
+    return items;
+});
 
 const isActive = (href) => window.location.pathname.startsWith(href);
 </script>

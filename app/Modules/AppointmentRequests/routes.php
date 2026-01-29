@@ -20,5 +20,8 @@ Route::middleware(['auth'])->group(function () {
         
         Route::post('cancel', [AppointmentRequestController::class, 'cancel'])
             ->name('appointment-requests.cancel');
+
+        Route::post('notes', [AppointmentRequestController::class, 'saveNotes'])
+            ->name('appointment-requests.notes');
     });
 });

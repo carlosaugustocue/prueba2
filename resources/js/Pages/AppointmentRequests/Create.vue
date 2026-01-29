@@ -4,7 +4,7 @@ import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
 import {
-    ChevronLeft, User, Search, Loader2, X, Check, Clock,
+    ChevronLeft, User, Search, Loader2, X, Check,
     Stethoscope, Heart, FlaskConical, Scan, ClipboardList,
     AlertCircle, Flag, Zap, FileText, MessageSquare
 } from 'lucide-vue-next';
@@ -22,7 +22,6 @@ const form = useForm({
     type: 'general',
     priority: 'medium',
     specialty: '',
-    requested_at: new Date().toISOString().slice(0, 16),
     client_notes: '',
 });
 
@@ -120,29 +119,6 @@ const submit = () => {
             </div>
 
             <form @submit.prevent="submit" class="space-y-6">
-                <!-- Fecha de Solicitud -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-start gap-4">
-                        <div class="p-2 bg-amber-100 rounded-lg flex-shrink-0">
-                            <Clock class="h-5 w-5 text-amber-600" />
-                        </div>
-                        <div class="flex-1">
-                            <label class="block text-sm font-semibold text-gray-900 mb-1">
-                                ¿Cuándo solicitó el cliente esta cita? *
-                            </label>
-                            <p class="text-sm text-gray-500 mb-3">
-                                Registre la fecha y hora en que el cliente contactó a Serviconli
-                            </p>
-                            <input 
-                                v-model="form.requested_at" 
-                                type="datetime-local" 
-                                :class="['block w-full sm:w-auto rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500', form.errors.requested_at ? 'border-red-300' : '']"
-                            />
-                            <p v-if="form.errors.requested_at" class="mt-1 text-sm text-red-600">{{ form.errors.requested_at }}</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Paciente -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">

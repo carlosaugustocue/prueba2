@@ -97,6 +97,8 @@ class AppointmentRequestController extends Controller
         $data = $request->validated();
         $data['created_by'] = auth()->id();
         $data['status'] = RequestStatus::PENDING->value;
+        // Tracking oculto: el timestamp de solicitud se registra automáticamente al crear la solicitud
+        $data['requested_at'] = now();
 
         $appointmentRequest = AppointmentRequest::create($data);
 
@@ -167,7 +169,6 @@ class AppointmentRequestController extends Controller
                 'priority' => $appointmentRequest->priority->value,
                 'specialty' => $appointmentRequest->specialty,
                 'client_notes' => $appointmentRequest->client_notes,
-                'requested_at' => $appointmentRequest->requested_at->format('Y-m-d H:i'),
             ],
         ]);
     }
@@ -202,6 +203,36 @@ class AppointmentRequestController extends Controller
         }
 
         return back()->with('error', 'No se pudo cancelar la solicitud.');
+    }
+
+    /**
+     * Guardar anotaciones internas (operadora)
+     */
+    public function saveNotes(Request $request, AppointmentRequest $appointmentRequest): RedirectResponse
+    {
+        $request->validate([
+            'operator_notes' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $user = $request->user();
+        $isAdmin = $user?->role?->name === 'admin';
+
+        if (! $isAdmin) {
+            // Solo la operadora asignada puede editar notas
+            if ($appointmentRequest->assigned_to && $appointmentRequest->assigned_to !== $user->id) {
+                abort(403, 'No tienes permiso para editar esta solicitud.');
+            }
+
+            // Solo mientras esté activa (pendiente o en proceso)
+            if (! in_array($appointmentRequest->status, RequestStatus::activeStatuses(), true)) {
+                return back()->with('error', 'No se pueden modificar anotaciones en una solicitud cerrada.');
+            }
+        }
+
+        $appointmentRequest->operator_notes = $request->input('operator_notes');
+        $appointmentRequest->save();
+
+        return back()->with('success', 'Anotaciones internas guardadas.');
     }
 
     public function destroy(AppointmentRequest $appointmentRequest): RedirectResponse

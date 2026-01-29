@@ -12,6 +12,8 @@ class AppointmentRequestResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $isAdmin = (bool) ($request->user()?->role?->name === 'admin');
+
         $typeValue = $this->resource->getRawOriginal('type') ?? $this->type;
         $statusValue = $this->resource->getRawOriginal('status') ?? $this->status;
         $priorityValue = $this->resource->getRawOriginal('priority') ?? $this->priority;
@@ -47,22 +49,22 @@ class AppointmentRequestResource extends JsonResource
             
             // Especialidad
             'specialty' => $this->specialty,
-            
-            // Fechas de seguimiento
-            'requested_at' => $this->requested_at?->format('Y-m-d H:i:s'),
-            'requested_at_formatted' => $this->requested_at?->format('d/m/Y H:i'),
-            'requested_at_relative' => $this->requested_at?->diffForHumans(),
-            'started_at' => $this->started_at?->format('Y-m-d H:i:s'),
-            'started_at_formatted' => $this->started_at?->format('d/m/Y H:i'),
-            'completed_at' => $this->completed_at?->format('Y-m-d H:i:s'),
-            'completed_at_formatted' => $this->completed_at?->format('d/m/Y H:i'),
-            
-            // Tiempos calculados
-            'waiting_time_minutes' => $this->waiting_time_minutes,
-            'waiting_time_formatted' => $this->waiting_time_formatted,
-            'processing_time_minutes' => $this->processing_time_minutes,
-            'processing_time_formatted' => $this->processing_time_formatted,
-            'elapsed_time_formatted' => $this->elapsed_time_formatted,
+            // Fechas/times de seguimiento (solo admin)
+            'requested_at' => $isAdmin ? $this->requested_at?->format('Y-m-d H:i:s') : null,
+            'requested_at_formatted' => $isAdmin ? $this->requested_at?->format('d/m/Y H:i') : null,
+            'requested_at_relative' => $isAdmin ? $this->requested_at?->diffForHumans() : null,
+            'started_at' => $isAdmin ? $this->started_at?->format('Y-m-d H:i:s') : null,
+            'started_at_formatted' => $isAdmin ? $this->started_at?->format('d/m/Y H:i') : null,
+            'completed_at' => $isAdmin ? $this->completed_at?->format('Y-m-d H:i:s') : null,
+            'completed_at_formatted' => $isAdmin ? $this->completed_at?->format('d/m/Y H:i') : null,
+
+            // Tiempos calculados (solo admin)
+            'waiting_time_minutes' => $isAdmin ? $this->waiting_time_minutes : null,
+            'waiting_time_formatted' => $isAdmin ? $this->waiting_time_formatted : null,
+            'processing_time_minutes' => $isAdmin ? $this->processing_time_minutes : null,
+            'processing_time_formatted' => $isAdmin ? $this->processing_time_formatted : null,
+            'elapsed_time_formatted' => $isAdmin ? $this->elapsed_time_formatted : null,
+            'tiempo_total_gestion' => $isAdmin ? $this->tiempo_total_gestion : null,
             
             // Notas
             'client_notes' => $this->client_notes,

@@ -399,9 +399,6 @@ const submit = () => {
                                 <p class="text-sm font-medium text-blue-900">
                                     Creando cita desde solicitud #{{ fromRequest.id }}
                                 </p>
-                                <p class="text-sm text-blue-700">
-                                    Solicitada el {{ fromRequest.requested_at }}
-                                </p>
                             </div>
                         </div>
                     </div>

@@ -21,7 +21,6 @@ class CreateAppointmentRequestRequest extends FormRequest
             'type' => ['required', Rule::enum(AppointmentType::class)],
             'priority' => ['required', Rule::enum(Priority::class)],
             'specialty' => ['nullable', 'string', 'max:100'],
-            'requested_at' => ['required', 'date'],
             'client_notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -30,7 +29,6 @@ class CreateAppointmentRequestRequest extends FormRequest
     {
         return [
             'patient_id.required' => 'Debe seleccionar un paciente.',
-            'requested_at.required' => 'La fecha de solicitud es obligatoria.',
         ];
     }
 }
