@@ -4,8 +4,8 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import {
-    Plus, Search, Clock, CheckCircle, AlertCircle, Filter,
-    User, Calendar, ChevronRight, Play, XCircle, Loader2
+    Plus, Search, Clock, CheckCircle, Filter,
+    User, Calendar, ChevronRight, Play, XCircle, Loader2, AlertTriangle
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -37,6 +37,17 @@ const startRequest = (request) => {
     if (confirm('¿Desea tomar esta solicitud para tramitarla?')) {
         router.post(`/appointment-requests/${request.id}/start`);
     }
+};
+
+const statusIcon = (status) => {
+    const map = {
+        pending: Clock,
+        in_progress: Loader2,
+        completed: CheckCircle,
+        cancelled: XCircle,
+        failed: AlertTriangle,
+    };
+    return map[status] || Clock;
 };
 
 const getPriorityClass = (priority) => {
@@ -167,14 +178,24 @@ const getPriorityClass = (priority) => {
                         <div class="flex items-center gap-4">
                             <!-- Status Icon -->
                             <div :class="[
-                                'flex-shrink-0 h-12 w-12 rounded-full flex items-center justify-center text-xl',
+                                'flex-shrink-0 h-12 w-12 rounded-full flex items-center justify-center',
                                 request.status === 'pending' ? 'bg-yellow-100' : '',
                                 request.status === 'in_progress' ? 'bg-blue-100' : '',
                                 request.status === 'completed' ? 'bg-green-100' : '',
                                 request.status === 'cancelled' ? 'bg-gray-100' : '',
                                 request.status === 'failed' ? 'bg-red-100' : '',
                             ]">
-                                {{ request.status_icon }}
+                                <component
+                                    :is="statusIcon(request.status)"
+                                    :class="[
+                                        'h-6 w-6',
+                                        request.status === 'pending' ? 'text-yellow-700' : '',
+                                        request.status === 'in_progress' ? 'text-blue-700 animate-spin' : '',
+                                        request.status === 'completed' ? 'text-green-700' : '',
+                                        request.status === 'cancelled' ? 'text-gray-600' : '',
+                                        request.status === 'failed' ? 'text-red-700' : '',
+                                    ]"
+                                />
                             </div>
 
                             <!-- Info -->
@@ -220,7 +241,7 @@ const getPriorityClass = (priority) => {
                                 <button 
                                     v-if="request.is_pending"
                                     @click="startRequest(request)"
-                                    class="inline-flex items-center gap-1 px-3 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
+                                    class="inline-flex items-center gap-1 px-3 py-2 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors"
                                 >
                                     <Play class="h-4 w-4" />
                                     Tomar
@@ -236,7 +257,7 @@ const getPriorityClass = (priority) => {
                                 <Link 
                                     v-if="request.has_appointment"
                                     :href="`/appointments/${request.appointment_id}`"
-                                    class="inline-flex items-center gap-1 px-3 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors"
+                                    class="inline-flex items-center gap-1 px-3 py-2 bg-brand-50 text-brand-700 text-sm font-medium rounded-lg hover:bg-brand-100 transition-colors"
                                 >
                                     <CheckCircle class="h-4 w-4" />
                                     Ver Cita

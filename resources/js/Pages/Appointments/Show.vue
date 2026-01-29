@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { ArrowLeft, MessageCircle, RotateCcw, Loader2, Pencil, Trash2, PhoneCall, CalendarDays, MapPin, ClipboardList, Lock, ScrollText, Info, ArrowRight, User, Check } from 'lucide-vue-next';
 
 const props = defineProps({
     appointment: Object,
@@ -81,8 +82,9 @@ const savePhoneCommunication = () => {
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <Link href="/appointments" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-2">
-                        ← Volver a citas
+                    <Link href="/appointments" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-brand-700 mb-2">
+                        <ArrowLeft class="h-4 w-4" />
+                        Volver a citas
                     </Link>
                     <h1 class="text-2xl font-bold text-gray-900">Cita #{{ apt.id }}</h1>
                     <p class="text-gray-500 mt-1">Creada el {{ apt.created_at_formatted }}</p>
@@ -99,27 +101,32 @@ const savePhoneCommunication = () => {
                         @click="sendConfirmation"
                         class="inline-flex items-center px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
                     >
-                        📱 Enviar WhatsApp
+                        <MessageCircle class="h-5 w-5 mr-2" />
+                        Enviar WhatsApp
                     </button>
                     <button
                         v-else-if="whatsappStatus === 'failed' && apt.status === 'confirmed'"
                         @click="sendConfirmation"
                         class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
-                        🔁 Reintentar WhatsApp
+                        <RotateCcw class="h-5 w-5 mr-2" />
+                        Reintentar WhatsApp
                     </button>
                     <button
                         v-else-if="whatsappStatus === 'pending'"
                         disabled
                         class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-600 rounded-lg cursor-not-allowed"
                     >
-                        ⏳ Enviando...
+                        <Loader2 class="h-5 w-5 mr-2 animate-spin" />
+                        Enviando...
                     </button>
                     <Link :href="`/appointments/${apt.id}/edit`" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                        ✏️ Editar
+                        <Pencil class="h-5 w-5 mr-2 text-brand-700" />
+                        Editar
                     </Link>
                     <button @click="deleteAppointment" class="inline-flex items-center px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
-                        🗑️ Eliminar
+                        <Trash2 class="h-5 w-5 mr-2" />
+                        Eliminar
                     </button>
                 </div>
             </div>
@@ -149,13 +156,13 @@ const savePhoneCommunication = () => {
                         <div v-if="apt.allowed_status_transitions?.length" class="mt-4 pt-4 border-t border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-3">Cambiar estado a:</p>
                             <div class="flex flex-wrap gap-2">
-                                <button 
+                                <button
                                     v-for="transition in apt.allowed_status_transitions" 
                                     :key="transition.value"
                                     @click="changeStatus(transition.value)"
                                     class="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                                 >
-                                    → {{ transition.label }}
+                                    {{ transition.label }}
                                 </button>
                             </div>
                         </div>
@@ -163,8 +170,9 @@ const savePhoneCommunication = () => {
 
                     <!-- Comunicación telefónica -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h2 class="text-lg font-semibold text-gray-900">📞 Comunicación telefónica</h2>
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                            <PhoneCall class="h-5 w-5 text-brand-600" />
+                            <h2 class="text-lg font-semibold text-gray-900">Comunicación telefónica</h2>
                         </div>
                         <div class="p-6 space-y-4">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -207,8 +215,9 @@ const savePhoneCommunication = () => {
 
                     <!-- Datos de la cita -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h2 class="text-lg font-semibold text-gray-900">📅 Información de la Cita</h2>
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                            <CalendarDays class="h-5 w-5 text-brand-600" />
+                            <h2 class="text-lg font-semibold text-gray-900">Información de la Cita</h2>
                         </div>
                         <div class="p-6">
                             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
@@ -240,14 +249,20 @@ const savePhoneCommunication = () => {
                             
                             <!-- Ubicación -->
                             <div v-if="apt.location_name || apt.location_address" class="mt-6 pt-6 border-t border-gray-200">
-                                <h3 class="text-sm font-medium text-gray-500 mb-2">📍 Ubicación</h3>
+                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
+                                    <MapPin class="h-4 w-4" />
+                                    Ubicación
+                                </h3>
                                 <p class="text-base text-gray-900 font-medium">{{ apt.location_name || 'Sin nombre' }}</p>
                                 <p v-if="apt.location_address" class="text-gray-600">{{ apt.location_address }}</p>
                             </div>
 
                             <!-- Especificaciones -->
                             <div v-if="apt.specifications" class="mt-6 pt-6 border-t border-gray-200">
-                                <h3 class="text-sm font-medium text-gray-500 mb-2">📋 Especificaciones para el paciente</h3>
+                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
+                                    <ClipboardList class="h-4 w-4" />
+                                    Especificaciones para el paciente
+                                </h3>
                                 <div class="bg-yellow-50 border border-yellow-100 rounded-lg p-4">
                                     <p class="text-gray-800 whitespace-pre-line">{{ apt.specifications }}</p>
                                 </div>
@@ -255,7 +270,10 @@ const savePhoneCommunication = () => {
 
                             <!-- Notas internas -->
                             <div v-if="apt.internal_notes" class="mt-6 pt-6 border-t border-gray-200">
-                                <h3 class="text-sm font-medium text-gray-500 mb-2">🔒 Notas internas (no se envían al paciente)</h3>
+                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
+                                    <Lock class="h-4 w-4" />
+                                    Notas internas (no se envían al paciente)
+                                </h3>
                                 <div class="bg-gray-50 border border-gray-100 rounded-lg p-4">
                                     <p class="text-gray-700 whitespace-pre-line">{{ apt.internal_notes }}</p>
                                 </div>
@@ -267,7 +285,10 @@ const savePhoneCommunication = () => {
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
                             <div class="flex items-center justify-between">
-                                <h2 class="text-lg font-semibold text-gray-900">📜 Timeline de la Cita</h2>
+                                <div class="flex items-center gap-2">
+                                    <ScrollText class="h-5 w-5 text-brand-600" />
+                                    <h2 class="text-lg font-semibold text-gray-900">Timeline de la Cita</h2>
+                                </div>
                                 <span class="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
                                     {{ apt.history?.length || 0 }} eventos
                                 </span>
@@ -292,7 +313,7 @@ const savePhoneCommunication = () => {
                                             item.action_color === 'amber' ? 'bg-amber-100 ring-2 ring-amber-300' : '',
                                             item.action_color === 'gray' || !item.action_color ? 'bg-gray-100 ring-2 ring-gray-300' : ''
                                         ]">
-                                            {{ item.action_icon || 'ℹ️' }}
+                                            <Info class="h-5 w-5 text-gray-600" />
                                         </div>
                                         
                                         <!-- Contenido del evento -->
@@ -308,7 +329,7 @@ const savePhoneCommunication = () => {
                                                     <div v-if="item.old_value && item.new_value && item.action === 'updated'" class="mt-2 text-xs">
                                                         <div class="inline-flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
                                                             <span class="text-red-600 line-through">{{ item.old_value }}</span>
-                                                            <span class="text-gray-400">→</span>
+                                                            <ArrowRight class="h-4 w-4 text-gray-400" />
                                                             <span class="text-brand-600 font-medium">{{ item.new_value }}</span>
                                                         </div>
                                                     </div>
@@ -340,7 +361,9 @@ const savePhoneCommunication = () => {
                         
                         <!-- Estado vacío -->
                         <div v-else class="p-8 text-center">
-                            <div class="text-4xl mb-2">📋</div>
+                            <div class="mx-auto h-12 w-12 rounded-xl bg-brand-50 flex items-center justify-center mb-3">
+                                <ScrollText class="h-6 w-6 text-brand-600" />
+                            </div>
                             <p class="text-gray-500">No hay eventos registrados aún</p>
                             <p class="text-xs text-gray-400 mt-1">Los cambios en la cita se registrarán aquí</p>
                         </div>
@@ -352,7 +375,10 @@ const savePhoneCommunication = () => {
                     <!-- Paciente -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h2 class="text-lg font-semibold text-gray-900">👤 Paciente</h2>
+                            <div class="flex items-center gap-2">
+                                <User class="h-5 w-5 text-brand-600" />
+                                <h2 class="text-lg font-semibold text-gray-900">Paciente</h2>
+                            </div>
                         </div>
                         <div class="p-6">
                             <div class="flex items-center space-x-4 mb-4">
@@ -381,8 +407,9 @@ const savePhoneCommunication = () => {
                             </dl>
 
                             <div class="mt-4 pt-4 border-t border-gray-200">
-                                <Link :href="`/patients/${patient.id}`" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
-                                    Ver perfil del paciente →
+                                <Link :href="`/patients/${patient.id}`" class="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium">
+                                    Ver perfil del paciente
+                                    <ArrowRight class="h-4 w-4" />
                                 </Link>
                             </div>
                         </div>
@@ -391,12 +418,15 @@ const savePhoneCommunication = () => {
                     <!-- Mensajes enviados -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h2 class="text-lg font-semibold text-gray-900">📱 Notificaciones</h2>
+                            <div class="flex items-center gap-2">
+                                <MessageCircle class="h-5 w-5 text-brand-600" />
+                                <h2 class="text-lg font-semibold text-gray-900">Notificaciones</h2>
+                            </div>
                         </div>
                         <div class="p-6 space-y-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-3">
-                                    <span :class="apt.confirmation_sent_at ? 'text-green-500' : 'text-gray-300'" class="text-xl">✓</span>
+                                    <Check :class="apt.confirmation_sent_at ? 'text-green-600' : 'text-gray-300'" class="h-5 w-5" />
                                     <div>
                                         <p class="text-sm font-medium text-gray-900">Confirmación</p>
                                         <p class="text-xs text-gray-500">{{ apt.confirmation_sent_at || 'No enviada' }}</p>
@@ -405,7 +435,7 @@ const savePhoneCommunication = () => {
                             </div>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-3">
-                                    <span :class="apt.reminder_sent_at ? 'text-green-500' : 'text-gray-300'" class="text-xl">✓</span>
+                                    <Check :class="apt.reminder_sent_at ? 'text-green-600' : 'text-gray-300'" class="h-5 w-5" />
                                     <div>
                                         <p class="text-sm font-medium text-gray-900">Recordatorio 24h</p>
                                         <p class="text-xs text-gray-500">{{ apt.reminder_sent_at || 'No enviado' }}</p>
@@ -417,8 +447,9 @@ const savePhoneCommunication = () => {
 
                     <!-- Información adicional -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h2 class="text-lg font-semibold text-gray-900">ℹ️ Información</h2>
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                            <Info class="h-5 w-5 text-brand-600" />
+                            <h2 class="text-lg font-semibold text-gray-900">Información</h2>
                         </div>
                         <div class="p-6 space-y-3 text-sm">
                             <div v-if="apt.creator?.name">

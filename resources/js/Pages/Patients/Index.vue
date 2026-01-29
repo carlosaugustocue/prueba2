@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
+import { UserPlus, Search, Eye, Pencil } from 'lucide-vue-next';
 
 const props = defineProps({
     patients: Object,
@@ -32,13 +33,17 @@ watch(search, () => {
                     <p class="mt-1 text-sm text-gray-500">Gestión de pacientes registrados</p>
                 </div>
                 <Link href="/patients/create" class="inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600">
-                    ➕ Nuevo Paciente
+                    <UserPlus class="h-5 w-5 mr-2" />
+                    Nuevo Paciente
                 </Link>
             </div>
 
             <!-- Búsqueda -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <input v-model="search" type="text" placeholder="🔍 Buscar por nombre, documento..." class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                <div class="relative">
+                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input v-model="search" type="text" placeholder="Buscar por nombre, documento..." class="block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                </div>
             </div>
 
             <!-- Tabla -->
@@ -70,8 +75,12 @@ watch(search, () => {
                             <td class="px-6 py-4 text-sm text-gray-500">{{ patient.eps?.name || '-' }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ patient.whatsapp || patient.phone || '-' }}</td>
                             <td class="px-6 py-4 text-right space-x-2">
-                                <Link :href="`/patients/${patient.id}`" class="text-gray-400 hover:text-gray-600">👁️</Link>
-                                <Link :href="`/patients/${patient.id}/edit`" class="text-gray-400 hover:text-brand-600">✏️</Link>
+                                <Link :href="`/patients/${patient.id}`" class="inline-flex items-center justify-center h-9 w-9 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors" aria-label="Ver">
+                                    <Eye class="h-4 w-4" />
+                                </Link>
+                                <Link :href="`/patients/${patient.id}/edit`" class="inline-flex items-center justify-center h-9 w-9 rounded-lg text-gray-400 hover:text-brand-700 hover:bg-brand-50 transition-colors" aria-label="Editar">
+                                    <Pencil class="h-4 w-4" />
+                                </Link>
                             </td>
                         </tr>
                         <tr v-if="!patients.data?.length">
