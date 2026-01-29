@@ -81,9 +81,13 @@ const savePhoneCommunication = () => {
         alertDialog({ title: 'Categoría requerida', text: 'Seleccione una categoría.' });
         return;
     }
+    if (!String(phoneNote.value || '').trim()) {
+        alertDialog({ title: 'Nota requerida', text: 'Escriba una nota antes de registrar la llamada.' });
+        return;
+    }
     router.post(`/appointments/${apt.value.id}/communications/phone`, {
         category: phoneCategory.value,
-        note: phoneNote.value || null,
+        note: String(phoneNote.value).trim(),
     }, {
         preserveScroll: true,
         onSuccess: () => {

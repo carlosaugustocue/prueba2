@@ -160,7 +160,7 @@ class AppointmentController extends Controller
     {
         $request->validate([
             'category' => ['required', 'string'],
-            'note' => ['nullable', 'string', 'max:500'],
+            'note' => ['required', 'string', 'max:500'],
         ]);
 
         $category = PhoneCommunicationCategory::from($request->input('category'));
@@ -169,7 +169,7 @@ class AppointmentController extends Controller
             'user_id' => auth()->id(),
             'channel' => 'phone',
             'category' => $category->value,
-            'note' => $request->input('note'),
+            'note' => trim((string) $request->input('note')),
         ]);
 
         if ($request->wantsJson()) {

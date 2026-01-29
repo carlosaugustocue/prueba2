@@ -33,6 +33,20 @@ const form = useForm({
     notes: '',
 });
 
+const applyHolderDefaults = (holder) => {
+    if (!holder) return;
+
+    // La EPS del beneficiario debe ser la misma del titular
+    if (holder.eps_id) {
+        form.eps_id = holder.eps_id;
+    }
+
+    // Teléfonos / dirección por defecto, pero editables
+    if (!form.phone && holder.phone) form.phone = holder.phone;
+    if (!form.whatsapp && holder.whatsapp) form.whatsapp = holder.whatsapp;
+    if (!form.address && holder.address) form.address = holder.address;
+};
+
 // Búsqueda de cotizantes
 const holderSearch = ref('');
 const holderResults = ref([]);
@@ -62,6 +76,7 @@ const searchHolders = async () => {
 const selectHolder = (holder) => {
     selectedHolder.value = holder;
     form.holder_id = holder.id;
+    applyHolderDefaults(holder);
     holderSearch.value = '';
     holderResults.value = [];
 };
@@ -90,6 +105,11 @@ watch(() => form.patient_type, (newType) => {
         form.relationship_type = '';
     }
 });
+
+// Si viene precargado desde el perfil del cotizante, aplicar defaults
+if (props.preselectedHolder) {
+    applyHolderDefaults(props.preselectedHolder);
+}
 
 // Obtener la descripción del tipo de parentesco seleccionado
 const selectedRelationshipDescription = ref('');
@@ -323,11 +343,22 @@ const submit = () => form.post('/patients');
                                 <Building2 class="h-4 w-4 text-gray-400" />
                                 EPS *
                             </label>
-                            <select v-model="form.eps_id" :class="['block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500', form.errors.eps_id ? 'border-red-300' : '']">
+                            <select
+                                v-model="form.eps_id"
+                                :disabled="form.patient_type === 'beneficiario' && !!selectedHolder"
+                                :class="[
+                                    'block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500',
+                                    (form.patient_type === 'beneficiario' && !!selectedHolder) ? 'bg-gray-100 text-gray-700 cursor-not-allowed' : '',
+                                    form.errors.eps_id ? 'border-red-300' : ''
+                                ]"
+                            >
                                 <option value="">Seleccione...</option>
                                 <option v-for="eps in epsList" :key="eps.id" :value="eps.id">{{ eps.name }}</option>
                             </select>
                             <p v-if="form.errors.eps_id" class="mt-1 text-sm text-red-600">{{ form.errors.eps_id }}</p>
+                            <p v-if="form.patient_type === 'beneficiario' && selectedHolder" class="mt-1 text-xs text-gray-500">
+                                La EPS del beneficiario se toma del cotizante titular.
+                            </p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>

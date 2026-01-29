@@ -46,7 +46,8 @@ class PatientController extends Controller
         if ($request->has('holder_id')) {
             $preselectedHolder = Patient::where('id', $request->holder_id)
                 ->where('patient_type', 'cotizante')
-                ->first(['id', 'first_name', 'last_name', 'document_number', 'document_type']);
+                ->with('eps:id,name,code')
+                ->first(['id', 'first_name', 'last_name', 'document_number', 'document_type', 'phone', 'whatsapp', 'address', 'eps_id']);
         }
 
         return Inertia::render('Patients/Create', [
@@ -59,6 +60,15 @@ class PatientController extends Controller
                 'full_name' => $preselectedHolder->full_name,
                 'document_number' => $preselectedHolder->document_number,
                 'document_type_abbreviation' => $preselectedHolder->document_type?->abbreviation(),
+                'eps_id' => $preselectedHolder->eps_id,
+                'eps' => $preselectedHolder->eps ? [
+                    'id' => $preselectedHolder->eps->id,
+                    'name' => $preselectedHolder->eps->name,
+                    'code' => $preselectedHolder->eps->code,
+                ] : null,
+                'phone' => $preselectedHolder->phone,
+                'whatsapp' => $preselectedHolder->whatsapp,
+                'address' => $preselectedHolder->address,
             ] : null,
         ]);
     }
@@ -137,7 +147,7 @@ class PatientController extends Controller
             })
             ->with('eps:id,name')
             ->limit(10)
-            ->get(['id', 'first_name', 'last_name', 'document_type', 'document_number', 'eps_id']);
+            ->get(['id', 'first_name', 'last_name', 'document_type', 'document_number', 'eps_id', 'phone', 'whatsapp', 'address']);
 
         return response()->json([
             'data' => $holders->map(fn($holder) => [
@@ -145,7 +155,11 @@ class PatientController extends Controller
                 'full_name' => $holder->full_name,
                 'document_type_abbreviation' => $holder->document_type?->abbreviation(),
                 'document_number' => $holder->document_number,
-                'eps' => $holder->eps ? ['name' => $holder->eps->name] : null,
+                'eps_id' => $holder->eps_id,
+                'eps' => $holder->eps ? ['id' => $holder->eps->id, 'name' => $holder->eps->name] : null,
+                'phone' => $holder->phone,
+                'whatsapp' => $holder->whatsapp,
+                'address' => $holder->address,
             ]),
         ]);
     }

@@ -43,6 +43,10 @@ class CreatePatientRequest extends FormRequest
                         }
                         if ($holder->patient_type->value !== 'cotizante') {
                             $fail('Solo puede seleccionar un cotizante como titular.');
+                            return;
+                        }
+                        if (! $holder->eps_id) {
+                            $fail('El cotizante no tiene EPS asignada. Primero asigne una EPS al cotizante.');
                         }
                     }
                 },
@@ -74,6 +78,16 @@ class CreatePatientRequest extends FormRequest
                 'holder_id' => null,
                 'relationship_type' => null,
             ]);
+        }
+
+        // Si es beneficiario y tiene holder, forzar eps_id a la del cotizante
+        if ($this->input('patient_type') === 'beneficiario' && $this->filled('holder_id')) {
+            $holder = Patient::find($this->input('holder_id'));
+            if ($holder && $holder->eps_id) {
+                $this->merge([
+                    'eps_id' => $holder->eps_id,
+                ]);
+            }
         }
     }
 }

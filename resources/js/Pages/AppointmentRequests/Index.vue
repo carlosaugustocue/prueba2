@@ -75,10 +75,10 @@ const getPriorityClass = (priority) => {
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Solicitudes de Citas</h1>
-                    <p class="text-gray-500 mt-1">Gestiona las solicitudes de los clientes</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Solicitudes de Citas</h1>
+                    <p class="mt-1 text-sm text-gray-500">Gestiona las solicitudes de los clientes</p>
                 </div>
-                <Link href="/appointment-requests/create" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition-colors shadow-lg shadow-brand-500/30">
+                <Link href="/appointment-requests/create" class="inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors">
                     <Plus class="h-5 w-5" />
                     Nueva Solicitud
                 </Link>
