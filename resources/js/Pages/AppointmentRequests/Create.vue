@@ -137,7 +137,7 @@ const submit = () => {
                                 <div>
                                     <p class="font-semibold text-gray-900">{{ selectedPatient.full_name }}</p>
                                     <p class="text-sm text-gray-600">{{ selectedPatient.document_type_abbreviation }} {{ selectedPatient.document_number }}</p>
-                                    <p class="text-sm text-gray-500">{{ selectedPatient.eps?.name }} • {{ selectedPatient.whatsapp_number || selectedPatient.phone || 'Sin teléfono' }}</p>
+                                    <p class="text-sm text-gray-500">{{ selectedPatient.whatsapp_number || selectedPatient.phone || 'Sin teléfono' }}</p>
                                 </div>
                             </div>
                             <button type="button" @click="clearPatient" class="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">

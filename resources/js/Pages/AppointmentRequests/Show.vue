@@ -2,7 +2,7 @@
 import { ref, computed, watchEffect } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { confirmDialog } from '@/Utils/swal';
+import { confirmDialog, toast } from '@/Utils/swal';
 import {
     ChevronLeft, Clock, User, Calendar, Play, XCircle, AlertTriangle,
     CheckCircle, Phone, Mail, Building2, FileText, MessageSquare, ArrowRight
@@ -89,6 +89,12 @@ const saveNotes = () => {
         operator_notes: notesDraft.value,
     }, {
         preserveScroll: true,
+        onSuccess: () => {
+            toast({ title: 'Anotaciones guardadas.' });
+        },
+        onError: () => {
+            toast({ title: 'No se pudieron guardar las anotaciones.', icon: 'error' });
+        },
         onFinish: () => {
             savingNotes.value = false;
         }

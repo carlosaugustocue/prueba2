@@ -66,7 +66,12 @@ watch(search, () => {
                                         <span class="text-brand-700 font-medium text-sm">{{ patient.first_name?.charAt(0) }}{{ patient.last_name?.charAt(0) }}</span>
                                     </div>
                                     <div>
-                                        <p class="font-medium text-gray-900">{{ patient.full_name }}</p>
+                                        <Link
+                                            :href="`/patients/${patient.id}`"
+                                            class="font-medium text-gray-900 hover:text-brand-700 hover:underline underline-offset-2"
+                                        >
+                                            {{ patient.full_name }}
+                                        </Link>
                                         <p class="text-sm text-gray-500">{{ patient.patient_type_label }}</p>
                                     </div>
                                 </div>

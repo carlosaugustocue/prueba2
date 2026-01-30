@@ -43,7 +43,8 @@ class AppointmentService
             $query->active();
         }
 
-        return $query->orderBy('appointment_date', 'asc')->paginate($perPage)->withQueryString();
+        // Mostrar primero las citas más recientes (por ID)
+        return $query->orderByDesc('id')->paginate($perPage)->withQueryString();
     }
 
     public function getTodayAppointments(): Collection
