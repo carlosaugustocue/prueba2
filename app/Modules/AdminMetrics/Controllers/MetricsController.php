@@ -4,6 +4,7 @@ namespace App\Modules\AdminMetrics\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\AppointmentRequests\Models\AppointmentRequest;
+use App\Modules\AppointmentRequests\Models\AppointmentRequestNote;
 use App\Modules\AppointmentRequests\Enums\RequestStatus;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
@@ -110,7 +111,7 @@ class MetricsController extends Controller
         return Inertia::render('Admin/Metrics/Operators', [
             'filters' => $filters,
             'rows' => $rows,
-            'operators' => User::whereHas('role', fn ($q) => $q->whereIn('name', ['operator', 'admin']))
+            'operators' => User::whereHas('role', fn ($q) => $q->whereIn('name', ['agent', 'admin', 'supervisor']))
                 ->orderBy('name')
                 ->get(['id', 'name']),
             'types' => AppointmentType::toArray(),
@@ -152,43 +153,63 @@ class MetricsController extends Controller
     {
         [$from, $to] = $this->dateRange($request);
 
-        $query = AppointmentRequest::query()
-            ->with(['patient.eps', 'assignee'])
-            ->whereNotNull('operator_notes')
-            ->where('operator_notes', '!=', '')
-            ->whereBetween('updated_at', [$from, $to])
-            ->orderByDesc('updated_at');
+        $query = AppointmentRequestNote::query()
+            ->with(['appointmentRequest.patient.eps', 'appointmentRequest.assignee', 'author'])
+            ->whereBetween('created_at', [$from, $to])
+            ->orderByDesc('created_at');
 
         if ($request->filled('operator_id')) {
-            $query->where('assigned_to', $request->integer('operator_id'));
+            $query->whereHas('appointmentRequest', fn ($q) => $q->where('assigned_to', $request->integer('operator_id')));
         }
 
         if ($request->filled('type')) {
-            $query->where('type', $request->string('type')->toString());
+            $type = $request->string('type')->toString();
+            $query->whereHas('appointmentRequest', fn ($q) => $q->where('type', $type));
         }
 
         if ($request->filled('eps_id')) {
-            $query->whereHas('patient', fn ($q) => $q->where('eps_id', $request->integer('eps_id')));
+            $epsId = $request->integer('eps_id');
+            $query->whereHas('appointmentRequest.patient', fn ($q) => $q->where('eps_id', $epsId));
         }
 
-        $items = $query->paginate(30)->withQueryString();
+        $items = $query->paginate(30)->withQueryString()->through(function (AppointmentRequestNote $n) {
+            $ar = $n->appointmentRequest;
+            $p = $ar?->patient;
+            return [
+                'id' => $n->id,
+                'request_id' => $n->appointment_request_id,
+                'assignee' => $ar?->assignee ? [
+                    'id' => $ar->assignee->id,
+                    'name' => $ar->assignee->name,
+                ] : null,
+                'patient' => $p ? [
+                    'id' => $p->id,
+                    'full_name' => $p->full_name,
+                    'eps' => $p->relationLoaded('eps') && $p->eps ? [
+                        'id' => $p->eps->id,
+                        'name' => $p->eps->name,
+                    ] : null,
+                ] : null,
+                'created_at' => $n->created_at?->format('Y-m-d H:i:s'),
+                'created_at_formatted' => $n->created_at?->format('d/m/Y H:i'),
+                'note' => $n->note,
+            ];
+        });
 
         if ($request->string('format')->toString() === 'csv') {
             $rows = $items->getCollection()->map(fn ($r) => [
-                $r->id,
-                $r->assigned_to,
-                $r->assignee?->name,
-                $r->patient?->full_name,
-                $r->patient?->eps?->name,
-                $r->type?->value ?? $r->getRawOriginal('type'),
-                $r->status?->value ?? $r->getRawOriginal('status'),
-                $r->updated_at?->format('Y-m-d H:i:s'),
-                preg_replace("/\\s+/", ' ', (string) $r->operator_notes),
+                $r['request_id'],
+                $r['assignee']['id'] ?? null,
+                $r['assignee']['name'] ?? null,
+                $r['patient']['full_name'] ?? null,
+                $r['patient']['eps']['name'] ?? null,
+                $r['created_at'],
+                preg_replace("/\\s+/", ' ', (string) ($r['note'] ?? '')),
             ])->toArray();
 
             return $this->csvResponse(
                 filename: "anotaciones_{$from->toDateString()}_{$to->toDateString()}.csv",
-                headers: ['request_id', 'operator_id', 'operator_name', 'patient', 'eps', 'type', 'status', 'updated_at', 'operator_notes'],
+                headers: ['request_id', 'operator_id', 'operator_name', 'patient', 'eps', 'created_at', 'note'],
                 rows: $rows,
             );
         }
@@ -202,7 +223,7 @@ class MetricsController extends Controller
                 'eps_id' => $request->integer('eps_id') ?: null,
             ],
             'items' => $items,
-            'operators' => User::whereHas('role', fn ($q) => $q->whereIn('name', ['operator', 'admin']))
+            'operators' => User::whereHas('role', fn ($q) => $q->whereIn('name', ['agent', 'admin', 'supervisor']))
                 ->orderBy('name')
                 ->get(['id', 'name']),
             'types' => AppointmentType::toArray(),

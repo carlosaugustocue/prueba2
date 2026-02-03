@@ -1,15 +1,18 @@
 <script setup>
-import { ref, computed, watchEffect } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { confirmDialog, toast } from '@/Utils/swal';
 import {
     ChevronLeft, Clock, User, Calendar, Play, XCircle, AlertTriangle,
-    CheckCircle, Phone, Mail, Building2, FileText, MessageSquare, ArrowRight
+    CheckCircle, Phone, Mail, Building2, FileText, MessageSquare, ArrowRight,
+    Loader2, ClipboardList, Info, Trash2
 } from 'lucide-vue-next';
 
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
+const isAgent = computed(() => page.props.auth?.user?.role === 'agent');
+const isSupervisor = computed(() => page.props.auth?.user?.role === 'supervisor');
 
 const props = defineProps({
     appointmentRequest: Object,
@@ -18,23 +21,24 @@ const props = defineProps({
     priorities: Array,
 });
 
+const currentUserId = computed(() => page.props.auth?.user?.id);
+
 const request = computed(() => props.appointmentRequest?.data || props.appointmentRequest || {});
 const patient = computed(() => request.value.patient || {});
+const notes = computed(() => request.value.notes || []);
 
-const notesDraft = ref('');
+const newNoteDraft = ref('');
 const savingNotes = ref(false);
 const canEditNotes = computed(() => {
     const userId = page.props.auth?.user?.id;
     if (!userId) return false;
     if (isAdmin.value) return true;
     if (!request.value?.is_active) return false;
-    // Solo la operadora asignada (si existe) puede editar
+    // Agentes y supervisores pueden agregar anotaciones (aunque la solicitud esté asignada a otra persona)
+    if (isAgent.value || isSupervisor.value) return true;
+    // Otros roles: solo el asignado puede editar
     if (request.value?.assignee?.id && request.value.assignee.id !== userId) return false;
     return true;
-});
-
-watchEffect(() => {
-    notesDraft.value = request.value?.operator_notes || '';
 });
 
 // Modal para marcar como fallida
@@ -84,13 +88,18 @@ const deleteRequest = () => {
 
 const saveNotes = () => {
     if (!canEditNotes.value) return;
+    const note = (newNoteDraft.value || '').trim();
+    if (!note) return;
     savingNotes.value = true;
     router.post(`/appointment-requests/${request.value.id}/notes`, {
-        operator_notes: notesDraft.value,
+        note,
     }, {
         preserveScroll: true,
         onSuccess: () => {
             toast({ title: 'Anotaciones guardadas.' });
+            newNoteDraft.value = '';
+            // Asegurar que se refresquen las props (autor/fecha) después de guardar
+            router.reload({ only: ['appointmentRequest'], preserveScroll: true });
         },
         onError: () => {
             toast({ title: 'No se pudieron guardar las anotaciones.', icon: 'error' });
@@ -106,6 +115,17 @@ const getTimeClass = (minutes) => {
     if (minutes <= 60) return 'bg-green-100 text-green-700';
     if (minutes <= 240) return 'bg-yellow-100 text-yellow-700';
     return 'bg-red-100 text-red-700';
+};
+
+const statusIcon = (status) => {
+    const map = {
+        pending: Clock,
+        in_progress: Loader2,
+        completed: CheckCircle,
+        cancelled: XCircle,
+        failed: AlertTriangle,
+    };
+    return map[status] || Clock;
 };
 </script>
 
@@ -182,7 +202,13 @@ const getTimeClass = (minutes) => {
                             <div>
                                 <p class="text-sm font-medium text-gray-500 mb-2">Estado</p>
                                 <span :class="[request.status_badge_class, 'inline-flex items-center gap-2 px-4 py-2 rounded-full text-base font-semibold']">
-                                    <span class="text-lg">{{ request.status_icon }}</span>
+                                    <component
+                                        :is="statusIcon(request.status)"
+                                        :class="[
+                                            'h-5 w-5',
+                                            request.status === 'in_progress' ? 'animate-spin' : ''
+                                        ]"
+                                    />
                                     {{ request.status_label }}
                                 </span>
                             </div>
@@ -196,7 +222,10 @@ const getTimeClass = (minutes) => {
 
                         <!-- Línea de tiempo de trámite (solo admin) -->
                         <div v-if="isAdmin" class="border-t border-gray-200 pt-6">
-                            <h3 class="text-sm font-semibold text-gray-900 mb-4">⏱️ Tiempos del Trámite</h3>
+                            <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-4">
+                                <Clock class="h-4 w-4 text-brand-600" />
+                                Tiempos del Trámite
+                            </h3>
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div class="bg-gray-50 rounded-lg p-4">
                                     <p class="text-xs text-gray-500 mb-1">Solicitud del Cliente</p>
@@ -222,8 +251,9 @@ const getTimeClass = (minutes) => {
 
                     <!-- Detalles de la solicitud -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h2 class="text-lg font-semibold text-gray-900">📋 Detalles de la Solicitud</h2>
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                            <ClipboardList class="h-5 w-5 text-brand-600" />
+                            <h2 class="text-lg font-semibold text-gray-900">Detalles de la Solicitud</h2>
                         </div>
                         <div class="p-6">
                             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -249,33 +279,61 @@ const getTimeClass = (minutes) => {
                             </div>
 
                             <!-- Anotaciones internas -->
-                            <div v-if="canEditNotes || request.operator_notes" class="mt-6 pt-6 border-t border-gray-200">
+                            <div v-if="canEditNotes || notes.length || request.operator_notes" class="mt-6 pt-6 border-t border-gray-200">
                                 <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
                                     <FileText class="h-4 w-4" />
                                     Anotaciones internas
                                 </h3>
 
-                                <div v-if="canEditNotes" class="space-y-3">
-                                    <textarea
-                                        v-model="notesDraft"
-                                        rows="4"
-                                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                                        placeholder="Ej: IPS no responde, agenda llena, volver a llamar mañana..."
-                                    />
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button
-                                            type="button"
-                                            @click="saveNotes"
-                                            :disabled="savingNotes"
-                                            class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50"
+                                <div class="space-y-3">
+                                    <div v-if="notes.length" class="space-y-3">
+                                        <div
+                                            v-for="n in notes"
+                                            :key="n.id"
+                                            class="bg-gray-50 border border-gray-100 rounded-lg p-4"
                                         >
-                                            {{ savingNotes ? 'Guardando…' : 'Guardar anotaciones' }}
-                                        </button>
+                                            <div class="flex items-start justify-between gap-3">
+                                                <p class="text-sm font-semibold text-gray-900">
+                                                    <span class="text-gray-500 font-medium">Autor:</span>
+                                                    {{ n.author?.name || (n.user_id ? `Usuario #${n.user_id}` : 'Sistema') }}
+                                                    <span
+                                                        v-if="n.author?.id && currentUserId && n.author.id === currentUserId"
+                                                        class="ml-2 inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700"
+                                                    >
+                                                        Tú
+                                                    </span>
+                                                </p>
+                                                <p class="text-xs text-gray-500 whitespace-nowrap">
+                                                    {{ n.created_at_formatted || n.created_at || '' }}
+                                                </p>
+                                            </div>
+                                            <p class="mt-2 text-gray-700 whitespace-pre-line">{{ n.note }}</p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div v-else class="bg-gray-50 border border-gray-100 rounded-lg p-4">
-                                    <p class="text-gray-700 whitespace-pre-line">{{ request.operator_notes }}</p>
+                                    <!-- Fallback por si aún no hay backfill en BD -->
+                                    <div v-else-if="request.operator_notes" class="bg-gray-50 border border-gray-100 rounded-lg p-4">
+                                        <p class="text-gray-700 whitespace-pre-line">{{ request.operator_notes }}</p>
+                                    </div>
+
+                                    <div v-if="canEditNotes" class="pt-2">
+                                        <textarea
+                                            v-model="newNoteDraft"
+                                            rows="3"
+                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                            placeholder="Agregar nueva anotación… (Ej: IPS no responde, agenda llena, volver a llamar mañana)"
+                                        />
+                                        <div class="flex items-center justify-end gap-2 mt-3">
+                                            <button
+                                                type="button"
+                                                @click="saveNotes"
+                                                :disabled="savingNotes || !newNoteDraft.trim()"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50"
+                                            >
+                                                {{ savingNotes ? 'Guardando…' : 'Agregar anotación' }}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -345,8 +403,9 @@ const getTimeClass = (minutes) => {
                             </dl>
 
                             <div class="mt-4 pt-4 border-t border-gray-200">
-                                <Link :href="`/patients/${patient.id}`" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
-                                    Ver perfil del paciente →
+                                <Link :href="`/patients/${patient.id}`" class="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium">
+                                    Ver perfil del paciente
+                                    <ArrowRight class="h-4 w-4" />
                                 </Link>
                             </div>
                         </div>
@@ -354,8 +413,9 @@ const getTimeClass = (minutes) => {
 
                     <!-- Información -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h2 class="text-lg font-semibold text-gray-900">ℹ️ Información</h2>
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                            <Info class="h-5 w-5 text-brand-600" />
+                            <h2 class="text-lg font-semibold text-gray-900">Información</h2>
                         </div>
                         <div class="p-6 space-y-3 text-sm">
                             <div v-if="request.creator?.name">
@@ -377,7 +437,10 @@ const getTimeClass = (minutes) => {
                     <div class="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
                         <div class="p-6">
                             <button @click="deleteRequest" class="w-full px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
-                                🗑️ Eliminar Solicitud
+                                <span class="inline-flex items-center justify-center gap-2">
+                                    <Trash2 class="h-4 w-4" />
+                                    Eliminar Solicitud
+                                </span>
                             </button>
                         </div>
                     </div>

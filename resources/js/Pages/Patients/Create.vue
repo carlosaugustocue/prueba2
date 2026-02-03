@@ -87,6 +87,9 @@ const clearHolder = () => {
     holderSearch.value = '';
 };
 
+// Si entramos desde perfil del cotizante (?holder_id=X), no se puede cambiar a cotizante
+const isAddingBeneficiaryFromHolder = !!props.preselectedHolder;
+
 let searchTimeout;
 watch(holderSearch, () => {
     clearTimeout(searchTimeout);
@@ -140,15 +143,20 @@ const submit = () => form.post('/patients');
                         <Users class="h-5 w-5 text-brand-600" />
                         Tipo de Afiliado
                     </h2>
+                    <p v-if="isAddingBeneficiaryFromHolder" class="mb-4 text-sm text-gray-600">
+                        Está agregando un beneficiario al cotizante <strong>{{ preselectedHolder?.full_name }}</strong>. El tipo de afiliado no puede cambiarse.
+                    </p>
                     <div class="grid grid-cols-2 gap-4">
                         <button
                             type="button"
-                            @click="form.patient_type = 'cotizante'"
+                            :disabled="isAddingBeneficiaryFromHolder"
+                            @click="!isAddingBeneficiaryFromHolder && (form.patient_type = 'cotizante')"
                             :class="[
                                 'relative p-4 rounded-xl border-2 transition-all duration-200 text-left',
                                 form.patient_type === 'cotizante'
                                     ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500/20'
-                                    : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50'
+                                    : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50',
+                                isAddingBeneficiaryFromHolder ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''
                             ]"
                         >
                             <User :class="['h-8 w-8 mb-2', form.patient_type === 'cotizante' ? 'text-brand-600' : 'text-gray-400']" />

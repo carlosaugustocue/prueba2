@@ -134,11 +134,17 @@ const submit = () => form.put(`/patients/${patientData.value.id}`);
                         </p>
                     </div>
 
+                    <!-- Info: beneficiario puede pasar a cotizante principal -->
+                    <div v-if="patientData.patient_type === 'beneficiario'" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <p class="text-blue-800 text-sm">
+                            <strong>Cotizante principal:</strong> Si esta persona pasa a ser afiliado principal, seleccione «Cotizante». Se desvinculará del titular actual y podrá tener su propia EPS y beneficiarios.
+                        </p>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <button
                             type="button"
                             @click="form.patient_type = 'cotizante'"
-                            :disabled="patientData.patient_type === 'beneficiario' && patientData.holder_id"
                             :class="[
                                 'relative p-4 rounded-xl border-2 transition-all duration-200 text-left',
                                 form.patient_type === 'cotizante'

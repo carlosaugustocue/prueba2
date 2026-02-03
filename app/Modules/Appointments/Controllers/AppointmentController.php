@@ -12,6 +12,7 @@ use App\Modules\Appointments\Enums\AppointmentStatus;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
 use App\Modules\Appointments\Enums\PhoneCommunicationCategory;
+use App\Modules\AppointmentRequests\Resources\AppointmentRequestResource;
 use App\Modules\Patients\Models\Eps;
 use App\Modules\Patients\Models\Patient;
 use App\Modules\Patients\Resources\PatientResource;
@@ -32,6 +33,7 @@ class AppointmentController extends Controller
         return Inertia::render('Dashboard', [
             'stats' => $this->appointmentService->getDashboardStats(),
             'todayAppointments' => AppointmentResource::collection($this->appointmentService->getTodayAppointments()),
+            'inProgressRequests' => AppointmentRequestResource::collection($this->appointmentService->getInProgressRequests()),
         ]);
     }
 

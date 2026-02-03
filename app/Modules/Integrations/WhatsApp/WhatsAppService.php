@@ -15,10 +15,12 @@ class WhatsAppService implements NotificationChannelInterface
 
     public function __construct()
     {
-        $this->apiUrl = config('services.whatsapp.api_url', 'https://graph.facebook.com/v18.0');
-        $this->phoneNumberId = config('services.whatsapp.phone_number_id', '');
-        $this->accessToken = config('services.whatsapp.access_token', '');
-        $this->defaultLanguage = config('services.whatsapp.language', 'es_CO');
+        // config() puede retornar null si la key existe pero el env está vacío.
+        // Forzamos a string para evitar TypeError en propiedades tipadas.
+        $this->apiUrl = (string) (config('services.whatsapp.api_url') ?? 'https://graph.facebook.com/v18.0');
+        $this->phoneNumberId = (string) (config('services.whatsapp.phone_number_id') ?? '');
+        $this->accessToken = (string) (config('services.whatsapp.access_token') ?? '');
+        $this->defaultLanguage = (string) (config('services.whatsapp.language') ?? 'es_CO');
     }
 
     public function send(string $recipient, string $message, array $options = []): array

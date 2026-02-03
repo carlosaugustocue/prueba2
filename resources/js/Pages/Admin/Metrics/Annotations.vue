@@ -101,22 +101,22 @@ const csvUrl = computed(() => {
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operador</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">EPS</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actualizado</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Anotación</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             <tr v-for="r in rows" :key="r.id" class="hover:bg-gray-50">
                                 <td class="px-6 py-4 text-sm">
-                                    <Link :href="`/appointment-requests/${r.id}`" class="text-brand-600 hover:text-brand-700 font-medium">
-                                        #{{ r.id }}
+                                    <Link :href="`/appointment-requests/${r.request_id}`" class="text-brand-600 hover:text-brand-700 font-medium">
+                                        #{{ r.request_id }}
                                     </Link>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.assignee?.name || '-' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.patient?.full_name || '-' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.patient?.eps?.name || '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.updated_at }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 whitespace-pre-line">{{ r.operator_notes }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.created_at_formatted || r.created_at }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700 whitespace-pre-line">{{ r.note }}</td>
                             </tr>
                             <tr v-if="!rows.length">
                                 <td colspan="6" class="px-6 py-10 text-center text-sm text-gray-500">

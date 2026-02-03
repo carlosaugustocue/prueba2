@@ -137,7 +137,7 @@ class CommunicationsController extends Controller
         return Inertia::render('Admin/Communications/Index', [
             'filters' => $filters,
             'items' => $rows,
-            'operators' => User::whereHas('role', fn ($q) => $q->whereIn('name', ['operator', 'admin']))
+            'operators' => User::whereHas('role', fn ($q) => $q->whereIn('name', ['agent', 'admin', 'supervisor']))
                 ->orderBy('name')
                 ->get(['id', 'name']),
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name']),

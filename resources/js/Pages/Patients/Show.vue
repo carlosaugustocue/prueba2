@@ -30,7 +30,6 @@ const holder = computed(() => patient.value.holder);
                         <ChevronLeft class="h-4 w-4" />
                         Volver a pacientes
                     </Link>
-                    <h1 class="text-3xl font-bold text-gray-900 mt-2">{{ patient.full_name || 'Sin nombre' }}</h1>
                     <div class="flex items-center gap-2 mt-1">
                         <span :class="[
                             'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium',

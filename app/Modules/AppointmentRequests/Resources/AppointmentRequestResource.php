@@ -69,6 +69,21 @@ class AppointmentRequestResource extends JsonResource
             // Notas
             'client_notes' => $this->client_notes,
             'operator_notes' => $this->operator_notes,
+            'notes' => $this->whenLoaded('notes', function () {
+                return $this->notes->map(function ($n) {
+                    return [
+                        'id' => $n->id,
+                        'user_id' => $n->user_id,
+                        'note' => $n->note,
+                        'created_at' => $n->created_at?->format('Y-m-d H:i:s'),
+                        'created_at_formatted' => $n->created_at?->format('d/m/Y H:i'),
+                        'author' => $n->relationLoaded('author') && $n->author ? [
+                            'id' => $n->author->id,
+                            'name' => $n->author->name,
+                        ] : null,
+                    ];
+                })->values();
+            }),
             
             // Relación con cita
             'appointment_id' => $this->appointment_id,

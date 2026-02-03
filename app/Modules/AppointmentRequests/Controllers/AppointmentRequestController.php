@@ -74,8 +74,7 @@ class AppointmentRequestController extends Controller
             'filters' => $request->only(['status', 'priority', 'assigned_to', 'search']),
             'statuses' => RequestStatus::toArray(),
             'priorities' => Priority::toArray(),
-            'operators' => User::whereHas('role', fn($q) => $q->where('name', 'operator'))
-                ->orWhereHas('role', fn($q) => $q->where('name', 'admin'))
+            'operators' => User::whereHas('role', fn($q) => $q->whereIn('name', ['agent', 'supervisor', 'admin']))
                 ->get(['id', 'name']),
             'stats' => $stats,
         ]);
@@ -109,7 +108,7 @@ class AppointmentRequestController extends Controller
 
     public function show(AppointmentRequest $appointmentRequest): Response
     {
-        $appointmentRequest->load(['patient.eps', 'creator', 'assignee', 'appointment']);
+        $appointmentRequest->load(['patient.eps', 'creator', 'assignee', 'appointment', 'notes.author']);
 
         return Inertia::render('AppointmentRequests/Show', [
             'appointmentRequest' => new AppointmentRequestResource($appointmentRequest),
@@ -181,6 +180,16 @@ class AppointmentRequestController extends Controller
         $request->validate(['reason' => 'nullable|string|max:500']);
 
         if ($appointmentRequest->markAsFailed($request->reason)) {
+            $reason = trim((string) ($request->reason ?? ''));
+            if ($reason !== '') {
+                $appointmentRequest->notes()->create([
+                    'user_id' => auth()->id(),
+                    'note' => "No obtenida: {$reason}",
+                ]);
+                $appointmentRequest->operator_notes = "No obtenida: {$reason}";
+                $appointmentRequest->save();
+            }
+
             return redirect()
                 ->route('appointment-requests.index')
                 ->with('success', 'Solicitud marcada como no obtenida.');
@@ -197,6 +206,16 @@ class AppointmentRequestController extends Controller
         $request->validate(['reason' => 'nullable|string|max:500']);
 
         if ($appointmentRequest->cancel($request->reason)) {
+            $reason = trim((string) ($request->reason ?? ''));
+            if ($reason !== '') {
+                $appointmentRequest->notes()->create([
+                    'user_id' => auth()->id(),
+                    'note' => "Cancelación: {$reason}",
+                ]);
+                $appointmentRequest->operator_notes = "Cancelación: {$reason}";
+                $appointmentRequest->save();
+            }
+
             return redirect()
                 ->route('appointment-requests.index')
                 ->with('success', 'Solicitud cancelada.');
@@ -211,25 +230,44 @@ class AppointmentRequestController extends Controller
     public function saveNotes(Request $request, AppointmentRequest $appointmentRequest): RedirectResponse
     {
         $request->validate([
+            'note' => ['nullable', 'string', 'max:5000'],
+            // compat: versiones antiguas enviaban operator_notes
             'operator_notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $user = $request->user();
-        $isAdmin = $user?->role?->name === 'admin';
+        $role = (string) ($user?->role?->name ?? '');
+        $isAdmin = $role === 'admin';
+        $isAgentOrSupervisor = in_array($role, ['agent', 'supervisor'], true);
 
         if (! $isAdmin) {
-            // Solo la operadora asignada puede editar notas
-            if ($appointmentRequest->assigned_to && $appointmentRequest->assigned_to !== $user->id) {
-                abort(403, 'No tienes permiso para editar esta solicitud.');
-            }
-
             // Solo mientras esté activa (pendiente o en proceso)
             if (! in_array($appointmentRequest->status, RequestStatus::activeStatuses(), true)) {
                 return back()->with('error', 'No se pueden modificar anotaciones en una solicitud cerrada.');
             }
+
+            // Agentes/supervisores pueden agregar anotaciones aunque no estén asignados.
+            // Otros roles: solo el asignado.
+            if (! $isAgentOrSupervisor) {
+                if ($appointmentRequest->assigned_to && $appointmentRequest->assigned_to !== $user->id) {
+                    abort(403, 'No tienes permiso para editar esta solicitud.');
+                }
+            }
         }
 
-        $appointmentRequest->operator_notes = $request->input('operator_notes');
+        $noteText = trim((string) ($request->input('note') ?? $request->input('operator_notes') ?? ''));
+        if ($noteText === '') {
+            return back()->with('error', 'La anotación no puede estar vacía.');
+        }
+
+        // Siempre usar el usuario autenticado actual (evita que se guarde otro usuario por sesión/request)
+        $appointmentRequest->notes()->create([
+            'user_id' => auth()->id(),
+            'note' => $noteText,
+        ]);
+
+        // Mantener un "resumen" en la solicitud para compatibilidad (última anotación)
+        $appointmentRequest->operator_notes = $noteText;
         $appointmentRequest->save();
 
         return back()->with('success', 'Anotaciones internas guardadas.');

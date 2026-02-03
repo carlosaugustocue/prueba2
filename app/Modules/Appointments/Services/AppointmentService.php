@@ -62,9 +62,20 @@ class AppointmentService
         return [
             'today' => Appointment::today()->confirmed()->count(),
             'pending_requests' => \App\Modules\AppointmentRequests\Models\AppointmentRequest::where('status', 'pending')->count(),
+            'in_progress_requests' => \App\Modules\AppointmentRequests\Models\AppointmentRequest::where('status', 'in_progress')->count(),
             'urgent_requests' => \App\Modules\AppointmentRequests\Models\AppointmentRequest::whereIn('status', ['pending', 'in_progress'])->where('priority', 'urgent')->count(),
             'confirmed' => Appointment::confirmed()->count(),
         ];
+    }
+
+    public function getInProgressRequests(int $limit = 10): Collection
+    {
+        return AppointmentRequest::query()
+            ->with(['patient.eps', 'assignee'])
+            ->where('status', 'in_progress')
+            ->orderByDesc('started_at')
+            ->limit($limit)
+            ->get();
     }
 
     public function create(array $data): Appointment

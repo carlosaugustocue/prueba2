@@ -5,7 +5,7 @@ namespace App\Modules\AppointmentRequests\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Modules\Core\Traits\HasUuid;
 use App\Modules\Core\Traits\Searchable;
 use App\Modules\AppointmentRequests\Enums\RequestStatus;
@@ -74,6 +74,11 @@ class AppointmentRequest extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(\App\Modules\Auth\Models\User::class, 'assigned_to');
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(AppointmentRequestNote::class)->orderByDesc('created_at');
     }
 
     // ==================== MÉTODOS ====================

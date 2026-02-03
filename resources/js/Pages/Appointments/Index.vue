@@ -99,7 +99,12 @@ const appointments = computed(() => props.appointments?.data || []);
                                 <div class="text-xs text-gray-500">Cita</div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm font-medium text-gray-900">{{ apt.patient?.full_name }}</div>
+                                <Link
+                                    :href="`/appointments/${apt.id}`"
+                                    class="text-sm font-medium text-gray-900 hover:text-brand-700 hover:underline underline-offset-2"
+                                >
+                                    {{ apt.patient?.full_name }}
+                                </Link>
                                 <div class="text-sm text-gray-500">{{ apt.patient?.document_type_abbreviation }} {{ apt.patient?.document_number }}</div>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-900">{{ apt.type_label }}</td>
