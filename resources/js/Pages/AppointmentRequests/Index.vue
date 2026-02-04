@@ -266,12 +266,12 @@ const getPriorityClass = (priority) => {
                                     Crear Cita
                                 </Link>
                                 <Link 
-                                    v-if="request.has_appointment"
-                                    :href="`/appointments/${request.appointment_id}`"
+                                    v-if="request.appointment"
+                                    :href="`/appointments/${request.appointment.id}`"
                                     class="inline-flex items-center gap-1 px-3 py-2 bg-brand-50 text-brand-700 text-sm font-medium rounded-lg hover:bg-brand-100 transition-colors"
                                 >
                                     <CheckCircle class="h-4 w-4" />
-                                    Ver Cita #{{ request.appointment_id }}
+                                    Ver Cita #{{ request.appointment.id }}
                                 </Link>
                                 <Link :href="`/appointment-requests/${request.id}`" class="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
                                     <ChevronRight class="h-5 w-5" />

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Download, Filter, MessageSquare } from 'lucide-vue-next';
+import { Download, Filter, MessageSquare, Send, Clock } from 'lucide-vue-next';
 import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
@@ -12,6 +12,7 @@ const props = defineProps({
     epsList: Array,
     statuses: Array,
     channels: Array,
+    whatsapp_pending_count: { type: Number, default: 0 },
 });
 
 const rows = computed(() => props.items?.data || []);
@@ -31,6 +32,13 @@ const csvUrl = computed(() => {
     const q = new URLSearchParams({ ...props.filters, format: 'csv' }).toString();
     return `/admin/comunicaciones?${q}`;
 });
+
+const statusLabel = (status) => {
+    const s = props.statuses?.find(x => x.value === status);
+    return s?.label ?? status;
+};
+
+const isPendingWhatsApp = (r) => r.channel === 'whatsapp' && (r.status === 'pending' || r.status === 'processing');
 </script>
 
 <template>
@@ -41,10 +49,20 @@ const csvUrl = computed(() => {
                     <h1 class="text-2xl font-bold text-gray-900">Comunicaciones</h1>
                     <p class="text-sm text-gray-500">Auditoría de WhatsApp y llamadas telefónicas (solo admin)</p>
                 </div>
-                <a :href="csvUrl" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">
-                    <Download class="h-4 w-4" />
-                    Exportar CSV
-                </a>
+                <div class="flex items-center gap-2">
+                    <Link
+                        v-if="whatsapp_pending_count > 0"
+                        href="/admin/whatsapp-envios?status=pending"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-sm font-medium hover:bg-amber-100"
+                    >
+                        <Send class="h-4 w-4" />
+                        {{ whatsapp_pending_count }} por enviar → Envíos WhatsApp
+                    </Link>
+                    <a :href="csvUrl" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">
+                        <Download class="h-4 w-4" />
+                        Exportar CSV
+                    </a>
+                </div>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -102,11 +120,29 @@ const csvUrl = computed(() => {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            <tr v-for="r in rows" :key="`${r.channel}-${r.id}`" class="hover:bg-gray-50">
+                            <tr v-for="r in rows" :key="`${r.channel}-${r.id}`" class="hover:bg-gray-50" :class="{ 'bg-amber-50/50': isPendingWhatsApp(r) }">
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.created_at }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.channel }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.type }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.status }}</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <Link
+                                        v-if="isPendingWhatsApp(r)"
+                                        href="/admin/whatsapp-envios?status=pending"
+                                        class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200"
+                                    >
+                                        <Clock class="h-3.5 w-3.5" />
+                                        Por enviar →
+                                    </Link>
+                                    <span v-else class="inline-flex px-2 py-0.5 rounded text-xs font-medium" :class="{
+                                        'bg-green-100 text-green-800': r.status === 'sent',
+                                        'bg-red-100 text-red-800': r.status === 'failed',
+                                        'bg-gray-100 text-gray-600': r.status === 'cancelled',
+                                        'bg-blue-100 text-blue-800': r.status === 'processing',
+                                        'bg-gray-100 text-gray-700': !['sent','failed','cancelled','processing'].includes(r.status)
+                                    }">
+                                        {{ r.channel === 'phone' ? 'Registrada' : statusLabel(r.status) }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 text-sm">
                                     <Link :href="`/appointments/${r.appointment_id}`" class="text-brand-600 hover:text-brand-700 font-medium">
                                         #{{ r.appointment_id }}

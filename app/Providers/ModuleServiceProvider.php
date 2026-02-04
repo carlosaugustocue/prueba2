@@ -18,6 +18,7 @@ class ModuleServiceProvider extends ServiceProvider
         'AdminUsers',
         'AdminMetrics',
         'AdminCommunications',
+        'AdminWhatsApp',
         'Integrations',
     ];
 

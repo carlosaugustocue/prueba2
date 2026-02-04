@@ -111,6 +111,11 @@ class CommunicationsController extends Controller
             ->paginate($request->integer('per_page', 30))
             ->withQueryString();
 
+        $whatsappPendingCount = Reminder::query()
+            ->where('channel', Reminder::CHANNEL_WHATSAPP)
+            ->whereIn('status', [Reminder::STATUS_PENDING, Reminder::STATUS_PROCESSING])
+            ->count();
+
         if ($request->string('format')->toString() === 'csv') {
             $all = DB::query()->fromSub($union, 'c')->orderByDesc('created_at')->get();
 
@@ -137,6 +142,7 @@ class CommunicationsController extends Controller
         return Inertia::render('Admin/Communications/Index', [
             'filters' => $filters,
             'items' => $rows,
+            'whatsapp_pending_count' => $whatsappPendingCount,
             'operators' => User::whereHas('role', fn ($q) => $q->whereIn('name', ['agent', 'admin', 'supervisor']))
                 ->orderBy('name')
                 ->get(['id', 'name']),

@@ -12,6 +12,7 @@ use App\Modules\Appointments\Enums\AppointmentStatus;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
 use App\Modules\Appointments\Enums\PhoneCommunicationCategory;
+use App\Modules\AppointmentRequests\Models\AppointmentRequest;
 use App\Modules\AppointmentRequests\Resources\AppointmentRequestResource;
 use App\Modules\Patients\Models\Eps;
 use App\Modules\Patients\Models\Patient;
@@ -121,7 +122,12 @@ class AppointmentController extends Controller
 
     public function destroy(Appointment $appointment): RedirectResponse
     {
+        $appointmentId = $appointment->id;
         $appointment->delete();
+
+        // Dejar la solicitud sin cita para que no quede enlace roto y se pueda crear otra cita
+        AppointmentRequest::where('appointment_id', $appointmentId)->update(['appointment_id' => null]);
+
         return redirect()->route('appointments.index')->with('success', 'Cita eliminada correctamente.');
     }
 

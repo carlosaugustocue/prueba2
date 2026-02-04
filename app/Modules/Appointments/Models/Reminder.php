@@ -66,6 +66,18 @@ class Reminder extends Model
         ]);
     }
 
+    public function markAsCancelled(): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_CANCELLED,
+        ]);
+    }
+
+    public function isCancellable(): bool
+    {
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_PROCESSING], true);
+    }
+
     public function scopeDueToSend($query)
     {
         return $query->where('status', self::STATUS_PENDING)->where('scheduled_at', '<=', now());

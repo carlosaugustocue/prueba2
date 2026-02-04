@@ -159,7 +159,7 @@ class MetricsController extends Controller
             ->orderByDesc('created_at');
 
         if ($request->filled('operator_id')) {
-            $query->whereHas('appointmentRequest', fn ($q) => $q->where('assigned_to', $request->integer('operator_id')));
+            $query->where('user_id', $request->integer('operator_id'));
         }
 
         if ($request->filled('type')) {
@@ -175,9 +175,14 @@ class MetricsController extends Controller
         $items = $query->paginate(30)->withQueryString()->through(function (AppointmentRequestNote $n) {
             $ar = $n->appointmentRequest;
             $p = $ar?->patient;
+            $author = $n->relationLoaded('author') && $n->author ? [
+                'id' => $n->author->id,
+                'name' => $n->author->name,
+            ] : null;
             return [
                 'id' => $n->id,
                 'request_id' => $n->appointment_request_id,
+                'operator' => $author,
                 'assignee' => $ar?->assignee ? [
                     'id' => $ar->assignee->id,
                     'name' => $ar->assignee->name,
@@ -199,8 +204,8 @@ class MetricsController extends Controller
         if ($request->string('format')->toString() === 'csv') {
             $rows = $items->getCollection()->map(fn ($r) => [
                 $r['request_id'],
-                $r['assignee']['id'] ?? null,
-                $r['assignee']['name'] ?? null,
+                $r['operator']['id'] ?? null,
+                $r['operator']['name'] ?? null,
                 $r['patient']['full_name'] ?? null,
                 $r['patient']['eps']['name'] ?? null,
                 $r['created_at'],
