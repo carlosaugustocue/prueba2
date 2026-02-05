@@ -346,12 +346,12 @@ const savePhoneCommunication = () => {
                                                 <div class="flex-1">
                                                     <p class="font-medium text-gray-900">{{ item.description }}</p>
                                                     
-                                                    <!-- Detalle del cambio si aplica -->
-                                                    <div v-if="item.old_value && item.new_value && item.action === 'updated'" class="mt-2 text-xs">
+                                                    <!-- Detalle del cambio si aplica (valores en español) -->
+                                                    <div v-if="(item.old_value != null || item.old_value_display) && (item.new_value != null || item.new_value_display) && item.action === 'updated'" class="mt-2 text-xs">
                                                         <div class="inline-flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
-                                                            <span class="text-red-600 line-through">{{ item.old_value }}</span>
+                                                            <span class="text-red-600 line-through">{{ item.old_value_display ?? item.old_value }}</span>
                                                             <ArrowRight class="h-4 w-4 text-gray-400" />
-                                                            <span class="text-brand-600 font-medium">{{ item.new_value }}</span>
+                                                            <span class="text-brand-600 font-medium">{{ item.new_value_display ?? item.new_value }}</span>
                                                         </div>
                                                     </div>
                                                     
@@ -368,9 +368,9 @@ const savePhoneCommunication = () => {
                                                     </div>
                                                 </div>
                                                 
-                                                <!-- Fecha/hora exacta -->
+                                                <!-- Fecha/hora exacta (legible) -->
                                                 <div class="text-right">
-                                                    <p class="text-xs font-mono text-gray-400">{{ item.created_at }}</p>
+                                                    <p class="text-xs text-gray-600">{{ item.created_at_human || item.created_at }}</p>
                                                     <p v-if="item.ip_address" class="text-[10px] text-gray-300 mt-1">IP: {{ item.ip_address }}</p>
                                                 </div>
                                             </div>

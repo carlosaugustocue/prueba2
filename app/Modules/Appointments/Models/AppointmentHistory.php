@@ -43,14 +43,40 @@ class AppointmentHistory extends Model
         return $this->belongsTo(\App\Modules\Auth\Models\User::class);
     }
 
+    /** Nombres de campos en español para el timeline */
+    protected static function getFieldLabel(?string $field): string
+    {
+        $labels = [
+            'appointment_date' => 'Fecha',
+            'appointment_time' => 'Hora',
+            'type' => 'Tipo de cita',
+            'status' => 'Estado',
+            'priority' => 'Prioridad',
+            'specialty' => 'Especialidad',
+            'doctor_name' => 'Doctor / Profesional',
+            'location_name' => 'Lugar',
+            'location_address' => 'Dirección',
+            'authorization_number' => 'Número de autorización',
+            'specifications' => 'Especificaciones',
+            'internal_notes' => 'Notas internas',
+        ];
+        return $field ? ($labels[$field] ?? $field) : '';
+    }
+
+    /** Campos en femenino para concordancia "actualizada" */
+    protected static function isFieldFeminine(?string $field): bool
+    {
+        return in_array($field, ['appointment_date', 'appointment_time', 'specialty', 'location_address', 'specifications', 'internal_notes'], true);
+    }
+
     public function getActionDescription(): string
     {
-        return match($this->action) {
+        return match ($this->action) {
             self::ACTION_CREATED => 'Cita creada',
-            self::ACTION_UPDATED => "Campo '{$this->field_changed}' actualizado",
+            self::ACTION_UPDATED => self::getFieldLabel($this->field_changed) . (self::isFieldFeminine($this->field_changed) ? ' actualizada' : ' actualizado'),
             self::ACTION_STATUS_CHANGED => "Estado cambiado de '{$this->old_value}' a '{$this->new_value}'",
-            self::ACTION_CONFIRMATION_SENT => 'Confirmación enviada al paciente',
-            self::ACTION_REMINDER_SENT => 'Recordatorio enviado al paciente',
+            self::ACTION_CONFIRMATION_SENT => 'Confirmación enviada por WhatsApp',
+            self::ACTION_REMINDER_SENT => 'Recordatorio 24h enviado por WhatsApp',
             default => $this->description ?? $this->action,
         };
     }

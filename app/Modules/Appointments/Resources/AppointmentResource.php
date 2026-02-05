@@ -47,6 +47,48 @@ class AppointmentResource extends JsonResource
         };
     }
 
+    /** Valor legible en español para el timeline (enum, fecha u hora) */
+    private function historyValueDisplay(?string $field, mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $str = is_array($value) ? json_encode($value) : (string) $value;
+        return match ($field) {
+            'status' => AppointmentStatus::tryFrom($str)?->label() ?? $str,
+            'type' => AppointmentType::tryFrom($str)?->label() ?? $str,
+            'priority' => Priority::tryFrom($str)?->label() ?? $str,
+            'appointment_date' => $this->formatHumanDate($str),
+            'appointment_time' => $this->formatHumanTime($str),
+            default => $str,
+        };
+    }
+
+    /** Fecha legible: acepta Y-m-d o ISO y devuelve "5 de febrero de 2026" */
+    private function formatHumanDate(string $value): ?string
+    {
+        try {
+            $date = \Carbon\Carbon::parse($value)->locale('es');
+            return $date->translatedFormat('j \d\e F \d\e Y');
+        } catch (\Throwable) {
+            return $value;
+        }
+    }
+
+    /** Hora legible: "10:00:00" → "10:00" */
+    private function formatHumanTime(string $value): ?string
+    {
+        try {
+            $parsed = \Carbon\Carbon::parse($value);
+            return $parsed->format('H:i');
+        } catch (\Throwable) {
+            if (preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', trim($value))) {
+                return substr($value, 0, 5);
+            }
+            return $value;
+        }
+    }
+
     public function toArray(Request $request): array
     {
         // Acceder directamente a los atributos del modelo
@@ -191,9 +233,9 @@ class AppointmentResource extends JsonResource
                 ] : null;
             }),
             
-            // History (Timeline)
-            'history' => $this->whenLoaded('history', function() {
-                return $this->history->map(fn($h) => [
+            // History (Timeline) — textos en español
+            'history' => $this->whenLoaded('history', function () {
+                return $this->history->map(fn ($h) => [
                     'id' => $h->id,
                     'action' => $h->action,
                     'action_type' => $this->getActionType($h->action),
@@ -203,10 +245,13 @@ class AppointmentResource extends JsonResource
                     'field_changed' => $h->field_changed,
                     'old_value' => $h->old_value,
                     'new_value' => $h->new_value,
+                    'old_value_display' => $this->historyValueDisplay($h->field_changed, $h->old_value),
+                    'new_value_display' => $this->historyValueDisplay($h->field_changed, $h->new_value),
                     'user' => $h->user?->name ?? 'Sistema',
                     'user_id' => $h->user_id,
                     'created_at' => $h->created_at?->format('d/m/Y H:i:s'),
-                    'created_at_relative' => $h->created_at?->diffForHumans(),
+                    'created_at_human' => $h->created_at ? $h->created_at->locale('es')->translatedFormat('j \d\e F \d\e Y, H:i') : null,
+                    'created_at_relative' => $h->created_at?->locale('es')->diffForHumans(),
                     'ip_address' => $h->ip_address,
                 ])->toArray();
             }),
