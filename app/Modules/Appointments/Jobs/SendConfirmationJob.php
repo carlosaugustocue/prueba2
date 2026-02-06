@@ -5,6 +5,7 @@ namespace App\Modules\Appointments\Jobs;
 use App\Modules\Appointments\Models\Reminder;
 use App\Modules\Appointments\Models\AppointmentHistory;
 use App\Modules\Core\Contracts\NotificationChannelInterface;
+use App\Modules\Integrations\WhatsApp\AppointmentMessageFooter;
 use App\Modules\Integrations\WhatsApp\Templates\ConfirmationTemplate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -69,6 +70,17 @@ class SendConfirmationJob implements ShouldQueue
                 'language' => $language,
                 'parameters' => $parameters,
             ]);
+
+            // Mensaje diplomático sobre gestionar la cita si no podrá asistir (segundo mensaje)
+            try {
+                $notificationChannel->send($recipient, AppointmentMessageFooter::noShowNotice(), ['type' => 'text']);
+            } catch (\Exception $e) {
+                Log::warning('WhatsApp footer (no-show notice) not sent after confirmation', [
+                    'reminder_id' => $reminder->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             $reminder->markAsSent($response);
 
             $appointment->update([
