@@ -1,16 +1,18 @@
 # Serviconli - Sistema de Gestión de Citas Médicas
 
-Sistema de gestión de citas médicas para la Central de Citas de Serviconli, desarrollado con Laravel 12 (monolito modular) y Vue.js 3.
+Sistema de gestión de citas médicas para la Central de Citas de Serviconli, desarrollado con Laravel 12 (monolito modular), Vue.js 3 e Inertia.
 
 ## 🚀 Características
 
-- ✅ **Gestión de Citas**: Crear, editar, filtrar y dar seguimiento a citas médicas
-- ✅ **Gestión de Pacientes**: Registro de pacientes (cotizantes y beneficiarios)
+- ✅ **Solicitudes de Cita**: Registro de solicitudes (paciente, tipo, prioridad, especialidad si aplica) y flujo de tramitación
+- ✅ **Gestión de Citas**: Crear citas desde solicitudes o directo; editar, filtrar y dar seguimiento
+- ✅ **Gestión de Pacientes**: Registro de pacientes (cotizantes y beneficiarios), búsqueda por documento/nombre
 - ✅ **Estados de Cita**: Pendiente → En Progreso → Confirmada → Enviada → Completada
 - ✅ **Prioridades**: Urgente, Alta, Media, Baja
-- ✅ **Integración WhatsApp**: Envío de confirmaciones y recordatorios automáticos
+- ✅ **Integración WhatsApp**: Envío de confirmaciones, recordatorios y aviso por no asistencia
 - ✅ **Historial de Cambios**: Trazabilidad completa de cada cita
 - ✅ **Dashboard**: Vista rápida de estadísticas y citas del día
+- ✅ **Admin**: Usuarios, comunicaciones, métricas, envíos WhatsApp
 
 ## 📋 Requisitos
 
@@ -21,19 +23,23 @@ Sistema de gestión de citas médicas para la Central de Citas de Serviconli, de
 
 ## 🔧 Instalación
 
-### 1. Instalar dependencias
+### 1. Clonar e instalar dependencias
 
 ```bash
-cd /home/ksp/IdeaProjects/serviconli-system
+git clone <repo>
+cd serviconli-system
 composer install
 npm install
 ```
 
-### 2. Configurar base de datos
+### 2. Configurar entorno
 
-Edita el archivo `.env`:
+Copia `.env.example` a `.env`, configura la aplicación y la base de datos:
 
 ```env
+APP_NAME=Serviconli
+APP_URL=http://localhost:8000
+
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -42,7 +48,13 @@ DB_USERNAME=tu_usuario
 DB_PASSWORD=tu_contraseña
 ```
 
-### 3. Crear la base de datos y ejecutar migraciones
+Genera la clave de aplicación:
+
+```bash
+php artisan key:generate
+```
+
+### 3. Base de datos
 
 ```bash
 php artisan migrate
@@ -52,14 +64,16 @@ php artisan db:seed
 ### 4. Iniciar el proyecto
 
 ```bash
-# En una terminal:
+# Terminal 1 - assets (Vue/Vite):
 npm run dev
 
-# En otra terminal:
+# Terminal 2 - servidor PHP:
 php artisan serve
 ```
 
-Visita: http://localhost:8000
+Visita **http://localhost:8000**
+
+Para usar solo assets compilados (sin Vite): `npm run build` y luego `php artisan serve`.
 
 ## 👤 Usuarios de Prueba
 
@@ -74,19 +88,28 @@ Visita: http://localhost:8000
 ```
 app/
 ├── Modules/
-│   ├── Core/              # Traits, Contracts, Helpers
-│   ├── Auth/              # Login, Roles, Usuarios
-│   ├── Patients/          # Pacientes, EPS
-│   ├── Appointments/      # Citas, Historial, Recordatorios
-│   └── Integrations/      # WhatsApp, Email
-│
-├── Http/Middleware/       # HandleInertiaRequests, CheckRole
-└── Providers/             # ModuleServiceProvider
+│   ├── Core/                  # Traits, Contracts, Helpers
+│   ├── Auth/                  # Login, Roles, Usuarios
+│   ├── Patients/              # Pacientes, EPS
+│   ├── AppointmentRequests/   # Solicitudes de cita y tramitación
+│   ├── Appointments/          # Citas, Historial, Recordatorios
+│   ├── AdminUsers/            # CRUD usuarios (admin)
+│   ├── AdminCommunications/   # Comunicaciones
+│   ├── AdminMetrics/          # Métricas y reportes
+│   ├── AdminWhatsApp/         # Envíos WhatsApp pendientes
+│   └── Integrations/          # WhatsApp, plantillas
+├── Http/Middleware/           # HandleInertiaRequests, CheckRole
+└── Providers/                 # AppServiceProvider, ModuleServiceProvider
 ```
+
+## 📚 Documentación
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Visión general y flujos del sistema
+- **[docs/VALIDACIONES.md](docs/VALIDACIONES.md)** — Validaciones implementadas y sugerencias
 
 ## 📱 Configuración de WhatsApp
 
-Agrega al `.env`:
+En `.env`:
 
 ```env
 WHATSAPP_API_URL=https://graph.facebook.com/v18.0
