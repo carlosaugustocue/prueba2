@@ -17,7 +17,12 @@ class UpdateAppointmentRequest extends FormRequest
         return [
             'type' => ['sometimes', Rule::enum(AppointmentType::class)],
             'priority' => ['sometimes', Rule::enum(Priority::class)],
-            'specialty' => ['nullable', 'string', 'max:100'],
+            'specialty' => [
+                'nullable',
+                'string',
+                'max:100',
+                'required_if:type,specialist',
+            ],
             'appointment_date' => ['nullable', 'date', 'after_or_equal:today'],
             'appointment_time' => ['nullable', 'date_format:H:i'],
             'doctor_name' => ['nullable', 'string', 'max:150'],
@@ -35,18 +40,23 @@ class UpdateAppointmentRequest extends FormRequest
             $date = $this->input('appointment_date');
             $time = $this->input('appointment_time');
 
-            if (! $date || ! $time) {
-                return;
+            if ($date && $time) {
+                try {
+                    $selected = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$date} {$time}", config('app.timezone'));
+                    if ($selected->isPast()) {
+                        $validator->errors()->add('appointment_time', 'La hora debe ser actual o futura.');
+                    }
+                } catch (\Throwable) {
+                    // ignore
+                }
             }
 
-            try {
-                $selected = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$date} {$time}", config('app.timezone'));
-            } catch (\Throwable) {
-                return;
-            }
-
-            if ($selected->isPast()) {
-                $validator->errors()->add('appointment_time', 'La hora debe ser actual o futura.');
+            $type = $this->input('type');
+            $specialty = $this->input('specialty');
+            $isSpecialist = $type === AppointmentType::SPECIALIST->value
+                || (is_string($type) && strtolower($type) === 'specialist');
+            if ($isSpecialist && trim((string) $specialty) === '') {
+                $validator->errors()->add('specialty', 'Cuando el tipo es Especialista, debe indicar la especialidad.');
             }
         });
     }
@@ -54,6 +64,7 @@ class UpdateAppointmentRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'specialty.required_if' => 'Cuando el tipo es Especialista, debe indicar la especialidad.',
             'appointment_date.after_or_equal' => 'La fecha debe ser hoy o una fecha futura.',
         ];
     }

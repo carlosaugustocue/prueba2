@@ -261,9 +261,9 @@ const statusIcon = (status) => {
                                     <dt class="text-sm font-medium text-gray-500">Tipo de Cita</dt>
                                     <dd class="mt-1 text-base text-gray-900">{{ request.type_label }}</dd>
                                 </div>
-                                <div v-if="request.specialty">
+                                <div v-if="request.type === 'specialist'">
                                     <dt class="text-sm font-medium text-gray-500">Especialidad</dt>
-                                    <dd class="mt-1 text-base text-gray-900">{{ request.specialty }}</dd>
+                                    <dd class="mt-1 text-base text-gray-900">{{ request.specialty || 'No indicada' }}</dd>
                                 </div>
                             </dl>
 

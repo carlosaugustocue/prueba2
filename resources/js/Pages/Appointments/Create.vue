@@ -256,9 +256,31 @@ watch(patientSearch, () => {
 
 const requiresDetails = computed(() => props.types?.find(t => t.value === form.type)?.requiresDetails ?? true);
 
+const missingFields = computed(() => {
+    const list = [];
+    if (!form.patient_id) list.push('Paciente');
+    if (!form.type) list.push('Tipo de cita');
+    if (form.type === 'specialist' && !String(form.specialty || '').trim()) list.push('Especialidad');
+    if (!form.appointment_date) list.push('Fecha de la cita');
+    if (!form.appointment_time) list.push('Hora de la cita');
+    return list;
+});
+
+const hasValidationErrors = computed(() => Object.keys(form.errors || {}).length > 0);
+
+const validationErrorList = computed(() => {
+    const err = form.errors || {};
+    return Object.entries(err).map(([key, msg]) => ({ field: key, message: msg }));
+});
+
 const submit = () => {
-    if (!form.patient_id) {
-        alertDialog({ title: 'Paciente requerido', text: 'Debe seleccionar o crear un paciente primero.' });
+    if (missingFields.value.length > 0) {
+        alertDialog({
+            title: 'Faltan datos requeridos',
+            html: '<p class="text-left mb-2">Para continuar, complete los siguientes campos:</p><ul class="text-left list-disc list-inside space-y-1">' +
+                missingFields.value.map(f => `<li>${f}</li>`).join('') + '</ul>',
+            icon: 'warning',
+        });
         return;
     }
     form.post('/appointments');
@@ -278,6 +300,14 @@ const submit = () => {
             </div>
 
             <form @submit.prevent="submit" class="space-y-6">
+                <!-- Resumen de errores (backend) -->
+                <div v-if="hasValidationErrors" class="rounded-xl border-2 border-red-200 bg-red-50 p-4">
+                    <p class="font-semibold text-red-800 mb-2">Revisa los siguientes campos:</p>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-red-700">
+                        <li v-for="(e, i) in validationErrorList" :key="i">{{ e.message }}</li>
+                    </ul>
+                </div>
+
                 <!-- SECCIÓN PACIENTE -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
@@ -439,13 +469,14 @@ const submit = () => {
                             </div>
                             <!-- Especialidad si es especialista -->
                             <div v-if="form.type === 'specialist'" class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Especialidad</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Especialidad *</label>
                                 <input 
                                     v-model="form.specialty" 
                                     type="text" 
                                     placeholder="Ej: Cardiología, Neurología..."
-                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                    :class="['block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500', form.errors.specialty ? 'border-red-300' : '']"
                                 />
+                                <p v-if="form.errors.specialty" class="mt-2 text-sm text-red-600">{{ form.errors.specialty }}</p>
                             </div>
                         </div>
 
@@ -497,10 +528,10 @@ const submit = () => {
                     <!-- Fecha y Hora -->
                     <div v-if="requiresDetails" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Calendario -->
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" :class="{ 'ring-2 ring-red-200': form.errors.appointment_date }">
                             <label class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-4">
                                 <Calendar class="h-5 w-5 text-brand-600" />
-                                Fecha de la Cita
+                                Fecha de la Cita *
                             </label>
                             
                             <!-- Mini Calendario -->
@@ -553,13 +584,14 @@ const submit = () => {
                                     <span class="font-semibold">Fecha seleccionada:</span> {{ formattedSelectedDate }}
                                 </p>
                             </div>
+                            <p v-if="form.errors.appointment_date" class="mt-2 text-sm text-red-600">{{ form.errors.appointment_date }}</p>
                         </div>
 
                         <!-- Hora -->
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" :class="{ 'ring-2 ring-red-200': form.errors.appointment_time }">
                             <label class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-4">
                                 <Clock class="h-5 w-5 text-brand-600" />
-                                Hora de la Cita
+                                Hora de la Cita *
                             </label>
                             
                             <!-- Grid de horarios -->
@@ -596,6 +628,7 @@ const submit = () => {
                                     <span class="font-semibold">Hora seleccionada:</span> {{ form.appointment_time }}
                                 </p>
                             </div>
+                            <p v-if="form.errors.appointment_time" class="mt-2 text-sm text-red-600">{{ form.errors.appointment_time }}</p>
                         </div>
                     </div>
 

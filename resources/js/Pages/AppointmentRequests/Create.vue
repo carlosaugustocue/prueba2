@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
@@ -25,6 +25,19 @@ const form = useForm({
     specialty: '',
     client_notes: '',
 });
+
+const missingFields = computed(() => {
+    const list = [];
+    if (!form.patient_id) list.push('Paciente');
+    if (!form.type) list.push('Tipo de cita');
+    if (String(form.type || '') === 'specialist' && !String(form.specialty || '').trim()) list.push('Especialidad');
+    return list;
+});
+
+const hasValidationErrors = computed(() => Object.keys(form.errors || {}).length > 0);
+const validationErrorList = computed(() =>
+    Object.entries(form.errors || {}).map(([key, msg]) => ({ field: key, message: msg }))
+);
 
 // Iconos para tipos
 const typeIcons = {
@@ -99,8 +112,13 @@ watch(patientSearch, () => {
 });
 
 const submit = () => {
-    if (!form.patient_id) {
-        alertDialog({ title: 'Paciente requerido', text: 'Debe seleccionar un paciente.' });
+    if (missingFields.value.length > 0) {
+        alertDialog({
+            title: 'Faltan datos requeridos',
+            html: '<p class="text-left mb-2">Para continuar, complete los siguientes campos:</p><ul class="text-left list-disc list-inside space-y-1">' +
+                missingFields.value.map(f => `<li>${f}</li>`).join('') + '</ul>',
+            icon: 'warning',
+        });
         return;
     }
     form.post('/appointment-requests');
@@ -120,6 +138,14 @@ const submit = () => {
             </div>
 
             <form @submit.prevent="submit" class="space-y-6">
+                <!-- Resumen de errores (backend) -->
+                <div v-if="hasValidationErrors" class="rounded-xl border-2 border-red-200 bg-red-50 p-4">
+                    <p class="font-semibold text-red-800 mb-2">Revisa los siguientes campos:</p>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-red-700">
+                        <li v-for="(e, i) in validationErrorList" :key="i">{{ e.message }}</li>
+                    </ul>
+                </div>
+
                 <!-- Paciente -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
@@ -204,7 +230,8 @@ const submit = () => {
                                 'relative p-4 rounded-xl border-2 transition-all text-left',
                                 form.type === t.value
                                     ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500/20'
-                                    : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50'
+                                    : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50',
+                                form.errors.type ? 'border-red-300' : ''
                             ]"
                         >
                             <component :is="typeIcons[t.value] || Stethoscope" :class="['h-6 w-6 mb-2', form.type === t.value ? 'text-brand-600' : 'text-gray-400']" />
@@ -216,55 +243,56 @@ const submit = () => {
                             </div>
                         </button>
                     </div>
+                    <p v-if="form.errors.type" class="mt-2 text-sm text-red-600">{{ form.errors.type }}</p>
                 </div>
 
-                <!-- Prioridad y Especialidad -->
+                <!-- Especialidad -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Prioridad -->
-                        <div>
-                            <label class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
-                                <Flag class="h-4 w-4 text-brand-600" />
-                                Prioridad *
-                            </label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button 
-                                    v-for="p in priorities" 
-                                    :key="p.value"
-                                    type="button"
-                                    @click="form.priority = p.value"
-                                    :class="[
-                                        'flex items-center gap-2 p-3 rounded-lg border-2 transition-all',
-                                        form.priority === p.value
-                                            ? `border-${priorityConfig[p.value]?.color || 'gray'}-500 bg-${priorityConfig[p.value]?.color || 'gray'}-50`
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    ]"
-                                >
-                                    <component :is="priorityConfig[p.value]?.icon || Flag" :class="[
-                                        'h-4 w-4',
-                                        p.value === 'urgent' ? 'text-red-600' : '',
-                                        p.value === 'high' ? 'text-orange-600' : '',
-                                        p.value === 'medium' ? 'text-yellow-600' : '',
-                                        p.value === 'low' ? 'text-green-600' : ''
-                                    ]" />
-                                    <span class="text-sm font-medium">{{ p.label }}</span>
-                                </button>
-                            </div>
-                        </div>
+                    <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                        <FileText class="h-5 w-5 text-brand-600" />
+                        Especialidad
+                        <span v-if="form.type === 'specialist'" class="text-red-600">*</span>
+                    </h2>
+                    <p v-if="form.type === 'specialist'" class="text-sm text-gray-500 mb-3">
+                        Indique la especialidad médica solicitada (ej: Cardiología, Pediatría, Dermatología).
+                    </p>
+                    <input 
+                        v-model="form.specialty" 
+                        type="text" 
+                        placeholder="Ej: Cardiología, Pediatría, Dermatología..."
+                        :class="['block w-full rounded-xl border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-3 px-4', form.errors.specialty ? 'border-red-300' : '']"
+                    />
+                    <p v-if="form.errors.specialty" class="mt-2 text-sm text-red-600">{{ form.errors.specialty }}</p>
+                </div>
 
-                        <!-- Especialidad -->
-                        <div>
-                            <label class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
-                                <FileText class="h-4 w-4 text-brand-600" />
-                                Especialidad (opcional)
-                            </label>
-                            <input 
-                                v-model="form.specialty" 
-                                type="text" 
-                                placeholder="Ej: Cardiología, Pediatría..."
-                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                            />
-                        </div>
+                <!-- Prioridad -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                        <Flag class="h-5 w-5 text-brand-600" />
+                        Prioridad *
+                    </h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button 
+                            v-for="p in priorities" 
+                            :key="p.value"
+                            type="button"
+                            @click="form.priority = p.value"
+                            :class="[
+                                'flex items-center gap-2 p-3 rounded-lg border-2 transition-all',
+                                form.priority === p.value
+                                    ? `border-${priorityConfig[p.value]?.color || 'gray'}-500 bg-${priorityConfig[p.value]?.color || 'gray'}-50`
+                                    : 'border-gray-200 hover:border-gray-300'
+                            ]"
+                        >
+                            <component :is="priorityConfig[p.value]?.icon || Flag" :class="[
+                                'h-4 w-4',
+                                p.value === 'urgent' ? 'text-red-600' : '',
+                                p.value === 'high' ? 'text-orange-600' : '',
+                                p.value === 'medium' ? 'text-yellow-600' : '',
+                                p.value === 'low' ? 'text-green-600' : ''
+                            ]" />
+                            <span class="text-sm font-medium">{{ p.label }}</span>
+                        </button>
                     </div>
                 </div>
 

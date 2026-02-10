@@ -230,9 +230,11 @@ class AppointmentRequestController extends Controller
     public function saveNotes(Request $request, AppointmentRequest $appointmentRequest): RedirectResponse
     {
         $request->validate([
-            'note' => ['nullable', 'string', 'max:5000'],
-            // compat: versiones antiguas enviaban operator_notes
-            'operator_notes' => ['nullable', 'string', 'max:5000'],
+            'note' => ['required_without:operator_notes', 'nullable', 'string', 'max:5000'],
+            'operator_notes' => ['required_without:note', 'nullable', 'string', 'max:5000'],
+        ], [
+            'note.required_without' => 'La anotación no puede estar vacía.',
+            'operator_notes.required_without' => 'La anotación no puede estar vacía.',
         ]);
 
         $user = $request->user();

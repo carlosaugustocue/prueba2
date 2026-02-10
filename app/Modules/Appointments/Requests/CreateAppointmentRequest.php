@@ -17,9 +17,14 @@ class CreateAppointmentRequest extends FormRequest
             'patient_id' => ['required', 'exists:patients,id'],
             'type' => ['required', Rule::enum(AppointmentType::class)],
             'priority' => ['required', Rule::enum(Priority::class)],
-            'specialty' => ['nullable', 'string', 'max:100'],
-            'appointment_date' => ['nullable', 'date', 'after_or_equal:today'],
-            'appointment_time' => ['nullable', 'date_format:H:i'],
+            'specialty' => [
+                'nullable',
+                'string',
+                'max:100',
+                'required_if:type,specialist',
+            ],
+            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
+            'appointment_time' => ['required', 'date_format:H:i'],
             'doctor_name' => ['nullable', 'string', 'max:150'],
             'location_name' => ['nullable', 'string', 'max:150'],
             'location_address' => ['nullable', 'string', 'max:255'],
@@ -27,7 +32,6 @@ class CreateAppointmentRequest extends FormRequest
             'specifications' => ['nullable', 'string', 'max:500'],
             'internal_notes' => ['nullable', 'string', 'max:500'],
             'send_confirmation' => ['boolean'],
-            // Solicitud de origen (si viene de una solicitud)
             'appointment_request_id' => ['nullable', 'exists:appointment_requests,id'],
         ];
     }
@@ -36,7 +40,14 @@ class CreateAppointmentRequest extends FormRequest
     {
         return [
             'patient_id.required' => 'Debe seleccionar un paciente.',
+            'patient_id.exists' => 'El paciente seleccionado no es válido.',
+            'type.required' => 'Debe seleccionar el tipo de cita.',
+            'priority.required' => 'Debe seleccionar la prioridad.',
+            'specialty.required_if' => 'Cuando el tipo es Especialista, debe indicar la especialidad.',
+            'appointment_date.required' => 'Debe seleccionar la fecha de la cita.',
             'appointment_date.after_or_equal' => 'La fecha debe ser hoy o una fecha futura.',
+            'appointment_time.required' => 'Debe seleccionar la hora de la cita.',
+            'appointment_time.date_format' => 'La hora no tiene un formato válido (HH:mm).',
         ];
     }
 

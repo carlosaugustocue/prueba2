@@ -49,12 +49,12 @@ export async function confirmDialog({
   return res.isConfirmed;
 }
 
-export function alertDialog({ title, text, icon = 'info' }) {
+export function alertDialog({ title, text, html, icon = 'info' }) {
   return Swal.fire({
     ...base,
     icon,
     title,
-    text,
+    ...(html ? { html } : { text: text ?? '' }),
   });
 }
 
