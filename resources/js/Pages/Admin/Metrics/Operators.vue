@@ -28,6 +28,15 @@ const csvUrl = computed(() => {
     const q = new URLSearchParams({ ...props.filters, format: 'csv' }).toString();
     return `/admin/metricas/operadores?${q}`;
 });
+
+/** Formatea minutos a horas (ej: 90 → "1,50 h", 45 → "0,75 h") */
+const formatMinToHours = (min) => {
+    if (min == null || min === '') return '-';
+    const m = Number(min);
+    if (Number.isNaN(m)) return '-';
+    const h = m / 60;
+    return `${h.toFixed(2).replace('.', ',')} h`;
+};
 </script>
 
 <template>
@@ -124,9 +133,9 @@ const csvUrl = computed(() => {
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Obtenidas</th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">No obtenidas</th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Canceladas</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prom. total (min)</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prom. espera (min)</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prom. gestión (min)</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prom. total (h)</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prom. espera (h)</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prom. gestión (h)</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -136,9 +145,9 @@ const csvUrl = computed(() => {
                                 <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ r.total_obtenidas }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ r.total_no_obtenidas }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ r.total_canceladas }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ r.avg_total_min ?? '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ r.avg_espera_min ?? '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ r.avg_gestion_min ?? '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ formatMinToHours(r.avg_total_min) }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ formatMinToHours(r.avg_espera_min) }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700 text-right">{{ formatMinToHours(r.avg_gestion_min) }}</td>
                             </tr>
                             <tr v-if="!rows?.length">
                                 <td colspan="8" class="px-6 py-10 text-center text-sm text-gray-500">

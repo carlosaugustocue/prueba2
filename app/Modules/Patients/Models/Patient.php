@@ -21,27 +21,42 @@ class Patient extends Model
         'document_type',
         'document_number',
         'first_name',
+        'second_name',
         'last_name',
+        'second_last_name',
         'phone',
+        'phone_2',
         'whatsapp',
         'email',
         'address',
+        'neighborhood',
         'eps_id',
+        'afp_name',
+        'arp_name',
+        'arp_risk_class',
         'patient_type',
         'holder_id',
         'relationship_type',
         'birth_date',
         'notes',
+        'gender',
+        'status',
         'created_by',
         'updated_by',
     ];
 
     protected array $searchable = [
         'first_name',
+        'second_name',
         'last_name',
+        'second_last_name',
         'document_number',
         'phone',
+        'phone_2',
         'whatsapp',
+        'neighborhood',
+        'afp_name',
+        'arp_name',
     ];
 
     protected function casts(): array
@@ -56,7 +71,14 @@ class Patient extends Model
 
     public function getFullNameAttribute(): string
     {
-        return "{$this->first_name} {$this->last_name}";
+        $parts = [
+            $this->first_name,
+            $this->second_name,
+            $this->last_name,
+            $this->second_last_name,
+        ];
+
+        return trim(collect($parts)->filter()->join(' '));
     }
 
     public function eps(): BelongsTo

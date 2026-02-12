@@ -147,7 +147,10 @@ class PatientController extends Controller
             })
             ->with('eps:id,name')
             ->limit(10)
-            ->get(['id', 'first_name', 'last_name', 'document_type', 'document_number', 'eps_id', 'phone', 'whatsapp', 'address']);
+            ->get([
+                'id', 'first_name', 'second_name', 'last_name', 'second_last_name',
+                'document_type', 'document_number', 'eps_id', 'phone', 'whatsapp', 'address', 'neighborhood',
+            ]);
 
         return response()->json([
             'data' => $holders->map(fn($holder) => [

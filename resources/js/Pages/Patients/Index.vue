@@ -66,12 +66,21 @@ watch(search, () => {
                                         <span class="text-brand-700 font-medium text-sm">{{ patient.first_name?.charAt(0) }}{{ patient.last_name?.charAt(0) }}</span>
                                     </div>
                                     <div>
-                                        <Link
-                                            :href="`/patients/${patient.id}`"
-                                            class="font-medium text-gray-900 hover:text-brand-700 hover:underline underline-offset-2"
-                                        >
-                                            {{ patient.full_name }}
-                                        </Link>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <Link
+                                                :href="`/patients/${patient.id}`"
+                                                class="font-medium text-gray-900 hover:text-brand-700 hover:underline underline-offset-2"
+                                            >
+                                                {{ patient.full_name }}
+                                            </Link>
+                                            <span v-if="patient.status" :class="[
+                                                'inline-flex px-2 py-0.5 rounded text-xs font-medium',
+                                                patient.status === 'ACTIVO' ? 'bg-green-100 text-green-800' : '',
+                                                patient.status === 'INACTIVO' ? 'bg-red-100 text-red-800' : '',
+                                                patient.status === 'SUSPENDIDO' ? 'bg-amber-100 text-amber-800' : '',
+                                                !['ACTIVO','INACTIVO','SUSPENDIDO'].includes(patient.status) ? 'bg-gray-100 text-gray-700' : ''
+                                            ]">{{ patient.status }}</span>
+                                        </div>
                                         <p class="text-sm text-gray-500">{{ patient.patient_type_label }}</p>
                                     </div>
                                 </div>

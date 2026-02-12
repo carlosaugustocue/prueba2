@@ -36,6 +36,7 @@ const form = useForm({
     doctor_name: appointmentData.value?.doctor_name || '',
     location_name: appointmentData.value?.location_name || '',
     location_address: appointmentData.value?.location_address || '',
+    location_phone: appointmentData.value?.location_phone || '',
     authorization_number: appointmentData.value?.authorization_number || '',
     specifications: appointmentData.value?.specifications || '',
     internal_notes: appointmentData.value?.internal_notes || '',
@@ -191,6 +192,10 @@ const submit = () => {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
                             <input v-model="form.location_address" type="text" placeholder="Dirección completa" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono del centro</label>
+                            <input v-model="form.location_phone" type="text" placeholder="Ej: 601 1234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Número de autorización</label>

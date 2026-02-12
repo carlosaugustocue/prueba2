@@ -23,14 +23,15 @@ class Appointment extends Model
         'appointment_request_id',
         'type', 'status', 'priority', 'specialty',
         'appointment_date', 'appointment_time', 'doctor_name',
-        'location_name', 'location_address', 'authorization_number',
+        'location_name', 'location_address', 'location_phone', 'authorization_number',
         'specifications', 'internal_notes',
         'confirmation_sent_at', 'reminder_sent_at',
     ];
 
     protected array $searchable = [
         'doctor_name', 'location_name', 'authorization_number',
-        'patient.first_name', 'patient.last_name', 'patient.document_number',
+        'patient.first_name', 'patient.second_name', 'patient.last_name', 'patient.second_last_name',
+        'patient.document_number',
     ];
 
     protected function casts(): array

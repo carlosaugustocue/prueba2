@@ -18,6 +18,10 @@ const isHolder = computed(() => patient.value.is_holder);
 const isBeneficiary = computed(() => patient.value.is_beneficiary);
 const beneficiaries = computed(() => patient.value.beneficiaries || []);
 const holder = computed(() => patient.value.holder);
+const isPatientActive = computed(() => {
+    const s = (patient.value?.status || '').toString().toUpperCase();
+    return s === '' || s === 'ACTIVO';
+});
 </script>
 
 <template>
@@ -44,10 +48,14 @@ const holder = computed(() => patient.value.holder);
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <Link :href="`/appointments/create?patient_id=${patient.id}`" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-xl hover:bg-brand-600 transition-colors">
+                    <Link v-if="isPatientActive" :href="`/appointments/create?patient_id=${patient.id}`" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-xl hover:bg-brand-600 transition-colors">
                         <CalendarPlus class="h-5 w-5" />
                         Nueva Cita
                     </Link>
+                    <span v-else class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-xl cursor-not-allowed" title="Paciente inactivo o suspendido">
+                        <CalendarPlus class="h-5 w-5" />
+                        Nueva Cita (no disponible)
+                    </span>
                     <Link :href="`/patients/${patient.id}/edit`" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
                         <Pencil class="h-4 w-4" />
                         Editar
@@ -68,10 +76,22 @@ const holder = computed(() => patient.value.holder);
                                 <h2 class="text-2xl font-bold text-gray-900">{{ patient.full_name || 'Sin nombre' }}</h2>
                                 <p class="text-gray-600 mt-1">{{ patient.document_type_label || patient.document_type }} {{ patient.document_number }}</p>
                                 <div class="flex flex-wrap gap-4 mt-4">
+                                    <span v-if="patient.gender" class="text-sm text-gray-500">{{ patient.gender === 'M' ? 'Masculino' : patient.gender === 'F' ? 'Femenino' : patient.gender }}</span>
+                                    <span v-if="patient.birth_date" class="text-sm text-gray-500">Nac. {{ patient.birth_date }}</span>
+                                    <span v-if="patient.status" :class="[
+                                        'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                                        patient.status === 'ACTIVO' ? 'bg-green-100 text-green-800' : '',
+                                        patient.status === 'INACTIVO' ? 'bg-red-100 text-red-800' : '',
+                                        patient.status === 'SUSPENDIDO' ? 'bg-amber-100 text-amber-800' : '',
+                                        !['ACTIVO','INACTIVO','SUSPENDIDO'].includes(patient.status) ? 'bg-gray-100 text-gray-700' : ''
+                                    ]">{{ patient.status }}</span>
+                                </div>
+                                <div class="flex flex-wrap gap-4 mt-2">
                                     <div v-if="patient.phone" class="flex items-center gap-2 text-gray-600">
                                         <Phone class="h-4 w-4 text-gray-400" />
                                         {{ patient.phone }}
                                     </div>
+                                    <div v-if="patient.phone_2" class="flex items-center gap-2 text-gray-600">Tel 2: {{ patient.phone_2 }}</div>
                                     <div v-if="patient.whatsapp" class="flex items-center gap-2 text-gray-600">
                                         <MessageSquare class="h-4 w-4 text-green-500" />
                                         {{ patient.whatsapp }}
@@ -216,11 +236,15 @@ const holder = computed(() => patient.value.holder);
                         </div>
                         <div class="p-6 space-y-4">
                             <div>
-                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Teléfono</p>
+                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Teléfono 1</p>
                                 <p class="font-medium text-gray-900">{{ patient.phone || '-' }}</p>
                             </div>
+                            <div v-if="patient.phone_2">
+                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Teléfono 2</p>
+                                <p class="font-medium text-gray-900">{{ patient.phone_2 }}</p>
+                            </div>
                             <div>
-                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">WhatsApp</p>
+                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">WhatsApp / Celular</p>
                                 <p class="font-medium text-gray-900">{{ patient.whatsapp || patient.whatsapp_number || '-' }}</p>
                             </div>
                             <div>
@@ -231,20 +255,35 @@ const holder = computed(() => patient.value.holder);
                                 <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Dirección</p>
                                 <p class="font-medium text-gray-900">{{ patient.address || '-' }}</p>
                             </div>
+                            <div v-if="patient.neighborhood">
+                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Barrio</p>
+                                <p class="font-medium text-gray-900">{{ patient.neighborhood }}</p>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Información EPS -->
+                    <!-- Información EPS y seguridad social -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                             <h3 class="flex items-center gap-2 font-semibold text-gray-900">
                                 <Building2 class="h-5 w-5 text-brand-600" />
-                                EPS
+                                EPS y Seguridad Social
                             </h3>
                         </div>
-                        <div class="p-6">
-                            <p class="font-semibold text-gray-900">{{ patient.eps?.name || 'Sin EPS' }}</p>
-                            <p v-if="patient.eps?.code" class="text-sm text-gray-500">Código: {{ patient.eps.code }}</p>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">EPS</p>
+                                <p class="font-semibold text-gray-900">{{ patient.eps?.name || 'Sin EPS' }}</p>
+                                <p v-if="patient.eps?.code" class="text-sm text-gray-500">Código: {{ patient.eps.code }}</p>
+                            </div>
+                            <div v-if="patient.afp_name">
+                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">AFP</p>
+                                <p class="font-medium text-gray-900">{{ patient.afp_name }}</p>
+                            </div>
+                            <div v-if="patient.arp_name">
+                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">ARP</p>
+                                <p class="font-medium text-gray-900">{{ patient.arp_name }}<span v-if="patient.arp_risk_class" class="text-gray-500"> (Clase {{ patient.arp_risk_class }})</span></p>
+                            </div>
                         </div>
                     </div>
 

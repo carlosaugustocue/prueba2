@@ -20,16 +20,25 @@ const form = useForm({
     document_type: 'cc',
     document_number: '',
     first_name: '',
+    second_name: '',
     last_name: '',
+    second_last_name: '',
     phone: '',
+    phone_2: '',
     whatsapp: '',
     email: '',
     address: '',
+    neighborhood: '',
     eps_id: '',
+    afp_name: '',
+    arp_name: '',
+    arp_risk_class: '',
     patient_type: props.preselectedHolder ? 'beneficiario' : 'cotizante',
     holder_id: props.preselectedHolder?.id || '',
     relationship_type: '',
     birth_date: '',
+    gender: '',
+    status: 'ACTIVO',
     notes: '',
 });
 
@@ -43,8 +52,10 @@ const applyHolderDefaults = (holder) => {
 
     // Teléfonos / dirección por defecto, pero editables
     if (!form.phone && holder.phone) form.phone = holder.phone;
+    if (!form.phone_2 && holder.phone_2) form.phone_2 = holder.phone_2;
     if (!form.whatsapp && holder.whatsapp) form.whatsapp = holder.whatsapp;
     if (!form.address && holder.address) form.address = holder.address;
+    if (!form.neighborhood && holder.neighborhood) form.neighborhood = holder.neighborhood;
 };
 
 // Búsqueda de cotizantes
@@ -306,18 +317,35 @@ const submit = () => form.post('/patients');
                             <p v-if="form.errors.document_number" class="mt-1 text-sm text-red-600">{{ form.errors.document_number }}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombres *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Primer nombre *</label>
                             <input v-model="form.first_name" type="text" :class="['block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500', form.errors.first_name ? 'border-red-300' : '']" />
                             <p v-if="form.errors.first_name" class="mt-1 text-sm text-red-600">{{ form.errors.first_name }}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Apellidos *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Segundo nombre</label>
+                            <input v-model="form.second_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Primer apellido *</label>
                             <input v-model="form.last_name" type="text" :class="['block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500', form.errors.last_name ? 'border-red-300' : '']" />
                             <p v-if="form.errors.last_name" class="mt-1 text-sm text-red-600">{{ form.errors.last_name }}</p>
                         </div>
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Segundo apellido</label>
+                            <input v-model="form.second_last_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de nacimiento</label>
                             <input v-model="form.birth_date" type="date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sexo</label>
+                            <select v-model="form.gender" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Seleccione...</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="Otro">Otro</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Correo electrónico</label>
@@ -336,13 +364,17 @@ const submit = () => form.post('/patients');
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono 1</label>
                             <input v-model="form.phone" type="tel" placeholder="3001234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono 2</label>
+                            <input v-model="form.phone_2" type="tel" placeholder="3001234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                         <div>
                             <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                                 <MessageSquare class="h-4 w-4 text-green-500" />
-                                WhatsApp
+                                WhatsApp / Celular
                             </label>
                             <input v-model="form.whatsapp" type="tel" placeholder="3001234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
@@ -368,13 +400,51 @@ const submit = () => form.post('/patients');
                                 La EPS del beneficiario se toma del cotizante titular.
                             </p>
                         </div>
-                        <div>
+                        <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
-                            <input v-model="form.address" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            <input v-model="form.address" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Calle, número, barrio..." />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Barrio</label>
+                            <input v-model="form.neighborhood" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Nombre del barrio" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Estado del afiliado</label>
+                            <select v-model="form.status" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="ACTIVO">ACTIVO</option>
+                                <option value="INACTIVO">INACTIVO</option>
+                                <option value="SUSPENDIDO">SUSPENDIDO</option>
+                                <option value="">Otro / Sin especificar</option>
+                            </select>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Notas</label>
                             <textarea v-model="form.notes" rows="2" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Notas adicionales sobre el paciente..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seguridad social (AFP / ARP) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                        <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                            <Building2 class="h-5 w-5 text-brand-600" />
+                            Seguridad social (cotizante)
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">Opcional. AFP y ARP aplican principalmente a cotizantes.</p>
+                    </div>
+                    <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre AFP</label>
+                            <input v-model="form.afp_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: COLPENSIONES, PORVENIR..." />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre ARP</label>
+                            <input v-model="form.arp_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: POSITIVA, SURA..." />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Clase de riesgo ARP</label>
+                            <input v-model="form.arp_risk_class" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: 1, 2, 3..." />
                         </div>
                     </div>
                 </div>

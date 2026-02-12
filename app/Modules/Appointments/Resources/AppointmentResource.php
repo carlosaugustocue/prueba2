@@ -174,6 +174,7 @@ class AppointmentResource extends JsonResource
             'doctor_name' => $this->doctor_name,
             'location_name' => $this->location_name,
             'location_address' => $this->location_address,
+            'location_phone' => $this->location_phone,
             'authorization_number' => $this->authorization_number,
             'specifications' => $this->specifications,
             'internal_notes' => $this->internal_notes,
@@ -193,7 +194,7 @@ class AppointmentResource extends JsonResource
                 'label' => $s->label()
             ])->toArray() : [],
             
-            // Relaciones - Patient
+            // Relaciones - Patient (nombre completo: todos los nombres y apellidos)
             'patient' => $this->whenLoaded('patient', function() {
                 $p = $this->patient;
                 return [
@@ -203,11 +204,13 @@ class AppointmentResource extends JsonResource
                     'document_type_abbreviation' => strtoupper($p->getRawOriginal('document_type') ?? ''),
                     'document_number' => $p->document_number,
                     'first_name' => $p->first_name,
+                    'second_name' => $p->second_name,
                     'last_name' => $p->last_name,
-                    'full_name' => $p->first_name . ' ' . $p->last_name,
+                    'second_last_name' => $p->second_last_name,
+                    'full_name' => $p->full_name,
                     'phone' => $p->phone,
                     'whatsapp' => $p->whatsapp,
-                    'whatsapp_number' => $p->whatsapp ?? $p->phone,
+                    'whatsapp_number' => $p->getWhatsAppNumber(),
                     'email' => $p->email,
                     'eps' => $p->relationLoaded('eps') && $p->eps ? [
                         'id' => $p->eps->id,

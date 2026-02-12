@@ -15,6 +15,15 @@ const apply = (key, value) => {
         [key]: value || undefined,
     }, { preserveState: true, replace: true });
 };
+
+/** Formatea minutos a horas (ej: 90 → "1,50 h") */
+const formatMinToHours = (min) => {
+    if (min == null || min === '') return '-';
+    const m = Number(min);
+    if (Number.isNaN(m)) return '-';
+    const h = m / 60;
+    return `${h.toFixed(2).replace('.', ',')} h`;
+};
 </script>
 
 <template>
@@ -62,16 +71,16 @@ const apply = (key, value) => {
                     <p class="mt-1 text-2xl font-bold text-gray-900">{{ summary.total_cerradas }}</p>
                 </div>
                 <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <p class="text-xs text-gray-500">Promedio total (min)</p>
-                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ summary.avg_total_min ?? '-' }}</p>
+                    <p class="text-xs text-gray-500">Promedio total (h)</p>
+                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ formatMinToHours(summary.avg_total_min) }}</p>
                 </div>
                 <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <p class="text-xs text-gray-500">Mínimo (min)</p>
-                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ summary.min_total_min ?? '-' }}</p>
+                    <p class="text-xs text-gray-500">Mínimo (h)</p>
+                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ formatMinToHours(summary.min_total_min) }}</p>
                 </div>
                 <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <p class="text-xs text-gray-500">Máximo (min)</p>
-                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ summary.max_total_min ?? '-' }}</p>
+                    <p class="text-xs text-gray-500">Máximo (h)</p>
+                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ formatMinToHours(summary.max_total_min) }}</p>
                 </div>
             </div>
         </div>

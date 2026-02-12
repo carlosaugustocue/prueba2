@@ -56,6 +56,7 @@ class AppointmentHistory extends Model
             'doctor_name' => 'Doctor / Profesional',
             'location_name' => 'Lugar',
             'location_address' => 'Dirección',
+            'location_phone' => 'Teléfono del centro',
             'authorization_number' => 'Número de autorización',
             'specifications' => 'Especificaciones',
             'internal_notes' => 'Notas internas',

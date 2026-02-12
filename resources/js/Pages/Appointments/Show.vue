@@ -189,6 +189,75 @@ const savePhoneCommunication = () => {
                         </div>
                     </div>
 
+                    <!-- Datos de la cita -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                            <CalendarDays class="h-5 w-5 text-brand-600" />
+                            <h2 class="text-lg font-semibold text-gray-900">Información de la Cita</h2>
+                        </div>
+                        <div class="p-6">
+                            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Tipo de cita</dt>
+                                    <dd class="mt-1 text-base text-gray-900">{{ apt.type_label || '-' }}</dd>
+                                </div>
+                                <div v-if="apt.specialty">
+                                    <dt class="text-sm font-medium text-gray-500">Especialidad</dt>
+                                    <dd class="mt-1 text-base text-gray-900">{{ apt.specialty }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Fecha</dt>
+                                    <dd class="mt-1 text-base text-gray-900 font-semibold">{{ apt.appointment_date_formatted || 'Por definir' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Hora</dt>
+                                    <dd class="mt-1 text-base text-gray-900 font-semibold">{{ apt.appointment_time || 'Por definir' }}</dd>
+                                </div>
+                                <div v-if="apt.doctor_name">
+                                    <dt class="text-sm font-medium text-gray-500">Doctor / Profesional</dt>
+                                    <dd class="mt-1 text-base text-gray-900">{{ apt.doctor_name }}</dd>
+                                </div>
+                                <div v-if="apt.authorization_number">
+                                    <dt class="text-sm font-medium text-gray-500">Número de autorización</dt>
+                                    <dd class="mt-1 text-base text-gray-900 font-mono">{{ apt.authorization_number }}</dd>
+                                </div>
+                            </dl>
+                            
+                            <!-- Ubicación -->
+                            <div v-if="apt.location_name || apt.location_address || apt.location_phone" class="mt-6 pt-6 border-t border-gray-200">
+                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
+                                    <MapPin class="h-4 w-4" />
+                                    Ubicación
+                                </h3>
+                                <p class="text-base text-gray-900 font-medium">{{ apt.location_name || 'Sin nombre' }}</p>
+                                <p v-if="apt.location_address" class="text-gray-600">{{ apt.location_address }}</p>
+                                <p v-if="apt.location_phone" class="text-gray-600 mt-1">Tel: {{ apt.location_phone }}</p>
+                            </div>
+
+                            <!-- Especificaciones -->
+                            <div v-if="apt.specifications" class="mt-6 pt-6 border-t border-gray-200">
+                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
+                                    <ClipboardList class="h-4 w-4" />
+                                    Especificaciones para el paciente
+                                </h3>
+                                <div class="bg-yellow-50 border border-yellow-100 rounded-lg p-4">
+                                    <p class="text-gray-800 whitespace-pre-line">{{ apt.specifications }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Notas internas -->
+                            <div v-if="apt.internal_notes" class="mt-6 pt-6 border-t border-gray-200">
+                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
+                                    <Lock class="h-4 w-4" />
+                                    Notas internas (no se envían al paciente)
+                                </h3>
+                                <div class="bg-gray-50 border border-gray-100 rounded-lg p-4">
+                                    <p class="text-gray-700 whitespace-pre-line">{{ apt.internal_notes }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Comunicación telefónica -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
@@ -229,74 +298,6 @@ const savePhoneCommunication = () => {
                                         </div>
                                         <p v-if="c.note" class="text-gray-700 mt-1 whitespace-pre-line">{{ c.note }}</p>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Datos de la cita -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
-                            <CalendarDays class="h-5 w-5 text-brand-600" />
-                            <h2 class="text-lg font-semibold text-gray-900">Información de la Cita</h2>
-                        </div>
-                        <div class="p-6">
-                            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Tipo de cita</dt>
-                                    <dd class="mt-1 text-base text-gray-900">{{ apt.type_label || '-' }}</dd>
-                                </div>
-                                <div v-if="apt.specialty">
-                                    <dt class="text-sm font-medium text-gray-500">Especialidad</dt>
-                                    <dd class="mt-1 text-base text-gray-900">{{ apt.specialty }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Fecha</dt>
-                                    <dd class="mt-1 text-base text-gray-900 font-semibold">{{ apt.appointment_date_formatted || 'Por definir' }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Hora</dt>
-                                    <dd class="mt-1 text-base text-gray-900 font-semibold">{{ apt.appointment_time || 'Por definir' }}</dd>
-                                </div>
-                                <div v-if="apt.doctor_name">
-                                    <dt class="text-sm font-medium text-gray-500">Doctor / Profesional</dt>
-                                    <dd class="mt-1 text-base text-gray-900">{{ apt.doctor_name }}</dd>
-                                </div>
-                                <div v-if="apt.authorization_number">
-                                    <dt class="text-sm font-medium text-gray-500">Número de autorización</dt>
-                                    <dd class="mt-1 text-base text-gray-900 font-mono">{{ apt.authorization_number }}</dd>
-                                </div>
-                            </dl>
-                            
-                            <!-- Ubicación -->
-                            <div v-if="apt.location_name || apt.location_address" class="mt-6 pt-6 border-t border-gray-200">
-                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
-                                    <MapPin class="h-4 w-4" />
-                                    Ubicación
-                                </h3>
-                                <p class="text-base text-gray-900 font-medium">{{ apt.location_name || 'Sin nombre' }}</p>
-                                <p v-if="apt.location_address" class="text-gray-600">{{ apt.location_address }}</p>
-                            </div>
-
-                            <!-- Especificaciones -->
-                            <div v-if="apt.specifications" class="mt-6 pt-6 border-t border-gray-200">
-                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
-                                    <ClipboardList class="h-4 w-4" />
-                                    Especificaciones para el paciente
-                                </h3>
-                                <div class="bg-yellow-50 border border-yellow-100 rounded-lg p-4">
-                                    <p class="text-gray-800 whitespace-pre-line">{{ apt.specifications }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Notas internas -->
-                            <div v-if="apt.internal_notes" class="mt-6 pt-6 border-t border-gray-200">
-                                <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
-                                    <Lock class="h-4 w-4" />
-                                    Notas internas (no se envían al paciente)
-                                </h3>
-                                <div class="bg-gray-50 border border-gray-100 rounded-lg p-4">
-                                    <p class="text-gray-700 whitespace-pre-line">{{ apt.internal_notes }}</p>
                                 </div>
                             </div>
                         </div>
@@ -407,7 +408,7 @@ const savePhoneCommunication = () => {
                                     <span class="text-brand-700 font-bold text-xl">{{ patient.first_name?.charAt(0) || '?' }}{{ patient.last_name?.charAt(0) || '' }}</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-lg font-semibold text-gray-900 truncate">{{ patient.full_name || 'Sin nombre' }}</p>
+                                    <p class="text-lg font-semibold text-gray-900">{{ patient.full_name || 'Sin nombre' }}</p>
                                     <p class="text-sm text-gray-600">{{ patient.document_type_abbreviation }} {{ patient.document_number }}</p>
                                 </div>
                             </div>

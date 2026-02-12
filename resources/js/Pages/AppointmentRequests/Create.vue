@@ -26,9 +26,23 @@ const form = useForm({
     client_notes: '',
 });
 
+const isPatientActive = (patient) => {
+    const s = (patient?.status || '').toString().toUpperCase();
+    return s === '' || s === 'ACTIVO';
+};
+
+const patientStatusBadge = (status) => {
+    const s = (status || '').toString().toUpperCase();
+    if (s === 'ACTIVO') return { label: 'Activo', class: 'bg-green-100 text-green-800' };
+    if (s === 'INACTIVO') return { label: 'Inactivo', class: 'bg-red-100 text-red-800' };
+    if (s === 'SUSPENDIDO') return { label: 'Suspendido', class: 'bg-amber-100 text-amber-800' };
+    return { label: status || 'Sin estado', class: 'bg-gray-100 text-gray-700' };
+};
+
 const missingFields = computed(() => {
     const list = [];
     if (!form.patient_id) list.push('Paciente');
+    else if (selectedPatient.value && !isPatientActive(selectedPatient.value)) list.push('El paciente seleccionado está inactivo o suspendido; no puede solicitar cita.');
     if (!form.type) list.push('Tipo de cita');
     if (String(form.type || '') === 'specialist' && !String(form.specialty || '').trim()) list.push('Especialidad');
     return list;
@@ -88,6 +102,14 @@ const searchPatients = async () => {
 };
 
 const selectPatient = (patient) => {
+    if (!isPatientActive(patient)) {
+        alertDialog({
+            title: 'Paciente no disponible',
+            text: 'Este paciente está ' + (patient.status === 'SUSPENDIDO' ? 'suspendido' : 'inactivo') + '. No se pueden crear solicitudes de cita para pacientes inactivos o suspendidos.',
+            icon: 'warning',
+        });
+        return;
+    }
     selectedPatient.value = patient;
     form.patient_id = patient.id;
     patientSearch.value = '';
@@ -154,16 +176,29 @@ const submit = () => {
                     </h2>
 
                     <!-- Paciente seleccionado -->
-                    <div v-if="selectedPatient" class="bg-brand-50 border border-brand-200 rounded-xl p-4">
+                    <div v-if="selectedPatient" :class="[
+                        'rounded-xl p-4 border',
+                        isPatientActive(selectedPatient)
+                            ? 'bg-brand-50 border-brand-200'
+                            : 'bg-red-50 border-red-200'
+                    ]">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="h-12 w-12 rounded-full bg-brand-100 flex items-center justify-center">
-                                    <span class="text-brand-700 font-bold">{{ selectedPatient.first_name?.charAt(0) }}{{ selectedPatient.last_name?.charAt(0) }}</span>
+                                <div class="h-12 w-12 rounded-full flex items-center justify-center" :class="isPatientActive(selectedPatient) ? 'bg-brand-100' : 'bg-red-100'">
+                                    <span :class="isPatientActive(selectedPatient) ? 'text-brand-700 font-bold' : 'text-red-700 font-bold'">{{ selectedPatient.first_name?.charAt(0) }}{{ selectedPatient.last_name?.charAt(0) }}</span>
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-gray-900">{{ selectedPatient.full_name }}</p>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="font-semibold text-gray-900">{{ selectedPatient.full_name }}</p>
+                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium', patientStatusBadge(selectedPatient.status).class]">
+                                            {{ patientStatusBadge(selectedPatient.status).label }}
+                                        </span>
+                                    </div>
                                     <p class="text-sm text-gray-600">{{ selectedPatient.document_type_abbreviation }} {{ selectedPatient.document_number }}</p>
                                     <p class="text-sm text-gray-500">{{ selectedPatient.whatsapp_number || selectedPatient.phone || 'Sin teléfono' }}</p>
+                                    <p v-if="!isPatientActive(selectedPatient)" class="text-sm text-red-700 font-medium mt-1">
+                                        No se pueden crear solicitudes de cita para este paciente.
+                                    </p>
                                 </div>
                             </div>
                             <button type="button" @click="clearPatient" class="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
@@ -194,16 +229,27 @@ const submit = () => {
                                 :key="patient.id" 
                                 type="button" 
                                 @click="selectPatient(patient)"
-                                class="w-full px-4 py-3 text-left hover:bg-brand-50 border-b last:border-0 flex items-center gap-3 transition-colors"
+                                :class="[
+                                    'w-full px-4 py-3 text-left border-b last:border-0 flex items-center gap-3 transition-colors',
+                                    isPatientActive(patient)
+                                        ? 'hover:bg-brand-50'
+                                        : 'opacity-75 cursor-not-allowed hover:bg-gray-50'
+                                ]"
                             >
-                                <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                <div class="h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0" :class="isPatientActive(patient) ? 'bg-gray-100' : 'bg-gray-200'">
                                     <span class="text-gray-600 font-medium">{{ patient.first_name?.charAt(0) }}{{ patient.last_name?.charAt(0) }}</span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="font-medium text-gray-900 truncate">{{ patient.full_name }}</p>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="font-medium text-gray-900 truncate">{{ patient.full_name }}</p>
+                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium flex-shrink-0', patientStatusBadge(patient.status).class]">
+                                            {{ patientStatusBadge(patient.status).label }}
+                                        </span>
+                                    </div>
                                     <p class="text-sm text-gray-500">{{ patient.document_type_abbreviation }} {{ patient.document_number }}</p>
+                                    <p v-if="!isPatientActive(patient)" class="text-xs text-amber-600 mt-0.5">No puede solicitar cita</p>
                                 </div>
-                                <Check class="h-5 w-5 text-brand-500" />
+                                <Check v-if="isPatientActive(patient)" class="h-5 w-5 text-brand-500 flex-shrink-0" />
                             </button>
                         </div>
 

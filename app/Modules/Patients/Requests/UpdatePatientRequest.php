@@ -25,12 +25,19 @@ class UpdatePatientRequest extends FormRequest
             'document_type' => ['required', Rule::enum(DocumentType::class)],
             'document_number' => ['required', 'string', 'max:20', Rule::unique('patients', 'document_number')->ignore($patientId)],
             'first_name' => ['required', 'string', 'max:100'],
+            'second_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
+            'second_last_name' => ['nullable', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'phone_2' => ['nullable', 'string', 'max:20'],
             'whatsapp' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
+            'neighborhood' => ['nullable', 'string', 'max:100'],
             'eps_id' => ['required', 'exists:eps,id'],
+            'afp_name' => ['nullable', 'string', 'max:150'],
+            'arp_name' => ['nullable', 'string', 'max:150'],
+            'arp_risk_class' => ['nullable', 'string', 'max:20'],
             'patient_type' => [
                 'required',
                 Rule::enum(PatientType::class),
@@ -75,6 +82,8 @@ class UpdatePatientRequest extends FormRequest
                 Rule::enum(RelationshipType::class),
             ],
             'birth_date' => ['nullable', 'date', 'before:today'],
+            'gender' => ['nullable', 'string', 'max:10'],
+            'status' => ['nullable', 'string', 'max:30'],
             'notes' => ['nullable', 'string', 'max:500'],
         ];
     }

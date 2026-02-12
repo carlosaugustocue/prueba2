@@ -7,7 +7,7 @@ import { alertDialog } from '@/Utils/swal';
 import { 
     Search, UserPlus, X, Loader2, AlertTriangle, ChevronRight,
     Stethoscope, Heart, Brain, Bone, Eye as EyeIcon, Baby, FlaskConical, Scan,
-    Calendar, Clock, User, MapPin, Building2, FileText, ClipboardList, Lock,
+    Calendar, Clock, User, MapPin, Building2, FileText, ClipboardList, Lock, Phone,
     MessageSquare, Check, ChevronLeft, ChevronRight as ChevronRightIcon,
     AlertCircle, Flag, Zap, ArrowRight
 } from 'lucide-vue-next';
@@ -33,6 +33,7 @@ const form = useForm({
     doctor_name: '',
     location_name: '',
     location_address: '',
+    location_phone: '',
     authorization_number: '',
     specifications: '',
     internal_notes: props.fromRequest?.client_notes ? `Notas del cliente: ${props.fromRequest.client_notes}` : '',
@@ -423,13 +424,19 @@ const submit = () => {
 
                     <!-- Info de Solicitud (cuando viene de una solicitud) -->
                     <div v-if="fromRequest" class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-blue-100 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <div class="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                                 <Clock class="h-5 w-5 text-blue-600" />
                             </div>
-                            <div>
+                            <div class="min-w-0 flex-1">
                                 <p class="text-sm font-medium text-blue-900">
                                     Creando cita desde solicitud #{{ fromRequest.id }}
+                                </p>
+                                <p v-if="fromRequest.specialty" class="mt-2 text-sm font-semibold text-blue-800">
+                                    Especialidad solicitada: {{ fromRequest.specialty }}
+                                </p>
+                                <p v-if="fromRequest.client_notes" class="mt-1 text-sm text-blue-700">
+                                    Notas del cliente: {{ fromRequest.client_notes }}
                                 </p>
                             </div>
                         </div>
@@ -672,6 +679,18 @@ const submit = () => {
                                     v-model="form.location_address" 
                                     type="text" 
                                     placeholder="Dirección completa"
+                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                />
+                            </div>
+                            <div>
+                                <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                                    <Phone class="h-4 w-4 text-gray-400" />
+                                    Teléfono del centro
+                                </label>
+                                <input 
+                                    v-model="form.location_phone" 
+                                    type="text" 
+                                    placeholder="Ej: 601 1234567"
                                     class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                 />
                             </div>

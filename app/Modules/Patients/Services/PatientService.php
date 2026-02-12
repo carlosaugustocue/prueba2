@@ -34,7 +34,11 @@ class PatientService
             ->with(['eps'])
             ->search($term)
             ->limit($limit)
-            ->get(['id', 'uuid', 'document_type', 'document_number', 'first_name', 'last_name', 'phone', 'whatsapp', 'eps_id']);
+            ->get([
+                'id', 'uuid', 'document_type', 'document_number',
+                'first_name', 'second_name', 'last_name', 'second_last_name',
+                'phone', 'whatsapp', 'eps_id', 'status',
+            ]);
     }
 
     public function create(array $data): Patient

@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
+use App\Modules\Patients\Models\Patient;
 
 class CreateAppointmentRequest extends FormRequest
 {
@@ -14,7 +15,20 @@ class CreateAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => ['required', 'exists:patients,id'],
+            'patient_id' => [
+                'required',
+                'exists:patients,id',
+                function ($attribute, $value, $fail) {
+                    $patient = Patient::find($value);
+                    if (! $patient) {
+                        return;
+                    }
+                    $status = strtoupper(trim((string) ($patient->status ?? '')));
+                    if ($status === 'INACTIVO' || $status === 'SUSPENDIDO') {
+                        $fail('No se pueden crear citas para un paciente inactivo o suspendido.');
+                    }
+                },
+            ],
             'type' => ['required', Rule::enum(AppointmentType::class)],
             'priority' => ['required', Rule::enum(Priority::class)],
             'specialty' => [
@@ -28,6 +42,7 @@ class CreateAppointmentRequest extends FormRequest
             'doctor_name' => ['nullable', 'string', 'max:150'],
             'location_name' => ['nullable', 'string', 'max:150'],
             'location_address' => ['nullable', 'string', 'max:255'],
+            'location_phone' => ['nullable', 'string', 'max:30'],
             'authorization_number' => ['nullable', 'string', 'max:50'],
             'specifications' => ['nullable', 'string', 'max:500'],
             'internal_notes' => ['nullable', 'string', 'max:500'],

@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
+use App\Modules\Patients\Models\Patient;
 
 class CreateAppointmentRequestRequest extends FormRequest
 {
@@ -17,7 +18,20 @@ class CreateAppointmentRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => ['required', 'exists:patients,id'],
+            'patient_id' => [
+                'required',
+                'exists:patients,id',
+                function ($attribute, $value, $fail) {
+                    $patient = Patient::find($value);
+                    if (!$patient) {
+                        return;
+                    }
+                    $status = strtoupper(trim((string) ($patient->status ?? '')));
+                    if ($status === 'INACTIVO' || $status === 'SUSPENDIDO') {
+                        $fail('No se pueden crear solicitudes de cita para un paciente inactivo o suspendido.');
+                    }
+                },
+            ],
             'type' => ['required', Rule::enum(AppointmentType::class)],
             'priority' => ['required', Rule::enum(Priority::class)],
             'specialty' => [

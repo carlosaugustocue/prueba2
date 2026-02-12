@@ -28,6 +28,7 @@ class UpdateAppointmentRequest extends FormRequest
             'doctor_name' => ['nullable', 'string', 'max:150'],
             'location_name' => ['nullable', 'string', 'max:150'],
             'location_address' => ['nullable', 'string', 'max:255'],
+            'location_phone' => ['nullable', 'string', 'max:30'],
             'authorization_number' => ['nullable', 'string', 'max:50'],
             'specifications' => ['nullable', 'string', 'max:500'],
             'internal_notes' => ['nullable', 'string', 'max:500'],
