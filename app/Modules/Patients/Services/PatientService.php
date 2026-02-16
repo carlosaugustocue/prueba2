@@ -14,7 +14,7 @@ class PatientService
         $query = Patient::query()->with(['eps']);
 
         if (! empty($filters['search'])) {
-            $query->search($filters['search']);
+            $query->searchByWords($filters['search']);
         }
 
         if (! empty($filters['eps_id'])) {
@@ -32,7 +32,7 @@ class PatientService
     {
         return Patient::query()
             ->with(['eps'])
-            ->search($term)
+            ->searchByWords($term)
             ->limit($limit)
             ->get([
                 'id', 'uuid', 'document_type', 'document_number',

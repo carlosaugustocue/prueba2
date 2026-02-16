@@ -2,6 +2,7 @@
 
 namespace App\Modules\Patients\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -58,6 +59,32 @@ class Patient extends Model
         'afp_name',
         'arp_name',
     ];
+
+    /**
+     * Búsqueda por cualquier combinación de palabras: cada palabra debe coincidir
+     * en al menos uno de los campos (nombres, apellidos, documento, etc.).
+     * Ej: "Juan Pérez" encuentra registros con Juan en un campo y Pérez en otro.
+     */
+    public function scopeSearchByWords(Builder $query, string $search): Builder
+    {
+        $words = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY);
+        if (empty($words)) {
+            return $query;
+        }
+
+        $columns = $this->getSearchableColumns();
+
+        foreach ($words as $word) {
+            $term = $word;
+            $query->where(function (Builder $q) use ($columns, $term) {
+                foreach ($columns as $column) {
+                    $q->orWhere($column, 'LIKE', '%' . $term . '%');
+                }
+            });
+        }
+
+        return $query;
+    }
 
     protected function casts(): array
     {

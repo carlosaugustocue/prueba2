@@ -7,7 +7,7 @@ const props = defineProps({
 });
 
 const visibleLinks = computed(() => props.links || []);
-const shouldRender = computed(() => visibleLinks.value.length > 3);
+const shouldRender = computed(() => visibleLinks.value.length > 0);
 </script>
 
 <template>

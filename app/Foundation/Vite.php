@@ -5,15 +5,33 @@ namespace App\Foundation;
 use Illuminate\Foundation\Vite as BaseVite;
 
 /**
- * En desarrollo, usa el host de la petición para la URL de Vite (hot file).
- * Así la app carga el front desde otra máquina: quien abre la página recibe
- * assets desde el mismo host (ej. http://192.168.1.50:5173) en lugar de localhost.
+ * En desarrollo local:
+ * - Si la petición viene de otro equipo (ej. celular por IP), usamos siempre el build
+ *   para que todos los assets se sirvan desde el mismo :8000 (no se depende del puerto 5173).
+ * - Si la petición es desde el mismo equipo (localhost), usamos hot cuando exista y
+ *   la URL de hot con el host de la petición para que funcione por IP en la misma máquina.
  */
 class Vite extends BaseVite
 {
     /**
+     * Cuando la petición viene de otro equipo (IP de red), no usar hot:
+     * así el front carga todo desde Laravel (:8000) y no desde Vite (:5173).
+     */
+    public function hotFile(): string
+    {
+        if (! app()->runningInConsole() && request()->hasHeader('Host')) {
+            $host = request()->getHost();
+            if ($host !== 'localhost' && $host !== '127.0.0.1') {
+                return public_path('hot').'.no-remote';
+            }
+        }
+
+        return parent::hotFile();
+    }
+
+    /**
      * Get the path to a given asset when running in HMR mode.
-     * Uses the request host so the front loads when opening the app from another machine.
+     * Uses the request host so el mismo PC puede abrir por IP y cargar Vite.
      */
     protected function hotAsset($asset): string
     {

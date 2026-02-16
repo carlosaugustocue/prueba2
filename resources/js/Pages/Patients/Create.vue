@@ -424,14 +424,14 @@ const submit = () => form.post('/patients');
                     </div>
                 </div>
 
-                <!-- Seguridad social (AFP / ARP) -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <!-- Seguridad social (AFP / ARP) - solo para cotizantes -->
+                <div v-if="form.patient_type === 'cotizante'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <Building2 class="h-5 w-5 text-brand-600" />
                             Seguridad social (cotizante)
                         </h2>
-                        <p class="text-sm text-gray-500 mt-1">Opcional. AFP y ARP aplican principalmente a cotizantes.</p>
+                        <p class="text-sm text-gray-500 mt-1">Opcional. AFP y ARP aplican al cotizante.</p>
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>

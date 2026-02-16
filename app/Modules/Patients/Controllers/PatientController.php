@@ -47,7 +47,7 @@ class PatientController extends Controller
             $preselectedHolder = Patient::where('id', $request->holder_id)
                 ->where('patient_type', 'cotizante')
                 ->with('eps:id,name,code')
-                ->first(['id', 'first_name', 'last_name', 'document_number', 'document_type', 'phone', 'whatsapp', 'address', 'eps_id']);
+                ->first(['id', 'first_name', 'second_name', 'last_name', 'second_last_name', 'document_number', 'document_type', 'phone', 'whatsapp', 'address', 'eps_id']);
         }
 
         return Inertia::render('Patients/Create', [

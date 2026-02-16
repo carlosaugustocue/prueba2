@@ -6,6 +6,41 @@ use Illuminate\Support\Facades\Schedule;
 use App\Modules\Appointments\Models\Reminder;
 use App\Modules\Appointments\Jobs\SendReminderJob;
 
+Artisan::command('serve:network-info', function () {
+    $ips = [];
+    if (PHP_OS_FAMILY === 'Windows') {
+        exec('ipconfig 2>NUL', $out);
+        foreach ($out as $line) {
+            if (preg_match('/IPv4[^:]*:\s*(\d+\.\d+\.\d+\.\d+)/', $line, $m)) {
+                $ips[] = $m[1];
+            }
+        }
+    } else {
+        exec('hostname -I 2>/dev/null', $out);
+        if (!empty($out)) {
+            $ips = array_filter(explode(' ', trim($out[0])));
+        }
+        if (empty($ips)) {
+            exec("ip -4 addr show 2>/dev/null | grep -oE 'inet [0-9.]+' | awk '{print \$2}'", $ips);
+        }
+    }
+    $ips = array_unique(array_filter($ips, fn ($ip) => $ip !== '127.0.0.1'));
+    $this->line('');
+    $this->info('Para acceder desde el celular u otro equipo en la red:');
+    $this->line('');
+    if (empty($ips)) {
+        $this->warn('No se detectó IP de red. Ejecuta: php artisan serve --host=0.0.0.0');
+        $this->line('Luego en el celular usa: http://<IP-DEL-PC>:8000');
+    } else {
+        foreach ($ips as $ip) {
+            $this->line('  → <href=http://' . $ip . ':8000>http://' . $ip . ':8000</>');
+        }
+        $this->line('');
+        $this->comment('Asegúrate de iniciar el servidor con: php artisan serve --host=0.0.0.0');
+    }
+    $this->line('');
+})->purpose('Muestra la URL para abrir la app desde el celular en la misma red');
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

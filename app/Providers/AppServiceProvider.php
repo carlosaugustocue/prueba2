@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Foundation\Vite as AppVite;
 use Illuminate\Foundation\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // En local, la URL base se toma del host de la petición para que la app
+        // funcione en cualquier equipo/IP sin fijar APP_URL a una IP concreta.
+        if (app()->environment('local') && $this->app->runningInConsole() === false) {
+            $request = request();
+            if ($request && $request->getHttpHost()) {
+                URL::forceRootUrl($request->getScheme() . '://' . $request->getHttpHost());
+            }
+        }
     }
 }

@@ -104,7 +104,12 @@ watch(search, () => {
                 </table>
             </div>
 
-            <Pagination :links="patients?.links" />
+            <div v-if="patients?.links?.length" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p v-if="patients?.meta" class="text-sm text-gray-500">
+                    Mostrando {{ patients.meta.from ?? 0 }} a {{ patients.meta.to ?? 0 }} de {{ patients.meta.total ?? 0 }} resultados
+                </p>
+                <Pagination :links="patients?.links" />
+            </div>
         </div>
     </AppLayout>
 </template>
