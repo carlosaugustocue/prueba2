@@ -60,11 +60,11 @@ const searchHolders = async () => {
     
     isSearchingHolder.value = true;
     try {
-        const response = await axios.get('/api/patients/search-holders', {
+        const response = await axios.get('/api/affiliates/search-holders', {
             params: { term: holderSearch.value }
         });
-        // Excluir el paciente actual de los resultados
-        holderResults.value = (response.data.data || []).filter(h => h.id !== patientData.value.id);
+        // Excluir el afiliado actual de los resultados
+        holderResults.value = (response.data.data || []).filter(h => h.id !== affiliateData.value.id);
     } catch (error) {
         console.error(error);
         holderResults.value = [];

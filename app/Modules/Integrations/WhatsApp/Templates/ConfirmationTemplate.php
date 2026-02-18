@@ -12,9 +12,9 @@ class ConfirmationTemplate
      */
     public function build(Appointment $appointment): string
     {
-        $patient = $appointment->patient;
+        $affiliate = $appointment->affiliate;
         $dateInfo = DateHelper::formatForConfirmation($appointment->appointment_date);
-        $fullName = mb_strtoupper($patient->full_name);
+        $fullName = mb_strtoupper($affiliate->full_name);
         $typeDesc = $this->getAppointmentTypeDescription($appointment);
         $time = $appointment->appointment_time ? substr((string) $appointment->appointment_time, 0, 5) : 'por confirmar';
         $doctor = $appointment->doctor_name ? 'DR. ' . mb_strtoupper($appointment->doctor_name) : 'el especialista asignado';
@@ -47,8 +47,8 @@ class ConfirmationTemplate
      */
     public function templateParameters(Appointment $appointment): array
     {
-        $patient = $appointment->patient;
-        $firstName = trim((string) ($patient->first_name ?? ''));
+        $affiliate = $appointment->affiliate;
+        $firstName = trim((string) ($affiliate->first_name ?? ''));
         $typeDesc = $this->getAppointmentTypeDescription($appointment);
         $date = $appointment->appointment_date ? $appointment->appointment_date->format('d/m/Y') : '';
         $time = $appointment->appointment_time ? substr((string) $appointment->appointment_time, 0, 5) : '';

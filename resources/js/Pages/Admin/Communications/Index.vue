@@ -148,7 +148,7 @@ const isPendingWhatsApp = (r) => r.channel === 'whatsapp' && (r.status === 'pend
                                         #{{ r.appointment_id }}
                                     </Link>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.patient_name }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.affiliate_name }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.eps_name || '-' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.operator_name || '-' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">

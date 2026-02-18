@@ -78,7 +78,7 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
                                     </div>
                                     <div>
                                         <p class="text-sm font-medium text-gray-900">{{ appointment.affiliate?.full_name }}</p>
-                                        <p class="text-sm text-gray-500">{{ appointment.type_label }} • {{ appointment.patient?.eps?.name }}</p>
+                                        <p class="text-sm text-gray-500">{{ appointment.type_label }} • {{ appointment.affiliate?.eps?.name }}</p>
                                     </div>
                                 </div>
                                 <span :class="[appointment.status_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">{{ appointment.status_label }}</span>
@@ -143,7 +143,7 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
                                 <Clock class="h-5 w-5" />
                                 <span class="ml-3 font-medium">Ver Solicitudes Pendientes</span>
                             </Link>
-                            <Link href="/patients/create" class="flex items-center p-3 rounded-lg bg-accent-500/10 text-brand-700 hover:bg-accent-500/20 transition-colors">
+                            <Link href="/affiliates/create" class="flex items-center p-3 rounded-lg bg-accent-500/10 text-brand-700 hover:bg-accent-500/20 transition-colors">
                                 <UserPlus class="h-5 w-5" />
                                 <span class="ml-3 font-medium">Nuevo Afiliado</span>
                             </Link>

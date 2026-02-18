@@ -48,7 +48,7 @@ class CommunicationsController extends Controller
                 r.sent_at as sent_at,
                 r.created_at as created_at,
                 a.id as appointment_id,
-                CONCAT(af.first_name, ' ', af.last_name) as patient_name,
+                CONCAT(af.first_name, ' ', af.last_name) as affiliate_name,
                 COALESCE(u.name, 'Sistema') as operator_name,
                 e.name as eps_name
             ")
@@ -75,7 +75,7 @@ class CommunicationsController extends Controller
                 NULL as sent_at,
                 ac.created_at as created_at,
                 a.id as appointment_id,
-                CONCAT(af.first_name, ' ', af.last_name) as patient_name,
+                CONCAT(af.first_name, ' ', af.last_name) as affiliate_name,
                 COALESCE(u.name, 'Sistema') as operator_name,
                 e.name as eps_name
             ")
@@ -123,7 +123,7 @@ class CommunicationsController extends Controller
 
             return $this->csvResponse(
                 filename: "comunicaciones_{$filters['from']}_{$filters['to']}.csv",
-                headers: ['created_at', 'channel', 'type', 'status', 'category', 'appointment_id', 'patient', 'eps', 'operator', 'recipient', 'message', 'error'],
+                headers: ['created_at', 'channel', 'type', 'status', 'category', 'appointment_id', 'affiliate', 'eps', 'operator', 'recipient', 'message', 'error'],
                 rows: $all->map(fn ($r) => [
                     $r->created_at,
                     $r->channel,
@@ -131,7 +131,7 @@ class CommunicationsController extends Controller
                     $r->status,
                     $r->category,
                     $r->appointment_id,
-                    $r->patient_name,
+                    $r->affiliate_name,
                     $r->eps_name,
                     $r->operator_name,
                     $r->recipient,

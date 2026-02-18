@@ -4,7 +4,6 @@ namespace App\Modules\AdminWhatsApp\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Appointments\Models\Reminder;
-use App\Modules\Patients\Models\Eps;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,7 +13,7 @@ class WhatsAppSendsController extends Controller
     public function index(Request $request): Response
     {
         $query = Reminder::query()
-            ->with(['appointment.patient.eps'])
+            ->with(['appointment.affiliate.socialSecurityProfile.eps'])
             ->where('channel', Reminder::CHANNEL_WHATSAPP)
             ->orderByDesc('created_at');
 
@@ -34,7 +33,8 @@ class WhatsAppSendsController extends Controller
 
         $items = $query->paginate($request->integer('per_page', 20))->withQueryString()->through(function (Reminder $r) {
             $apt = $r->appointment;
-            $patient = $apt?->patient;
+            $affiliate = $apt?->affiliate;
+            $eps = $affiliate?->socialSecurityProfile?->eps;
             return [
                 'id' => $r->id,
                 'type' => $r->type,
@@ -52,10 +52,10 @@ class WhatsAppSendsController extends Controller
                 'created_at_formatted' => $r->created_at?->format('d/m/Y H:i'),
                 'error_message' => $r->error_message,
                 'appointment_id' => $apt?->id,
-                'patient' => $patient ? [
-                    'id' => $patient->id,
-                    'full_name' => $patient->full_name,
-                    'eps' => $patient->relationLoaded('eps') && $patient->eps ? ['id' => $patient->eps->id, 'name' => $patient->eps->name] : null,
+                'affiliate' => $affiliate ? [
+                    'id' => $affiliate->id,
+                    'full_name' => $affiliate->full_name,
+                    'eps' => $eps ? ['id' => $eps->id, 'name' => $eps->name] : null,
                 ] : null,
             ];
         });

@@ -41,8 +41,8 @@ class ReminderTemplate
      */
     public function templateParameters(Appointment $appointment): array
     {
-        $patient = $appointment->patient;
-        $firstName = trim((string) ($patient->first_name ?? ''));
+        $affiliate = $appointment->affiliate;
+        $firstName = trim((string) ($affiliate->first_name ?? ''));
 
         $typeDesc = $appointment->type->value === 'specialist' && $appointment->specialty
             ? "especialista ({$appointment->specialty})"

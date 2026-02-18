@@ -145,7 +145,7 @@ async function cancelSend(reminderId) {
                                     </Link>
                                     <span v-else class="text-gray-400">—</span>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.patient?.full_name || '—' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.affiliate?.full_name || '—' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-600">{{ r.recipient || '—' }}</td>
                                 <td class="px-6 py-4 text-sm">
                                     <button

@@ -113,8 +113,8 @@ const csvUrl = computed(() => {
                                     </Link>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.operator?.name || '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.patient?.full_name || '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.patient?.eps?.name || '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.affiliate?.full_name || '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ r.affiliate?.eps?.name || '-' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ r.created_at_formatted || r.created_at }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700 whitespace-pre-line">{{ r.note }}</td>
                             </tr>

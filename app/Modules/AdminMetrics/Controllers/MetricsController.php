@@ -191,7 +191,7 @@ class MetricsController extends Controller
                     'id' => $ar->assignee->id,
                     'name' => $ar->assignee->name,
                 ] : null,
-                'patient' => $affiliate ? [
+                'affiliate' => $affiliate ? [
                     'id' => $affiliate->id,
                     'full_name' => $affiliate->full_name,
                     'eps' => $eps ? [
@@ -210,15 +210,15 @@ class MetricsController extends Controller
                 $r['request_id'],
                 $r['operator']['id'] ?? null,
                 $r['operator']['name'] ?? null,
-                $r['patient']['full_name'] ?? null,
-                $r['patient']['eps']['name'] ?? null,
+                $r['affiliate']['full_name'] ?? null,
+                $r['affiliate']['eps']['name'] ?? null,
                 $r['created_at'],
                 preg_replace("/\\s+/", ' ', (string) ($r['note'] ?? '')),
             ])->toArray();
 
             return $this->csvResponse(
                 filename: "anotaciones_{$from->toDateString()}_{$to->toDateString()}.csv",
-                headers: ['request_id', 'operator_id', 'operator_name', 'patient', 'eps', 'created_at', 'note'],
+                headers: ['request_id', 'operator_id', 'operator_name', 'affiliate', 'eps', 'created_at', 'note'],
                 rows: $rows,
             );
         }

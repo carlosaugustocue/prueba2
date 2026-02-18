@@ -44,7 +44,7 @@ class SendConfirmationJob implements ShouldQueue
             return;
         }
 
-        $recipient = $patient->getWhatsAppNumber();
+        $recipient = $affiliate->getWhatsAppNumber();
 
         if (! $recipient) {
             Log::warning('Affiliate has no WhatsApp number', ['appointment_id' => $appointment->id, 'reminder_id' => $reminder->id]);
