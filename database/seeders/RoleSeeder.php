@@ -20,13 +20,13 @@ class RoleSeeder extends Seeder
                 'name' => 'supervisor',
                 'display_name' => 'Supervisor',
                 'description' => 'Puede ver reportes, historial y gestionar citas',
-                'permissions' => ['appointments.*', 'patients.*', 'reports.*'],
+                'permissions' => ['appointments.*', 'affiliates.*', 'reports.*'],
             ],
             [
                 'name' => 'agent',
                 'display_name' => 'Agente',
-                'description' => 'Puede gestionar citas y pacientes',
-                'permissions' => ['appointments.view', 'appointments.create', 'appointments.update', 'patients.*'],
+                'description' => 'Puede gestionar citas y afiliados',
+                'permissions' => ['appointments.view', 'appointments.create', 'appointments.update', 'affiliates.*'],
             ],
         ];
 

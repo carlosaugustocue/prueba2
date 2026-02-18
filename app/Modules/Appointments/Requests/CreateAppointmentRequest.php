@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
-use App\Modules\Patients\Models\Patient;
+use App\Modules\Patients\Models\Affiliate;
 
 class CreateAppointmentRequest extends FormRequest
 {
@@ -15,17 +15,17 @@ class CreateAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => [
+            'affiliate_id' => [
                 'required',
-                'exists:patients,id',
+                'exists:affiliates,id',
                 function ($attribute, $value, $fail) {
-                    $patient = Patient::find($value);
-                    if (! $patient) {
+                    $affiliate = Affiliate::find($value);
+                    if (! $affiliate) {
                         return;
                     }
-                    $status = strtoupper(trim((string) ($patient->status ?? '')));
+                    $status = strtoupper(trim((string) ($affiliate->status ?? '')));
                     if ($status === 'INACTIVO' || $status === 'SUSPENDIDO') {
-                        $fail('No se pueden crear citas para un paciente inactivo o suspendido.');
+                        $fail('No se pueden crear citas para un afiliado inactivo o suspendido.');
                     }
                 },
             ],
@@ -54,8 +54,8 @@ class CreateAppointmentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'patient_id.required' => 'Debe seleccionar un paciente.',
-            'patient_id.exists' => 'El paciente seleccionado no es válido.',
+            'affiliate_id.required' => 'Debe seleccionar un afiliado.',
+            'affiliate_id.exists' => 'El afiliado seleccionado no es válido.',
             'type.required' => 'Debe seleccionar el tipo de cita.',
             'priority.required' => 'Debe seleccionar la prioridad.',
             'specialty.required_if' => 'Cuando el tipo es Especialista, debe indicar la especialidad.',

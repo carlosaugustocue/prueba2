@@ -4,7 +4,7 @@ namespace App\Modules\Appointments\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Modules\Patients\Resources\PatientResource;
+use App\Modules\Patients\Resources\AffiliateResource;
 use App\Modules\Appointments\Enums\AppointmentStatus;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
@@ -143,7 +143,7 @@ class AppointmentResource extends JsonResource
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
-            'patient_id' => $this->patient_id,
+            'affiliate_id' => $this->affiliate_id,
             
             // Tipo
             'type' => $typeEnum?->value ?? $typeValue,
@@ -194,28 +194,28 @@ class AppointmentResource extends JsonResource
                 'label' => $s->label()
             ])->toArray() : [],
             
-            // Relaciones - Patient (nombre completo: todos los nombres y apellidos)
-            'patient' => $this->whenLoaded('patient', function() {
-                $p = $this->patient;
+            // Relaciones - Affiliate (nombre completo: todos los nombres y apellidos)
+            'affiliate' => $this->whenLoaded('affiliate', function () {
+                $a = $this->affiliate;
                 return [
-                    'id' => $p->id,
-                    'uuid' => $p->uuid,
-                    'document_type' => $p->getRawOriginal('document_type'),
-                    'document_type_abbreviation' => strtoupper($p->getRawOriginal('document_type') ?? ''),
-                    'document_number' => $p->document_number,
-                    'first_name' => $p->first_name,
-                    'second_name' => $p->second_name,
-                    'last_name' => $p->last_name,
-                    'second_last_name' => $p->second_last_name,
-                    'full_name' => $p->full_name,
-                    'phone' => $p->phone,
-                    'whatsapp' => $p->whatsapp,
-                    'whatsapp_number' => $p->getWhatsAppNumber(),
-                    'email' => $p->email,
-                    'eps' => $p->relationLoaded('eps') && $p->eps ? [
-                        'id' => $p->eps->id,
-                        'name' => $p->eps->name,
-                        'code' => $p->eps->code,
+                    'id' => $a->id,
+                    'uuid' => $a->uuid,
+                    'document_type' => $a->getRawOriginal('document_type'),
+                    'document_type_abbreviation' => strtoupper($a->getRawOriginal('document_type') ?? ''),
+                    'document_number' => $a->document_number,
+                    'first_name' => $a->first_name,
+                    'second_name' => $a->second_name,
+                    'last_name' => $a->last_name,
+                    'second_last_name' => $a->second_last_name,
+                    'full_name' => $a->full_name,
+                    'phone' => $a->phone,
+                    'whatsapp' => $a->whatsapp,
+                    'whatsapp_number' => $a->getWhatsAppNumber(),
+                    'email' => $a->email,
+                    'eps' => $a->relationLoaded('socialSecurityProfile') && $a->socialSecurityProfile?->eps ? [
+                        'id' => $a->socialSecurityProfile->eps->id,
+                        'name' => $a->socialSecurityProfile->eps->name,
+                        'code' => $a->socialSecurityProfile->eps->code,
                     ] : null,
                 ];
             }),

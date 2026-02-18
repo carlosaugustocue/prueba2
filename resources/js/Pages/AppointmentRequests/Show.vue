@@ -24,7 +24,7 @@ const props = defineProps({
 const currentUserId = computed(() => page.props.auth?.user?.id);
 
 const request = computed(() => props.appointmentRequest?.data || props.appointmentRequest || {});
-const patient = computed(() => request.value.patient || {});
+const affiliate = computed(() => request.value.affiliate || {});
 const notes = computed(() => request.value.notes || []);
 
 const newNoteDraft = ref('');
@@ -366,45 +366,45 @@ const statusIcon = (status) => {
 
                 <!-- Columna derecha -->
                 <div class="space-y-6">
-                    <!-- Paciente -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <!-- Afiliado -->
+                    <div v-if="request.affiliate && (request.affiliate.id || request.affiliate.full_name)" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                             <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
                                 <User class="h-5 w-5 text-brand-600" />
-                                Paciente
+                                Afiliado
                             </h2>
                         </div>
                         <div class="p-6">
                             <div class="flex items-center gap-4 mb-4">
                                 <div class="h-14 w-14 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
-                                    <span class="text-brand-700 font-bold text-xl">{{ patient.first_name?.charAt(0) }}{{ patient.last_name?.charAt(0) }}</span>
+                                    <span class="text-brand-700 font-bold text-xl">{{ affiliate?.first_name?.charAt(0) }}{{ affiliate?.last_name?.charAt(0) }}</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-lg font-semibold text-gray-900 truncate">{{ patient.full_name }}</p>
-                                    <p class="text-sm text-gray-600">{{ patient.document_type_abbreviation }} {{ patient.document_number }}</p>
+                                    <p class="text-lg font-semibold text-gray-900 truncate">{{ affiliate?.full_name }}</p>
+                                    <p class="text-sm text-gray-600">{{ affiliate?.document_type_abbreviation }} {{ affiliate?.document_number }}</p>
                                 </div>
                             </div>
 
                             <dl class="space-y-3 text-sm">
-                                <div v-if="patient.eps?.name">
+                                <div v-if="affiliate?.eps?.name">
                                     <dt class="flex items-center gap-2 text-gray-500">
                                         <Building2 class="h-4 w-4" />
                                         EPS
                                     </dt>
-                                    <dd class="font-medium text-gray-900 ml-6">{{ patient.eps.name }}</dd>
+                                    <dd class="font-medium text-gray-900 ml-6">{{ affiliate.eps.name }}</dd>
                                 </div>
-                                <div v-if="patient.whatsapp_number || patient.phone">
+                                <div v-if="affiliate?.whatsapp_number || affiliate?.phone">
                                     <dt class="flex items-center gap-2 text-gray-500">
                                         <Phone class="h-4 w-4" />
                                         Teléfono
                                     </dt>
-                                    <dd class="font-medium text-gray-900 ml-6">{{ patient.whatsapp_number || patient.phone }}</dd>
+                                    <dd class="font-medium text-gray-900 ml-6">{{ affiliate?.whatsapp_number || affiliate?.phone }}</dd>
                                 </div>
                             </dl>
 
-                            <div class="mt-4 pt-4 border-t border-gray-200">
-                                <Link :href="`/patients/${patient.id}`" class="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium">
-                                    Ver perfil del paciente
+                            <div v-if="affiliate?.id" class="mt-4 pt-4 border-t border-gray-200">
+                                <Link :href="`/affiliates/${affiliate.id}`" class="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium">
+                                    Ver perfil del afiliado
                                     <ArrowRight class="h-4 w-4" />
                                 </Link>
                             </div>

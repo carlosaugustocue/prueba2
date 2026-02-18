@@ -31,8 +31,9 @@ class CommunicationsController extends Controller
         // Reminders (WhatsApp/email) como comunicaciones automáticas
         $remindersQuery = DB::table('reminders as r')
             ->join('appointments as a', 'a.id', '=', 'r.appointment_id')
-            ->join('patients as p', 'p.id', '=', 'a.patient_id')
-            ->leftJoin('eps as e', 'e.id', '=', 'p.eps_id')
+            ->join('affiliates as af', 'af.id', '=', 'a.affiliate_id')
+            ->leftJoin('social_security_profiles as ssp', 'ssp.affiliate_id', '=', 'af.id')
+            ->leftJoin('eps as e', 'e.id', '=', 'ssp.eps_id')
             ->leftJoin('users as u', 'u.id', '=', 'a.created_by')
             ->selectRaw("
                 r.id as id,
@@ -47,7 +48,7 @@ class CommunicationsController extends Controller
                 r.sent_at as sent_at,
                 r.created_at as created_at,
                 a.id as appointment_id,
-                CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                CONCAT(af.first_name, ' ', af.last_name) as patient_name,
                 COALESCE(u.name, 'Sistema') as operator_name,
                 e.name as eps_name
             ")
@@ -57,8 +58,9 @@ class CommunicationsController extends Controller
         // Phone communications manuales
         $phonesQuery = DB::table('appointment_communications as ac')
             ->join('appointments as a', 'a.id', '=', 'ac.appointment_id')
-            ->join('patients as p', 'p.id', '=', 'a.patient_id')
-            ->leftJoin('eps as e', 'e.id', '=', 'p.eps_id')
+            ->join('affiliates as af', 'af.id', '=', 'a.affiliate_id')
+            ->leftJoin('social_security_profiles as ssp', 'ssp.affiliate_id', '=', 'af.id')
+            ->leftJoin('eps as e', 'e.id', '=', 'ssp.eps_id')
             ->leftJoin('users as u', 'u.id', '=', 'ac.user_id')
             ->selectRaw("
                 ac.id as id,
@@ -73,7 +75,7 @@ class CommunicationsController extends Controller
                 NULL as sent_at,
                 ac.created_at as created_at,
                 a.id as appointment_id,
-                CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                CONCAT(af.first_name, ' ', af.last_name) as patient_name,
                 COALESCE(u.name, 'Sistema') as operator_name,
                 e.name as eps_name
             ")
@@ -82,8 +84,8 @@ class CommunicationsController extends Controller
 
         // Aplicar filtros comunes
         if ($filters['eps_id']) {
-            $remindersQuery->where('p.eps_id', $filters['eps_id']);
-            $phonesQuery->where('p.eps_id', $filters['eps_id']);
+            $remindersQuery->where('ssp.eps_id', $filters['eps_id']);
+            $phonesQuery->where('ssp.eps_id', $filters['eps_id']);
         }
 
         if ($filters['operator_id']) {

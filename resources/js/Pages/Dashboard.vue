@@ -77,7 +77,7 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
                                         <span class="text-brand-700 font-medium text-sm">{{ appointment.appointment_time || '--:--' }}</span>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-medium text-gray-900">{{ appointment.patient?.full_name }}</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ appointment.affiliate?.full_name }}</p>
                                         <p class="text-sm text-gray-500">{{ appointment.type_label }} • {{ appointment.patient?.eps?.name }}</p>
                                     </div>
                                 </div>
@@ -111,10 +111,10 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
                                 <div class="flex items-center justify-between gap-4">
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-gray-900 truncate">
-                                            Solicitud #{{ r.id }} • {{ r.patient?.full_name }}
+                                            Solicitud #{{ r.id }} • {{ r.affiliate?.full_name }}
                                         </p>
                                         <p class="text-sm text-gray-500 truncate">
-                                            {{ r.type_label }} • {{ r.patient?.eps?.name || 'Sin EPS' }}
+                                            {{ r.type_label }} • {{ r.affiliate?.eps?.name || 'Sin EPS' }}
                                         </p>
                                     </div>
                                     <span :class="[r.priority_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap']">
@@ -145,7 +145,7 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
                             </Link>
                             <Link href="/patients/create" class="flex items-center p-3 rounded-lg bg-accent-500/10 text-brand-700 hover:bg-accent-500/20 transition-colors">
                                 <UserPlus class="h-5 w-5" />
-                                <span class="ml-3 font-medium">Nuevo Paciente</span>
+                                <span class="ml-3 font-medium">Nuevo Afiliado</span>
                             </Link>
                             <Link href="/appointments" class="flex items-center p-3 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
                                 <CalendarCheck class="h-5 w-5" />

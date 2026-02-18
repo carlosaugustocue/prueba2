@@ -19,7 +19,7 @@ class AppointmentService
 {
     public function search(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Appointment::query()->with(['patient.eps', 'creator', 'assignee']);
+        $query = Appointment::query()->with(['affiliate.socialSecurityProfile.eps', 'creator', 'assignee']);
 
         if (! empty($filters['search'])) {
             $query->search($filters['search']);
@@ -33,8 +33,8 @@ class AppointmentService
         if (! empty($filters['type'])) {
             $query->where('type', $filters['type']);
         }
-        if (! empty($filters['patient_id'])) {
-            $query->where('patient_id', $filters['patient_id']);
+        if (! empty($filters['affiliate_id'])) {
+            $query->where('affiliate_id', $filters['affiliate_id']);
         }
         if (! empty($filters['today'])) {
             $query->today();
@@ -50,7 +50,7 @@ class AppointmentService
     public function getTodayAppointments(): Collection
     {
         return Appointment::query()
-            ->with(['patient.eps'])
+            ->with(['affiliate.socialSecurityProfile.eps'])
             ->today()
             ->confirmed()
             ->orderBy('appointment_time')
@@ -71,7 +71,7 @@ class AppointmentService
     public function getInProgressRequests(int $limit = 10): Collection
     {
         return AppointmentRequest::query()
-            ->with(['patient.eps', 'assignee'])
+            ->with(['affiliate.socialSecurityProfile.eps', 'assignee'])
             ->where('status', 'in_progress')
             ->orderByDesc('started_at')
             ->limit($limit)
@@ -165,13 +165,13 @@ class AppointmentService
      */
     protected function queueWhatsAppConfirmation(Appointment $appointment, bool $force = false): void
     {
-        $appointment->loadMissing('patient');
+        $appointment->loadMissing('affiliate');
 
         if (! $force && $appointment->confirmation_sent_at) {
             return;
         }
 
-        $recipient = $appointment->patient?->getWhatsAppNumber();
+        $recipient = $appointment->affiliate?->getWhatsAppNumber();
         if (! $recipient) {
             return;
         }
@@ -207,13 +207,13 @@ class AppointmentService
     protected function scheduleWhatsAppReminderMorning(Appointment $appointment, bool $reschedule = false): void
     {
         $appointment->refresh();
-        $appointment->loadMissing('patient');
+        $appointment->loadMissing('affiliate');
 
         if (! $appointment->appointment_date || ! $appointment->appointment_time) {
             return;
         }
 
-        $recipient = $appointment->patient?->getWhatsAppNumber();
+        $recipient = $appointment->affiliate?->getWhatsAppNumber();
         if (! $recipient) {
             // Sin WhatsApp: no se programa recordatorio automático
             return;
@@ -286,6 +286,6 @@ class AppointmentService
 
     public function getWithDetails(Appointment $appointment): Appointment
     {
-        return $appointment->load(['patient.eps', 'patient.holder', 'creator', 'assignee', 'history.user', 'reminders', 'communications.user']);
+        return $appointment->load(['affiliate.socialSecurityProfile.eps', 'affiliate.holder', 'creator', 'assignee', 'history.user', 'reminders', 'communications.user']);
     }
 }

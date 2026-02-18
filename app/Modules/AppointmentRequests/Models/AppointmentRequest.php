@@ -18,7 +18,7 @@ class AppointmentRequest extends Model
 
     protected $fillable = [
         'uuid',
-        'patient_id',
+        'affiliate_id',
         'type',
         'priority',
         'specialty',
@@ -37,9 +37,9 @@ class AppointmentRequest extends Model
     protected array $searchable = [
         'specialty',
         'client_notes',
-        'patient.first_name',
-        'patient.last_name',
-        'patient.document_number',
+        'affiliate.first_name',
+        'affiliate.last_name',
+        'affiliate.document_number',
     ];
 
     protected function casts(): array
@@ -56,9 +56,9 @@ class AppointmentRequest extends Model
 
     // ==================== RELACIONES ====================
 
-    public function patient(): BelongsTo
+    public function affiliate(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Patients\Models\Patient::class);
+        return $this->belongsTo(\App\Modules\Patients\Models\Affiliate::class);
     }
 
     public function appointment(): BelongsTo

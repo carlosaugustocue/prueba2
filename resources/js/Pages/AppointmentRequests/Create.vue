@@ -19,15 +19,15 @@ const props = defineProps({
 });
 
 const form = useForm({
-    patient_id: '',
+    affiliate_id: '',
     type: 'general',
     priority: 'medium',
     specialty: '',
     client_notes: '',
 });
 
-const isPatientActive = (patient) => {
-    const s = (patient?.status || '').toString().toUpperCase();
+const isAffiliateActive = (affiliate) => {
+    const s = (affiliate?.status || '').toString().toUpperCase();
     return s === '' || s === 'ACTIVO';
 };
 
@@ -41,8 +41,8 @@ const patientStatusBadge = (status) => {
 
 const missingFields = computed(() => {
     const list = [];
-    if (!form.patient_id) list.push('Paciente');
-    else if (selectedPatient.value && !isPatientActive(selectedPatient.value)) list.push('El paciente seleccionado está inactivo o suspendido; no puede solicitar cita.');
+    if (!form.affiliate_id) list.push('Afiliado');
+    else if (selectedAffiliate.value && !isAffiliateActive(selectedAffiliate.value)) list.push('El afiliado seleccionado está inactivo o suspendido; no puede solicitar cita.');
     if (!form.type) list.push('Tipo de cita');
     if (String(form.type || '') === 'specialist' && !String(form.specialty || '').trim()) list.push('Especialidad');
     return list;
@@ -70,16 +70,16 @@ const priorityConfig = {
     low: { color: 'green', icon: Check },
 };
 
-// Búsqueda de pacientes
-const patientSearch = ref('');
-const patientResults = ref([]);
-const selectedPatient = ref(null);
+// Búsqueda de afiliados
+const affiliateSearch = ref('');
+const affiliateResults = ref([]);
+const selectedAffiliate = ref(null);
 const isSearching = ref(false);
 const showNoResults = ref(false);
 
-const searchPatients = async () => {
-    if (patientSearch.value.length < 2) {
-        patientResults.value = [];
+const searchAffiliates = async () => {
+    if (affiliateSearch.value.length < 2) {
+        affiliateResults.value = [];
         showNoResults.value = false;
         return;
     }
@@ -88,47 +88,47 @@ const searchPatients = async () => {
     showNoResults.value = false;
     
     try {
-        const response = await axios.get('/api/patients/search', {
-            params: { term: patientSearch.value }
+        const response = await axios.get('/api/affiliates/search', {
+            params: { term: affiliateSearch.value }
         });
-        patientResults.value = response.data.data || response.data || [];
-        showNoResults.value = patientResults.value.length === 0;
+        affiliateResults.value = response.data.data || response.data || [];
+        showNoResults.value = affiliateResults.value.length === 0;
     } catch (error) {
         console.error(error);
-        patientResults.value = [];
+        affiliateResults.value = [];
     } finally {
         isSearching.value = false;
     }
 };
 
-const selectPatient = (patient) => {
-    if (!isPatientActive(patient)) {
+const selectAffiliate = (affiliate) => {
+    if (!isAffiliateActive(affiliate)) {
         alertDialog({
-            title: 'Paciente no disponible',
-            text: 'Este paciente está ' + (patient.status === 'SUSPENDIDO' ? 'suspendido' : 'inactivo') + '. No se pueden crear solicitudes de cita para pacientes inactivos o suspendidos.',
+            title: 'Afiliado no disponible',
+            text: 'Este afiliado está ' + (affiliate.status === 'SUSPENDIDO' ? 'suspendido' : 'inactivo') + '. No se pueden crear solicitudes de cita para afiliados inactivos o suspendidos.',
             icon: 'warning',
         });
         return;
     }
-    selectedPatient.value = patient;
-    form.patient_id = patient.id;
-    patientSearch.value = '';
-    patientResults.value = [];
+    selectedAffiliate.value = affiliate;
+    form.affiliate_id = affiliate.id;
+    affiliateSearch.value = '';
+    affiliateResults.value = [];
     showNoResults.value = false;
 };
 
-const clearPatient = () => {
-    selectedPatient.value = null;
-    form.patient_id = '';
+const clearAffiliate = () => {
+    selectedAffiliate.value = null;
+    form.affiliate_id = '';
 };
 
 let searchTimeout;
-watch(patientSearch, () => {
-    if (!selectedPatient.value && patientSearch.value.length >= 2) {
+watch(affiliateSearch, () => {
+    if (!selectedAffiliate.value && affiliateSearch.value.length >= 2) {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(searchPatients, 400);
-    } else if (patientSearch.value.length < 2) {
-        patientResults.value = [];
+        searchTimeout = setTimeout(searchAffiliates, 400);
+    } else if (affiliateSearch.value.length < 2) {
+        affiliateResults.value = [];
         showNoResults.value = false;
     }
 });
@@ -176,32 +176,32 @@ const submit = () => {
                     </h2>
 
                     <!-- Paciente seleccionado -->
-                    <div v-if="selectedPatient" :class="[
+                    <div v-if="selectedAffiliate" :class="[
                         'rounded-xl p-4 border',
-                        isPatientActive(selectedPatient)
+                        isAffiliateActive(selectedAffiliate)
                             ? 'bg-brand-50 border-brand-200'
                             : 'bg-red-50 border-red-200'
                     ]">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="h-12 w-12 rounded-full flex items-center justify-center" :class="isPatientActive(selectedPatient) ? 'bg-brand-100' : 'bg-red-100'">
-                                    <span :class="isPatientActive(selectedPatient) ? 'text-brand-700 font-bold' : 'text-red-700 font-bold'">{{ selectedPatient.first_name?.charAt(0) }}{{ selectedPatient.last_name?.charAt(0) }}</span>
+                                <div class="h-12 w-12 rounded-full flex items-center justify-center" :class="isAffiliateActive(selectedAffiliate) ? 'bg-brand-100' : 'bg-red-100'">
+                                    <span :class="isAffiliateActive(selectedAffiliate) ? 'text-brand-700 font-bold' : 'text-red-700 font-bold'">{{ selectedAffiliate.first_name?.charAt(0) }}{{ selectedAffiliate.last_name?.charAt(0) }}</span>
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <p class="font-semibold text-gray-900">{{ selectedPatient.full_name }}</p>
-                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium', patientStatusBadge(selectedPatient.status).class]">
-                                            {{ patientStatusBadge(selectedPatient.status).label }}
+                                        <p class="font-semibold text-gray-900">{{ selectedAffiliate.full_name }}</p>
+                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium', patientStatusBadge(selectedAffiliate.status).class]">
+                                            {{ patientStatusBadge(selectedAffiliate.status).label }}
                                         </span>
                                     </div>
-                                    <p class="text-sm text-gray-600">{{ selectedPatient.document_type_abbreviation }} {{ selectedPatient.document_number }}</p>
-                                    <p class="text-sm text-gray-500">{{ selectedPatient.whatsapp_number || selectedPatient.phone || 'Sin teléfono' }}</p>
-                                    <p v-if="!isPatientActive(selectedPatient)" class="text-sm text-red-700 font-medium mt-1">
+                                    <p class="text-sm text-gray-600">{{ selectedAffiliate.document_type_abbreviation }} {{ selectedAffiliate.document_number }}</p>
+                                    <p class="text-sm text-gray-500">{{ selectedAffiliate.whatsapp_number || selectedAffiliate.phone || 'Sin teléfono' }}</p>
+                                    <p v-if="!isAffiliateActive(selectedAffiliate)" class="text-sm text-red-700 font-medium mt-1">
                                         No se pueden crear solicitudes de cita para este paciente.
                                     </p>
                                 </div>
                             </div>
-                            <button type="button" @click="clearPatient" class="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                            <button type="button" @click="clearAffiliate" class="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                 <X class="h-4 w-4" />
                                 Cambiar
                             </button>
@@ -216,40 +216,40 @@ const submit = () => {
                                 <Search v-else class="h-5 w-5 text-gray-400" />
                             </div>
                             <input 
-                                v-model="patientSearch" 
+                                v-model="affiliateSearch" 
                                 type="text" 
                                 placeholder="Buscar por nombre o documento..." 
                                 class="block w-full pl-12 pr-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                             />
                         </div>
 
-                        <div v-if="patientResults.length > 0" class="bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-auto">
+                        <div v-if="affiliateResults.length > 0" class="bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-auto">
                             <button 
-                                v-for="patient in patientResults" 
-                                :key="patient.id" 
+                                v-for="affiliate in affiliateResults" 
+                                :key="affiliate.id" 
                                 type="button" 
-                                @click="selectPatient(patient)"
+                                @click="selectAffiliate(affiliate)"
                                 :class="[
                                     'w-full px-4 py-3 text-left border-b last:border-0 flex items-center gap-3 transition-colors',
-                                    isPatientActive(patient)
+                                    isAffiliateActive(affiliate)
                                         ? 'hover:bg-brand-50'
                                         : 'opacity-75 cursor-not-allowed hover:bg-gray-50'
                                 ]"
                             >
-                                <div class="h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0" :class="isPatientActive(patient) ? 'bg-gray-100' : 'bg-gray-200'">
-                                    <span class="text-gray-600 font-medium">{{ patient.first_name?.charAt(0) }}{{ patient.last_name?.charAt(0) }}</span>
+                                <div class="h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0" :class="isAffiliateActive(affiliate) ? 'bg-gray-100' : 'bg-gray-200'">
+                                    <span class="text-gray-600 font-medium">{{ affiliate.first_name?.charAt(0) }}{{ affiliate.last_name?.charAt(0) }}</span>
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <p class="font-medium text-gray-900 truncate">{{ patient.full_name }}</p>
-                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium flex-shrink-0', patientStatusBadge(patient.status).class]">
-                                            {{ patientStatusBadge(patient.status).label }}
+                                        <p class="font-medium text-gray-900 truncate">{{ affiliate.full_name }}</p>
+                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium flex-shrink-0', patientStatusBadge(affiliate.status).class]">
+                                            {{ patientStatusBadge(affiliate.status).label }}
                                         </span>
                                     </div>
-                                    <p class="text-sm text-gray-500">{{ patient.document_type_abbreviation }} {{ patient.document_number }}</p>
-                                    <p v-if="!isPatientActive(patient)" class="text-xs text-amber-600 mt-0.5">No puede solicitar cita</p>
+                                    <p class="text-sm text-gray-500">{{ affiliate.document_type_abbreviation }} {{ affiliate.document_number }}</p>
+                                    <p v-if="!isAffiliateActive(affiliate)" class="text-xs text-amber-600 mt-0.5">No puede solicitar cita</p>
                                 </div>
-                                <Check v-if="isPatientActive(patient)" class="h-5 w-5 text-brand-500 flex-shrink-0" />
+                                <Check v-if="isAffiliateActive(affiliate)" class="h-5 w-5 text-brand-500 flex-shrink-0" />
                             </button>
                         </div>
 
@@ -257,7 +257,7 @@ const submit = () => {
                             No se encontraron pacientes. Puede crear uno nuevo desde el módulo de pacientes.
                         </p>
                     </div>
-                    <p v-if="form.errors.patient_id" class="mt-2 text-sm text-red-600">{{ form.errors.patient_id }}</p>
+                    <p v-if="form.errors.affiliate_id" class="mt-2 text-sm text-red-600">{{ form.errors.affiliate_id }}</p>
                 </div>
 
                 <!-- Tipo de Cita -->

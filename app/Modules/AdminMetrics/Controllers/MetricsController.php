@@ -34,8 +34,9 @@ class MetricsController extends Controller
 
         $base = DB::table('appointment_requests as ar')
             ->leftJoin('users as u', 'u.id', '=', 'ar.assigned_to')
-            ->leftJoin('patients as p', 'p.id', '=', 'ar.patient_id')
-            ->leftJoin('eps as e', 'e.id', '=', 'p.eps_id')
+            ->leftJoin('affiliates as a', 'a.id', '=', 'ar.affiliate_id')
+            ->leftJoin('social_security_profiles as ssp', 'ssp.affiliate_id', '=', 'a.id')
+            ->leftJoin('eps as e', 'e.id', '=', 'ssp.eps_id')
             ->whereNotNull('ar.assigned_to')
             ->whereNotNull('ar.completed_at')
             ->whereBetween('ar.completed_at', [$from, $to])
@@ -55,7 +56,7 @@ class MetricsController extends Controller
             $base->where('ar.priority', $filters['priority']);
         }
         if ($filters['eps_id']) {
-            $base->where('p.eps_id', $filters['eps_id']);
+            $base->where('ssp.eps_id', $filters['eps_id']);
         }
 
         $rows = (clone $base)
@@ -154,7 +155,7 @@ class MetricsController extends Controller
         [$from, $to] = $this->dateRange($request);
 
         $query = AppointmentRequestNote::query()
-            ->with(['appointmentRequest.patient.eps', 'appointmentRequest.assignee', 'author'])
+            ->with(['appointmentRequest.affiliate.socialSecurityProfile.eps', 'appointmentRequest.assignee', 'author'])
             ->whereBetween('created_at', [$from, $to])
             ->orderByDesc('created_at');
 
@@ -169,12 +170,15 @@ class MetricsController extends Controller
 
         if ($request->filled('eps_id')) {
             $epsId = $request->integer('eps_id');
-            $query->whereHas('appointmentRequest.patient', fn ($q) => $q->where('eps_id', $epsId));
+            $query->whereHas('appointmentRequest.affiliate.socialSecurityProfile', fn ($q) => $q->where('eps_id', $epsId));
         }
 
         $items = $query->paginate(30)->withQueryString()->through(function (AppointmentRequestNote $n) {
             $ar = $n->appointmentRequest;
-            $p = $ar?->patient;
+            $affiliate = $ar?->affiliate;
+            $eps = $affiliate?->relationLoaded('socialSecurityProfile') && $affiliate->socialSecurityProfile?->relationLoaded('eps')
+                ? $affiliate->socialSecurityProfile->eps
+                : null;
             $author = $n->relationLoaded('author') && $n->author ? [
                 'id' => $n->author->id,
                 'name' => $n->author->name,
@@ -187,12 +191,12 @@ class MetricsController extends Controller
                     'id' => $ar->assignee->id,
                     'name' => $ar->assignee->name,
                 ] : null,
-                'patient' => $p ? [
-                    'id' => $p->id,
-                    'full_name' => $p->full_name,
-                    'eps' => $p->relationLoaded('eps') && $p->eps ? [
-                        'id' => $p->eps->id,
-                        'name' => $p->eps->name,
+                'patient' => $affiliate ? [
+                    'id' => $affiliate->id,
+                    'full_name' => $affiliate->full_name,
+                    'eps' => $eps ? [
+                        'id' => $eps->id,
+                        'name' => $eps->name,
                     ] : null,
                 ] : null,
                 'created_at' => $n->created_at?->format('Y-m-d H:i:s'),

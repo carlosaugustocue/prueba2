@@ -180,6 +180,8 @@ app/
 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Visión general y flujos del sistema
 - **[docs/VALIDACIONES.md](docs/VALIDACIONES.md)** — Validaciones implementadas y sugerencias
+- **[docs/PLAN_IMPLEMENTACION_SEGURIDAD_SOCIAL.md](docs/PLAN_IMPLEMENTACION_SEGURIDAD_SOCIAL.md)** — Plan paso a paso: refactor Pacientes → Afiliados y Módulo de Seguridad Social (arquitectura y desarrollo)
+- **[docs/mapeo_datasegura_a_base_de_datos.md](docs/mapeo_datasegura_a_base_de_datos.md)** — Mapeo DataSegura (Excel) → BD: affiliates, social_security_profiles, payers, novelties, operator_credentials (referencia obligatoria para ImportService y esquema)
 
 ## 📱 Configuración de WhatsApp
 

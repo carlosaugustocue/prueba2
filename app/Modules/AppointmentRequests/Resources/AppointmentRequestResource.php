@@ -25,7 +25,7 @@ class AppointmentRequestResource extends JsonResource
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
-            'patient_id' => $this->patient_id,
+            'affiliate_id' => $this->affiliate_id,
             
             // Tipo
             'type' => $typeEnum?->value ?? $typeValue,
@@ -89,25 +89,25 @@ class AppointmentRequestResource extends JsonResource
             'appointment_id' => $this->appointment_id,
             'has_appointment' => !is_null($this->appointment_id),
             
-            // Paciente
-            'patient' => $this->whenLoaded('patient', function() {
-                $p = $this->patient;
+            // Afiliado
+            'affiliate' => $this->whenLoaded('affiliate', function () {
+                $a = $this->affiliate;
                 return [
-                    'id' => $p->id,
-                    'uuid' => $p->uuid,
-                    'document_type_abbreviation' => strtoupper($p->getRawOriginal('document_type') ?? ''),
-                    'document_number' => $p->document_number,
-                    'first_name' => $p->first_name,
-                    'second_name' => $p->second_name,
-                    'last_name' => $p->last_name,
-                    'second_last_name' => $p->second_last_name,
-                    'full_name' => $p->full_name,
-                    'phone' => $p->phone,
-                    'whatsapp' => $p->whatsapp,
-                    'whatsapp_number' => $p->getWhatsAppNumber(),
-                    'eps' => $p->relationLoaded('eps') && $p->eps ? [
-                        'id' => $p->eps->id,
-                        'name' => $p->eps->name,
+                    'id' => $a->id,
+                    'uuid' => $a->uuid,
+                    'document_type_abbreviation' => strtoupper($a->getRawOriginal('document_type') ?? ''),
+                    'document_number' => $a->document_number,
+                    'first_name' => $a->first_name,
+                    'second_name' => $a->second_name,
+                    'last_name' => $a->last_name,
+                    'second_last_name' => $a->second_last_name,
+                    'full_name' => $a->full_name,
+                    'phone' => $a->phone,
+                    'whatsapp' => $a->whatsapp,
+                    'whatsapp_number' => $a->getWhatsAppNumber(),
+                    'eps' => $a->relationLoaded('socialSecurityProfile') && $a->socialSecurityProfile?->eps ? [
+                        'id' => $a->socialSecurityProfile->eps->id,
+                        'name' => $a->socialSecurityProfile->eps->name,
                     ] : null,
                 ];
             }),

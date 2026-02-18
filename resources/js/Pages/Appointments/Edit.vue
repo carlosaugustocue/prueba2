@@ -18,12 +18,11 @@ const props = defineProps({
 
 // Los datos vienen envueltos en "data" por el Resource
 const appointmentData = computed(() => props.appointment?.data || props.appointment || {});
-const patient = computed(() => appointmentData.value?.patient || {});
+const affiliate = computed(() => appointmentData.value?.affiliate || {});
 
-// Debug
 onMounted(() => {
     console.log('Appointment Data:', appointmentData.value);
-    console.log('Patient:', patient.value);
+    console.log('Affiliate:', affiliate.value);
 });
 
 // Inicializar el formulario con los valores del appointment
@@ -64,30 +63,30 @@ const submit = () => {
                 <h1 class="text-2xl font-bold text-gray-900">Editar Cita #{{ appointmentData.id }}</h1>
             </div>
 
-            <!-- Paciente (solo lectura) -->
+            <!-- Afiliado (solo lectura) -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
                         <div class="h-14 w-14 rounded-full bg-brand-100 flex items-center justify-center">
                             <span class="text-brand-700 font-bold text-xl">
-                                {{ patient.first_name?.charAt(0) || '?' }}{{ patient.last_name?.charAt(0) || '' }}
+                                {{ affiliate.first_name?.charAt(0) || '?' }}{{ affiliate.last_name?.charAt(0) || '' }}
                             </span>
                         </div>
                         <div>
                             <p class="text-lg font-semibold text-gray-900">
-                                {{ patient.full_name || 'Paciente no cargado' }}
+                                {{ affiliate.full_name || 'Afiliado no cargado' }}
                             </p>
                             <p class="text-sm text-gray-600">
-                                {{ patient.document_type_abbreviation || '' }} {{ patient.document_number || '' }}
+                                {{ affiliate.document_type_abbreviation || '' }} {{ affiliate.document_number || '' }}
                             </p>
                             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
                                 <span class="inline-flex items-center gap-1">
                                     <Building2 class="h-4 w-4 text-gray-400" />
-                                    {{ patient.eps?.name || 'Sin EPS' }}
+                                    {{ affiliate.eps?.name || 'Sin EPS' }}
                                 </span>
                                 <span class="inline-flex items-center gap-1">
                                     <Phone class="h-4 w-4 text-gray-400" />
-                                    {{ patient.whatsapp_number || patient.phone || 'Sin teléfono' }}
+                                    {{ affiliate.whatsapp_number || affiliate.phone || 'Sin teléfono' }}
                                 </span>
                             </div>
                         </div>

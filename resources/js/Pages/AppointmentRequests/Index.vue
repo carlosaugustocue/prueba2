@@ -213,7 +213,7 @@ const getPriorityClass = (priority) => {
                                         Solicitud #{{ request.id }}
                                     </span>
                                     <Link :href="`/appointment-requests/${request.id}`" class="font-semibold text-gray-900 hover:text-brand-600">
-                                        {{ request.patient?.full_name || 'Sin paciente' }}
+                                        {{ request.affiliate?.full_name || 'Sin afiliado' }}
                                     </Link>
                                     <span :class="[request.status_badge_class, 'px-2 py-0.5 rounded-full text-xs font-medium']">
                                         {{ request.status_label }}

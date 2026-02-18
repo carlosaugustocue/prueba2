@@ -23,7 +23,7 @@ class AppointmentRequestController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = AppointmentRequest::with(['patient.eps', 'assignee', 'appointment'])
+        $query = AppointmentRequest::with(['affiliate.socialSecurityProfile.eps', 'assignee', 'appointment'])
             ->orderByRaw("CASE 
                 WHEN status = 'pending' THEN 1 
                 WHEN status = 'in_progress' THEN 2 
@@ -50,7 +50,7 @@ class AppointmentRequestController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('patient', function ($q) use ($search) {
+            $query->whereHas('affiliate', function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('second_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
@@ -110,7 +110,7 @@ class AppointmentRequestController extends Controller
 
     public function show(AppointmentRequest $appointmentRequest): Response
     {
-        $appointmentRequest->load(['patient.eps', 'creator', 'assignee', 'appointment', 'notes.author']);
+        $appointmentRequest->load(['affiliate.socialSecurityProfile.eps', 'creator', 'assignee', 'appointment', 'notes.author']);
 
         return Inertia::render('AppointmentRequests/Show', [
             'appointmentRequest' => new AppointmentRequestResource($appointmentRequest),
@@ -137,7 +137,7 @@ class AppointmentRequestController extends Controller
      */
     public function createAppointment(AppointmentRequest $appointmentRequest): Response
     {
-        $appointmentRequest->load(['patient.eps']);
+        $appointmentRequest->load(['affiliate.socialSecurityProfile.eps']);
 
         // Si no está en progreso, iniciarla
         if ($appointmentRequest->status === RequestStatus::PENDING) {
@@ -153,17 +153,17 @@ class AppointmentRequestController extends Controller
             // Datos precargados de la solicitud
             'fromRequest' => [
                 'id' => $appointmentRequest->id,
-                'patient' => [
-                    'id' => $appointmentRequest->patient->id,
-                    'full_name' => $appointmentRequest->patient->full_name,
-                    'document_type_abbreviation' => $appointmentRequest->patient->document_type?->abbreviation(),
-                    'document_number' => $appointmentRequest->patient->document_number,
-                    'phone' => $appointmentRequest->patient->phone,
-                    'whatsapp' => $appointmentRequest->patient->whatsapp,
-                    'whatsapp_number' => $appointmentRequest->patient->getWhatsAppNumber(),
-                    'eps' => $appointmentRequest->patient->eps ? [
-                        'id' => $appointmentRequest->patient->eps->id,
-                        'name' => $appointmentRequest->patient->eps->name,
+                'affiliate' => [
+                    'id' => $appointmentRequest->affiliate->id,
+                    'full_name' => $appointmentRequest->affiliate->full_name,
+                    'document_type_abbreviation' => $appointmentRequest->affiliate->document_type?->abbreviation(),
+                    'document_number' => $appointmentRequest->affiliate->document_number,
+                    'phone' => $appointmentRequest->affiliate->phone,
+                    'whatsapp' => $appointmentRequest->affiliate->whatsapp,
+                    'whatsapp_number' => $appointmentRequest->affiliate->getWhatsAppNumber(),
+                    'eps' => $appointmentRequest->affiliate->socialSecurityProfile?->eps ? [
+                        'id' => $appointmentRequest->affiliate->socialSecurityProfile->eps->id,
+                        'name' => $appointmentRequest->affiliate->socialSecurityProfile->eps->name,
                     ] : null,
                 ],
                 'type' => $appointmentRequest->type->value,

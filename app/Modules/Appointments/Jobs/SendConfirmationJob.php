@@ -25,7 +25,7 @@ class SendConfirmationJob implements ShouldQueue
     public function handle(NotificationChannelInterface $notificationChannel): void
     {
         $reminder = Reminder::query()
-            ->with(['appointment.patient'])
+            ->with(['appointment.affiliate'])
             ->find($this->reminderId);
 
         if (! $reminder || ! $reminder->appointment) {
@@ -38,7 +38,7 @@ class SendConfirmationJob implements ShouldQueue
         }
 
         $appointment = $reminder->appointment;
-        $patient = $appointment->patient;
+        $affiliate = $appointment->affiliate;
 
         if (! $appointment->canSendConfirmation()) {
             return;
@@ -47,7 +47,7 @@ class SendConfirmationJob implements ShouldQueue
         $recipient = $patient->getWhatsAppNumber();
 
         if (! $recipient) {
-            Log::warning('Patient has no WhatsApp number', ['appointment_id' => $appointment->id, 'reminder_id' => $reminder->id]);
+            Log::warning('Affiliate has no WhatsApp number', ['appointment_id' => $appointment->id, 'reminder_id' => $reminder->id]);
             return;
         }
 

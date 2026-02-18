@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Documento interno de mapeo DataSegura (no commitear)
+docs/mapeo_datasegura_a_base_de_datos.md

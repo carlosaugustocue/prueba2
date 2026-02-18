@@ -103,9 +103,9 @@ const appointments = computed(() => props.appointments?.data || []);
                                     :href="`/appointments/${apt.id}`"
                                     class="text-sm font-medium text-gray-900 hover:text-brand-700 hover:underline underline-offset-2"
                                 >
-                                    {{ apt.patient?.full_name }}
+                                    {{ apt.affiliate?.full_name }}
                                 </Link>
-                                <div class="text-sm text-gray-500">{{ apt.patient?.document_type_abbreviation }} {{ apt.patient?.document_number }}</div>
+                                <div class="text-sm text-gray-500">{{ apt.affiliate?.document_type_abbreviation }} {{ apt.affiliate?.document_number }}</div>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-900">{{ apt.type_label }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ apt.formatted_datetime || 'Por definir' }}</td>

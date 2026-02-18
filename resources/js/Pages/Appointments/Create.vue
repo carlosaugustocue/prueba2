@@ -19,12 +19,12 @@ const props = defineProps({
     documentTypes: Array,
     patientTypes: Array,
     fromRequest: Object, // Datos precargados de una solicitud
-    preselectedPatient: Object, // Datos precargados desde perfil del paciente
+    preselectedAffiliate: Object, // Datos precargados desde perfil del afiliado
 });
 
 // Form principal de cita
 const form = useForm({
-    patient_id: props.fromRequest?.patient?.id || props.preselectedPatient?.data?.id || props.preselectedPatient?.id || '',
+    affiliate_id: props.fromRequest?.affiliate?.id || props.preselectedAffiliate?.data?.id || props.preselectedAffiliate?.id || '',
     type: props.fromRequest?.type || 'general',
     priority: props.fromRequest?.priority || 'medium',
     specialty: props.fromRequest?.specialty || '',
@@ -41,8 +41,8 @@ const form = useForm({
     appointment_request_id: props.fromRequest?.id || null,
 });
 
-// Si viene de una solicitud, precargar el paciente
-const selectedPatient = ref(props.fromRequest?.patient || (props.preselectedPatient?.data || props.preselectedPatient) || null);
+// Si viene de una solicitud o perfil, precargar el afiliado
+const selectedAffiliate = ref(props.fromRequest?.affiliate || (props.preselectedAffiliate?.data || props.preselectedAffiliate) || null);
 
 // Iconos para tipos de cita
 const typeIcons = {
@@ -131,16 +131,15 @@ const formattedSelectedDate = computed(() => {
     return `${dayNames[date.getDay()]} ${day} de ${monthNames[date.getMonth()]}`;
 });
 
-// Búsqueda de pacientes
-const patientSearch = ref('');
-const patientResults = ref([]);
-// selectedPatient ya está definido arriba (puede venir de fromRequest)
+// Búsqueda de afiliados
+const affiliateSearch = ref('');
+const affiliateResults = ref([]);
 const isSearching = ref(false);
 const showNoResults = ref(false);
 
-// Modal para crear nuevo paciente
-const showCreatePatientModal = ref(false);
-const patientForm = useForm({
+// Modal para crear nuevo afiliado
+const showCreateAffiliateModal = ref(false);
+const affiliateForm = useForm({
     document_type: 'cc',
     document_number: '',
     first_name: '',
@@ -152,9 +151,9 @@ const patientForm = useForm({
     patient_type: 'cotizante',
 });
 
-const searchPatients = async () => {
-    if (patientSearch.value.length < 2) { 
-        patientResults.value = []; 
+const searchAffiliates = async () => {
+    if (affiliateSearch.value.length < 2) { 
+        affiliateResults.value = []; 
         showNoResults.value = false;
         return; 
     }
@@ -163,94 +162,89 @@ const searchPatients = async () => {
     showNoResults.value = false;
     
     try {
-        const response = await axios.get('/api/patients/search', { 
-            params: { term: patientSearch.value } 
+        const response = await axios.get('/api/affiliates/search', { 
+            params: { term: affiliateSearch.value } 
         });
-        patientResults.value = response.data.data || response.data || [];
-        showNoResults.value = patientResults.value.length === 0;
+        affiliateResults.value = response.data.data || response.data || [];
+        showNoResults.value = affiliateResults.value.length === 0;
     } catch (error) { 
         console.error(error);
-        patientResults.value = [];
+        affiliateResults.value = [];
         showNoResults.value = true;
     } finally {
         isSearching.value = false;
     }
 };
 
-const selectPatient = (patient) => {
-    selectedPatient.value = patient;
-    form.patient_id = patient.id;
-    patientSearch.value = '';
-    patientResults.value = [];
+const selectAffiliate = (affiliate) => {
+    selectedAffiliate.value = affiliate;
+    form.affiliate_id = affiliate.id;
+    affiliateSearch.value = '';
+    affiliateResults.value = [];
     showNoResults.value = false;
 };
 
-const clearPatient = () => {
-    selectedPatient.value = null;
-    form.patient_id = '';
-    patientSearch.value = '';
-    patientResults.value = [];
+const clearAffiliate = () => {
+    selectedAffiliate.value = null;
+    form.affiliate_id = '';
+    affiliateSearch.value = '';
+    affiliateResults.value = [];
     showNoResults.value = false;
 };
 
-const openCreatePatientModal = () => {
-    // Pre-llenar con el término de búsqueda
-    const searchTerm = patientSearch.value.trim();
+const openCreateAffiliateModal = () => {
+    const searchTerm = affiliateSearch.value.trim();
     
-    // Si parece un número de documento
     if (/^\d+$/.test(searchTerm)) {
-        patientForm.document_number = searchTerm;
+        affiliateForm.document_number = searchTerm;
     } else {
-        // Si parece un nombre
         const parts = searchTerm.split(' ');
         if (parts.length >= 2) {
-            patientForm.first_name = parts[0];
-            patientForm.last_name = parts.slice(1).join(' ');
+            affiliateForm.first_name = parts[0];
+            affiliateForm.last_name = parts.slice(1).join(' ');
         } else {
-            patientForm.first_name = searchTerm;
+            affiliateForm.first_name = searchTerm;
         }
     }
     
-    showCreatePatientModal.value = true;
-    patientResults.value = [];
+    showCreateAffiliateModal.value = true;
+    affiliateResults.value = [];
     showNoResults.value = false;
 };
 
-const closeCreatePatientModal = () => {
-    showCreatePatientModal.value = false;
-    patientForm.reset();
-    patientForm.clearErrors();
+const closeCreateAffiliateModal = () => {
+    showCreateAffiliateModal.value = false;
+    affiliateForm.reset();
+    affiliateForm.clearErrors();
 };
 
-const createPatient = async () => {
+const createAffiliate = async () => {
     try {
-        const response = await axios.post('/api/patients', patientForm.data());
-        const newPatient = response.data.data || response.data;
-        
-        // Seleccionar el paciente recién creado
-        selectPatient(newPatient);
-        closeCreatePatientModal();
-        
+        const response = await axios.post('/api/affiliates', affiliateForm.data());
+        const newAffiliate = response.data.data || response.data;
+        if (newAffiliate?.id) {
+            selectAffiliate(newAffiliate);
+            closeCreateAffiliateModal();
+        }
     } catch (error) {
         if (error.response?.status === 422) {
-            // Errores de validación
             const errors = error.response.data.errors || {};
             Object.keys(errors).forEach(key => {
-                patientForm.setError(key, errors[key][0]);
+                affiliateForm.setError(key, errors[key][0]);
             });
         } else {
-            alertDialog({ title: 'Error', text: 'Error al crear el paciente. Intente nuevamente.', icon: 'error' });
+            alertDialog({ title: 'Error', text: 'Error al crear el afiliado. Intente nuevamente.', icon: 'error' });
         }
     }
 };
 
 let searchTimeout;
-watch(patientSearch, () => {
-    if (!selectedPatient.value && patientSearch.value.length >= 2) {
+watch(affiliateSearch, () => {
+    if (!selectedAffiliate.value && affiliateSearch.value.length >= 2) {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(searchPatients, 400);
-    } else if (patientSearch.value.length < 2) {
-        patientResults.value = [];
+        searchTimeout = setTimeout(searchAffiliates, 400);
+    } else if (affiliateSearch.value.length < 2) {
+        affiliateResults.value = [];
         showNoResults.value = false;
     }
 });
@@ -259,7 +253,7 @@ const requiresDetails = computed(() => props.types?.find(t => t.value === form.t
 
 const missingFields = computed(() => {
     const list = [];
-    if (!form.patient_id) list.push('Paciente');
+    if (!form.affiliate_id) list.push('Afiliado');
     if (!form.type) list.push('Tipo de cita');
     if (form.type === 'specialist' && !String(form.specialty || '').trim()) list.push('Especialidad');
     if (!form.appointment_date) list.push('Fecha de la cita');
@@ -317,26 +311,26 @@ const submit = () => {
                                 <User class="h-5 w-5 text-brand-600" />
                             </div>
                             <div>
-                                <h2 class="text-lg font-semibold text-gray-900">Paso 1: Buscar o Crear Paciente</h2>
+                                <h2 class="text-lg font-semibold text-gray-900">Paso 1: Buscar o Crear Afiliado</h2>
                                 <p class="text-sm text-gray-500">Busque por nombre, apellido o número de documento</p>
                             </div>
                         </div>
                     </div>
                     <div class="px-6 py-4 space-y-4">
                         <!-- Paciente seleccionado -->
-                        <div v-if="selectedPatient" class="bg-brand-50 border border-brand-200 rounded-xl p-4">
+                        <div v-if="selectedAffiliate" class="bg-brand-50 border border-brand-200 rounded-xl p-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-4">
                                     <div class="h-14 w-14 rounded-full bg-brand-100 flex items-center justify-center">
-                                        <span class="text-brand-700 font-bold text-lg">{{ selectedPatient.first_name?.charAt(0) }}{{ selectedPatient.last_name?.charAt(0) }}</span>
+                                        <span class="text-brand-700 font-bold text-lg">{{ selectedAffiliate.first_name?.charAt(0) }}{{ selectedAffiliate.last_name?.charAt(0) }}</span>
                                     </div>
                                     <div>
-                                        <p class="font-semibold text-gray-900 text-lg">{{ selectedPatient.full_name }}</p>
-                                        <p class="text-sm text-gray-600">{{ selectedPatient.document_type_abbreviation }} {{ selectedPatient.document_number }}</p>
-                                        <p class="text-sm text-gray-500">{{ selectedPatient.eps?.name }} • {{ selectedPatient.whatsapp_number || selectedPatient.phone || 'Sin teléfono' }}</p>
+                                        <p class="font-semibold text-gray-900 text-lg">{{ selectedAffiliate.full_name }}</p>
+                                        <p class="text-sm text-gray-600">{{ selectedAffiliate.document_type_abbreviation }} {{ selectedAffiliate.document_number }}</p>
+                                        <p class="text-sm text-gray-500">{{ selectedAffiliate.eps?.name }} • {{ selectedAffiliate.whatsapp_number || selectedAffiliate.phone || 'Sin teléfono' }}</p>
                                     </div>
                                 </div>
-                                <button type="button" @click="clearPatient" class="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors">
+                                <button type="button" @click="clearAffiliate" class="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors">
                                     <X class="h-4 w-4" />
                                     Cambiar
                                 </button>
@@ -359,20 +353,20 @@ const submit = () => {
                             </div>
 
                             <!-- Resultados de búsqueda -->
-                            <div v-if="patientResults.length > 0" class="bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-auto">
+                            <div v-if="affiliateResults.length > 0" class="bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-auto">
                                 <button 
-                                    v-for="patient in patientResults" 
-                                    :key="patient.id" 
+                                    v-for="patient in affiliateResults" 
+                                    :key="affiliate.id" 
                                     type="button" 
-                                    @click="selectPatient(patient)"
+                                    @click="selectAffiliate(affiliate)"
                                     class="w-full px-4 py-3 text-left hover:bg-brand-50 border-b last:border-0 flex items-center space-x-3 transition-colors"
                                 >
                                     <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                        <span class="text-gray-600 font-medium">{{ patient.first_name?.charAt(0) }}{{ patient.last_name?.charAt(0) }}</span>
+                                        <span class="text-gray-600 font-medium">{{ affiliate.first_name?.charAt(0) }}{{ affiliate.last_name?.charAt(0) }}</span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="font-medium text-gray-900 truncate">{{ patient.full_name }}</p>
-                                        <p class="text-sm text-gray-500">{{ patient.document_type_abbreviation }} {{ patient.document_number }} • {{ patient.eps?.name || 'Sin EPS' }}</p>
+                                        <p class="font-medium text-gray-900 truncate">{{ affiliate.full_name }}</p>
+                                        <p class="text-sm text-gray-500">{{ affiliate.document_type_abbreviation }} {{ affiliate.document_number }} • {{ affiliate.eps?.name || 'Sin EPS' }}</p>
                                     </div>
                                     <ChevronRight class="h-5 w-5 text-brand-500" />
                                 </button>
@@ -385,11 +379,11 @@ const submit = () => {
                                         <AlertTriangle class="h-6 w-6 text-amber-600" />
                                     </div>
                                     <div class="flex-1">
-                                        <p class="font-semibold text-amber-800">No se encontró ningún paciente</p>
+                                        <p class="font-semibold text-amber-800">No se encontró ningún afiliado</p>
                                         <p class="text-sm text-amber-700 mt-1">No hay resultados para "<strong>{{ patientSearch }}</strong>"</p>
                                         <button 
                                             type="button" 
-                                            @click="openCreatePatientModal"
+                                            @click="openCreateAffiliateModal"
                                             class="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
                                         >
                                             <UserPlus class="h-5 w-5" />
@@ -408,7 +402,7 @@ const submit = () => {
                 </div>
 
                 <!-- SECCIÓN DATOS DE LA CITA - REDISEÑADO -->
-                <div v-if="selectedPatient" class="space-y-6">
+                <div v-if="selectedAffiliate" class="space-y-6">
                     <!-- Header del Paso 2 -->
                     <div class="bg-gradient-to-r from-brand-500 to-brand-600 rounded-xl p-6 text-white">
                         <div class="flex items-center gap-3">
@@ -747,7 +741,7 @@ const submit = () => {
                 </div>
 
                 <!-- Opciones de envío -->
-                <div v-if="selectedPatient" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div v-if="selectedAffiliate" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <label class="flex items-start cursor-pointer group">
                         <div class="relative flex items-center">
                             <input v-model="form.send_confirmation" type="checkbox" class="sr-only peer" />
@@ -764,7 +758,7 @@ const submit = () => {
                 </div>
 
                 <!-- Botones -->
-                <div v-if="selectedPatient" class="flex flex-col sm:flex-row justify-end gap-4 pt-4">
+                <div v-if="selectedAffiliate" class="flex flex-col sm:flex-row justify-end gap-4 pt-4">
                     <Link href="/appointments" class="inline-flex items-center justify-center gap-2 px-6 py-3 font-medium rounded-xl bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors">
                         <X class="h-5 w-5" />
                         Cancelar
@@ -778,11 +772,11 @@ const submit = () => {
             </form>
         </div>
 
-        <!-- MODAL CREAR PACIENTE -->
-        <div v-if="showCreatePatientModal" class="fixed inset-0 z-50 overflow-y-auto">
+        <!-- MODAL CREAR AFILIADO -->
+        <div v-if="showCreateAffiliateModal" class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
                 <!-- Overlay -->
-                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeCreatePatientModal"></div>
+                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeCreateAffiliateModal"></div>
 
                 <!-- Modal -->
                 <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-auto z-10">
@@ -792,20 +786,20 @@ const submit = () => {
                                 <UserPlus class="h-6 w-6 text-brand-600" />
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-gray-900">Crear Nuevo Paciente</h3>
-                                <p class="text-sm text-gray-500">Complete la información del paciente</p>
+                                <h3 class="text-xl font-bold text-gray-900">Crear Nuevo Afiliado</h3>
+                                <p class="text-sm text-gray-500">Complete la información del afiliado</p>
                             </div>
                         </div>
-                        <button @click="closeCreatePatientModal" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button @click="closeCreateAffiliateModal" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                             <X class="h-5 w-5" />
                         </button>
                     </div>
 
-                    <form @submit.prevent="createPatient" class="p-6 space-y-6">
+                    <form @submit.prevent="createAffiliate" class="p-6 space-y-6">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de documento *</label>
-                                <select v-model="patientForm.document_type" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <select v-model="affiliateForm.document_type" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                     <option value="cc">Cédula de Ciudadanía</option>
                                     <option value="ti">Tarjeta de Identidad</option>
                                     <option value="ce">Cédula de Extranjería</option>
@@ -815,60 +809,60 @@ const submit = () => {
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Número de documento *</label>
-                                <input v-model="patientForm.document_number" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" :class="{'border-red-300 ring-red-100': patientForm.errors.document_number}" />
-                                <p v-if="patientForm.errors.document_number" class="mt-1 text-sm text-red-600">{{ patientForm.errors.document_number }}</p>
+                                <input v-model="affiliateForm.document_number" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" :class="{'border-red-300 ring-red-100': affiliateForm.errors.document_number}" />
+                                <p v-if="affiliateForm.errors.document_number" class="mt-1 text-sm text-red-600">{{ affiliateForm.errors.document_number }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Nombres *</label>
-                                <input v-model="patientForm.first_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" :class="{'border-red-300 ring-red-100': patientForm.errors.first_name}" />
-                                <p v-if="patientForm.errors.first_name" class="mt-1 text-sm text-red-600">{{ patientForm.errors.first_name }}</p>
+                                <input v-model="affiliateForm.first_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" :class="{'border-red-300 ring-red-100': affiliateForm.errors.first_name}" />
+                                <p v-if="affiliateForm.errors.first_name" class="mt-1 text-sm text-red-600">{{ affiliateForm.errors.first_name }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Apellidos *</label>
-                                <input v-model="patientForm.last_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" :class="{'border-red-300 ring-red-100': patientForm.errors.last_name}" />
-                                <p v-if="patientForm.errors.last_name" class="mt-1 text-sm text-red-600">{{ patientForm.errors.last_name }}</p>
+                                <input v-model="affiliateForm.last_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" :class="{'border-red-300 ring-red-100': affiliateForm.errors.last_name}" />
+                                <p v-if="affiliateForm.errors.last_name" class="mt-1 text-sm text-red-600">{{ affiliateForm.errors.last_name }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
-                                <input v-model="patientForm.phone" type="tel" placeholder="3001234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                                <input v-model="affiliateForm.phone" type="tel" placeholder="3001234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                             </div>
                             <div>
                                 <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                                     <MessageSquare class="h-4 w-4 text-green-500" />
                                     WhatsApp
                                 </label>
-                                <input v-model="patientForm.whatsapp" type="tel" placeholder="3001234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                                <input v-model="affiliateForm.whatsapp" type="tel" placeholder="3001234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">EPS *</label>
-                                <select v-model="patientForm.eps_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" :class="{'border-red-300 ring-red-100': patientForm.errors.eps_id}">
+                                <select v-model="affiliateForm.eps_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" :class="{'border-red-300 ring-red-100': affiliateForm.errors.eps_id}">
                                     <option value="">Seleccione...</option>
                                     <option v-for="eps in epsList" :key="eps.id" :value="eps.id">{{ eps.name }}</option>
                                 </select>
-                                <p v-if="patientForm.errors.eps_id" class="mt-1 text-sm text-red-600">{{ patientForm.errors.eps_id }}</p>
+                                <p v-if="affiliateForm.errors.eps_id" class="mt-1 text-sm text-red-600">{{ affiliateForm.errors.eps_id }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de afiliado *</label>
-                                <select v-model="patientForm.patient_type" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <select v-model="affiliateForm.patient_type" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                     <option value="cotizante">Cotizante</option>
                                     <option value="beneficiario">Beneficiario</option>
                                 </select>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Correo electrónico</label>
-                                <input v-model="patientForm.email" type="email" placeholder="paciente@email.com" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                                <input v-model="affiliateForm.email" type="email" placeholder="paciente@email.com" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                             </div>
                         </div>
 
                         <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
-                            <button type="button" @click="closeCreatePatientModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                            <button type="button" @click="closeCreateAffiliateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
                                 <X class="h-4 w-4" />
                                 Cancelar
                             </button>
-                            <button type="submit" :disabled="patientForm.processing" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 disabled:opacity-50 transition-colors">
-                                <Loader2 v-if="patientForm.processing" class="h-4 w-4 animate-spin" />
+                            <button type="submit" :disabled="affiliateForm.processing" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 disabled:opacity-50 transition-colors">
+                                <Loader2 v-if="affiliateForm.processing" class="h-4 w-4 animate-spin" />
                                 <Check v-else class="h-4 w-4" />
-                                {{ patientForm.processing ? 'Guardando...' : 'Crear Paciente' }}
+                                {{ affiliateForm.processing ? 'Guardando...' : 'Crear Afiliado' }}
                             </button>
                         </div>
                     </form>

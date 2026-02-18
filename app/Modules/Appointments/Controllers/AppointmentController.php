@@ -15,8 +15,8 @@ use App\Modules\Appointments\Enums\PhoneCommunicationCategory;
 use App\Modules\AppointmentRequests\Models\AppointmentRequest;
 use App\Modules\AppointmentRequests\Resources\AppointmentRequestResource;
 use App\Modules\Patients\Models\Eps;
-use App\Modules\Patients\Models\Patient;
-use App\Modules\Patients\Resources\PatientResource;
+use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Patients\Resources\AffiliateResource;
 use App\Modules\Patients\Enums\DocumentType;
 use App\Modules\Patients\Enums\PatientType;
 use Illuminate\Http\Request;
@@ -41,7 +41,7 @@ class AppointmentController extends Controller
     public function index(Request $request): Response
     {
         $appointments = $this->appointmentService->search(
-            $request->only(['search', 'status', 'priority', 'type', 'patient_id', 'today', 'active']),
+            $request->only(['search', 'status', 'priority', 'type', 'affiliate_id', 'today', 'active']),
             $request->integer('per_page', 15)
         );
 
@@ -56,11 +56,11 @@ class AppointmentController extends Controller
 
     public function create(Request $request): Response
     {
-        $preselectedPatient = null;
-        if ($request->filled('patient_id')) {
-            $patient = Patient::with('eps:id,name,code')->find($request->integer('patient_id'));
-            if ($patient) {
-                $preselectedPatient = new PatientResource($patient);
+        $preselectedAffiliate = null;
+        if ($request->filled('affiliate_id')) {
+            $affiliate = Affiliate::with('socialSecurityProfile.eps')->find($request->integer('affiliate_id'));
+            if ($affiliate) {
+                $preselectedAffiliate = new AffiliateResource($affiliate);
             }
         }
 
@@ -71,7 +71,7 @@ class AppointmentController extends Controller
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'documentTypes' => DocumentType::toArray(),
             'patientTypes' => PatientType::toArray(),
-            'preselectedPatient' => $preselectedPatient,
+            'preselectedAffiliate' => $preselectedAffiliate,
         ]);
     }
 

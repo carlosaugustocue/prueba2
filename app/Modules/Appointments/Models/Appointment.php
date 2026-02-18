@@ -19,7 +19,7 @@ class Appointment extends Model
     use SoftDeletes, HasUuid, Searchable;
 
     protected $fillable = [
-        'uuid', 'patient_id', 'created_by', 'assigned_to',
+        'uuid', 'affiliate_id', 'created_by', 'assigned_to',
         'appointment_request_id',
         'type', 'status', 'priority', 'specialty',
         'appointment_date', 'appointment_time', 'doctor_name',
@@ -30,8 +30,8 @@ class Appointment extends Model
 
     protected array $searchable = [
         'doctor_name', 'location_name', 'authorization_number',
-        'patient.first_name', 'patient.second_name', 'patient.last_name', 'patient.second_last_name',
-        'patient.document_number',
+        'affiliate.first_name', 'affiliate.second_name', 'affiliate.last_name', 'affiliate.second_last_name',
+        'affiliate.document_number',
     ];
 
     protected function casts(): array
@@ -51,9 +51,9 @@ class Appointment extends Model
         'created' => AppointmentCreated::class,
     ];
 
-    public function patient(): BelongsTo
+    public function affiliate(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Patients\Models\Patient::class);
+        return $this->belongsTo(\App\Modules\Patients\Models\Affiliate::class);
     }
 
     public function appointmentRequest(): BelongsTo

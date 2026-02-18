@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Modules\Patients\Models;
+namespace App\Modules\SocialSecurity\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Eps extends Model
+class Payer extends Model
 {
-    protected $table = 'eps';
-
     protected $fillable = [
         'name',
-        'code',
+        'document_type',
+        'document_number',
+        'address',
         'phone',
         'email',
+        'contact_person',
         'is_active',
     ];
 
@@ -26,11 +27,6 @@ class Eps extends Model
 
     public function socialSecurityProfiles(): HasMany
     {
-        return $this->hasMany(\App\Modules\SocialSecurity\Models\SocialSecurityProfile::class);
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
+        return $this->hasMany(SocialSecurityProfile::class, 'payer_id');
     }
 }

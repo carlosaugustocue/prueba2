@@ -14,7 +14,7 @@ const navigation = computed(() => {
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList },
         { name: 'Citas', href: '/appointments', icon: CalendarDays },
-        { name: 'Pacientes', href: '/patients', icon: Users },
+        { name: 'Afiliados', href: '/affiliates', icon: Users },
     ];
 
     if (user.value?.role === 'admin') {

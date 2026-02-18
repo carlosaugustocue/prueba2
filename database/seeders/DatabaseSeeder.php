@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             EpsSeeder::class,
             UserSeeder::class,
+            AffiliateWithBeneficiarySeeder::class,
         ]);
     }
 }
