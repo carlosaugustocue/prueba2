@@ -12,7 +12,20 @@ const props = defineProps({
     affiliate: Object,
 });
 
+/** Calcula la edad en años a partir de una fecha Y-m-d (o null). */
+function getAgeFromBirthDate(birthDateStr) {
+    if (!birthDateStr) return null;
+    const birth = new Date(birthDateStr);
+    if (Number.isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+}
+
 const affiliate = computed(() => props.affiliate?.data || props.affiliate || {});
+const affiliateAge = computed(() => getAgeFromBirthDate(affiliate.value?.birth_date));
 const isHolder = computed(() => affiliate.value.is_holder);
 const isBeneficiary = computed(() => affiliate.value.is_beneficiary);
 const beneficiaries = computed(() => affiliate.value.beneficiaries || []);
@@ -73,7 +86,7 @@ const isAffiliateActive = computed(() => {
                                 <p class="text-gray-600 mt-1">{{ affiliate.document_type_label || affiliate.document_type }} {{ affiliate.document_number }}</p>
                                 <div class="flex flex-wrap gap-4 mt-4">
                                     <span v-if="affiliate.gender" class="text-sm text-gray-500">{{ affiliate.gender === 'M' ? 'Masculino' : affiliate.gender === 'F' ? 'Femenino' : affiliate.gender }}</span>
-                                    <span v-if="affiliate.birth_date" class="text-sm text-gray-500">Nac. {{ affiliate.birth_date }}</span>
+                                    <span v-if="affiliate.birth_date" class="text-sm text-gray-500">Nac. {{ affiliate.birth_date }}{{ affiliateAge != null ? ` (${affiliateAge} años)` : '' }}</span>
                                     <span v-if="affiliate.status" :class="[
                                         'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
                                         affiliate.status === 'ACTIVO' ? 'bg-green-100 text-green-800' : '',

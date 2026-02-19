@@ -123,6 +123,10 @@ class AppointmentController extends Controller
     public function destroy(Appointment $appointment): RedirectResponse
     {
         $appointmentId = $appointment->id;
+
+        // Cancelar envíos WhatsApp pendientes (confirmación y recordatorio 24h) antes de eliminar
+        $this->appointmentService->cancelPendingReminders($appointment);
+
         $appointment->delete();
 
         // Dejar la solicitud sin cita para que no quede enlace roto y se pueda crear otra cita

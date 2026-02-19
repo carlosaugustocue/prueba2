@@ -155,9 +155,12 @@ class AppointmentRequestController extends Controller
                 'id' => $appointmentRequest->id,
                 'affiliate' => [
                     'id' => $appointmentRequest->affiliate->id,
+                    'first_name' => $appointmentRequest->affiliate->first_name,
+                    'last_name' => $appointmentRequest->affiliate->last_name,
                     'full_name' => $appointmentRequest->affiliate->full_name,
                     'document_type_abbreviation' => $appointmentRequest->affiliate->document_type?->abbreviation(),
                     'document_number' => $appointmentRequest->affiliate->document_number,
+                    'birth_date' => $appointmentRequest->affiliate->birth_date?->format('Y-m-d'),
                     'phone' => $appointmentRequest->affiliate->phone,
                     'whatsapp' => $appointmentRequest->affiliate->whatsapp,
                     'whatsapp_number' => $appointmentRequest->affiliate->getWhatsAppNumber(),

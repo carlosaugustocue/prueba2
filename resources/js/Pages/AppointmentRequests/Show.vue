@@ -379,8 +379,8 @@ const statusIcon = (status) => {
                                 <div class="h-14 w-14 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
                                     <span class="text-brand-700 font-bold text-xl">{{ affiliate?.first_name?.charAt(0) }}{{ affiliate?.last_name?.charAt(0) }}</span>
                                 </div>
-                                <div class="min-w-0">
-                                    <p class="text-lg font-semibold text-gray-900 truncate">{{ affiliate?.full_name }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-lg font-semibold text-gray-900 break-words">{{ affiliate?.full_name }}</p>
                                     <p class="text-sm text-gray-600">{{ affiliate?.document_type_abbreviation }} {{ affiliate?.document_number }}</p>
                                 </div>
                             </div>

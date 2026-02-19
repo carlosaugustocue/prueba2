@@ -32,8 +32,8 @@ class SendConfirmationJob implements ShouldQueue
             return;
         }
 
-        // Evitar duplicados
-        if ($reminder->status === Reminder::STATUS_SENT) {
+        // No enviar si ya se envió o si fue cancelado (cita cancelada/eliminada)
+        if (in_array($reminder->status, [Reminder::STATUS_SENT, Reminder::STATUS_CANCELLED], true)) {
             return;
         }
 

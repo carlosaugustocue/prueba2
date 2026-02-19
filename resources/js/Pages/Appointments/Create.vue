@@ -176,6 +176,30 @@ const searchAffiliates = async () => {
     }
 };
 
+/** Calcula la edad en años a partir de una fecha Y-m-d (o null). */
+function getAgeFromBirthDate(birthDateStr) {
+    if (!birthDateStr) return null;
+    const birth = new Date(birthDateStr);
+    if (Number.isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+}
+
+/** Devuelve " • XX años" si hay fecha de nacimiento, o "" si no. */
+function formatAgeSuffix(birthDateStr) {
+    const age = getAgeFromBirthDate(birthDateStr);
+    return age != null ? ` • ${age} años` : '';
+}
+
+/** Devuelve "Edad: XX años" para mostrar en front, o null si no hay fecha. */
+function formatAgeLabel(birthDateStr) {
+    const age = getAgeFromBirthDate(birthDateStr);
+    return age != null ? `Edad: ${age} años` : null;
+}
+
 const selectAffiliate = (affiliate) => {
     selectedAffiliate.value = affiliate;
     form.affiliate_id = affiliate.id;
@@ -327,7 +351,10 @@ const submit = () => {
                                     <div>
                                         <p class="font-semibold text-gray-900 text-lg">{{ selectedAffiliate.full_name }}</p>
                                         <p class="text-sm text-gray-600">{{ selectedAffiliate.document_type_abbreviation }} {{ selectedAffiliate.document_number }}</p>
-                                        <p class="text-sm text-gray-500">{{ selectedAffiliate.eps?.name }} • {{ selectedAffiliate.whatsapp_number || selectedAffiliate.phone || 'Sin teléfono' }}</p>
+                                        <p class="text-sm text-gray-500 flex items-center gap-2 flex-wrap">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md font-medium" :class="formatAgeLabel(selectedAffiliate.birth_date) ? 'bg-brand-100 text-brand-800' : 'bg-gray-100 text-gray-600'">{{ formatAgeLabel(selectedAffiliate.birth_date) || 'Edad: no registrada' }}</span>
+                                            <span>{{ selectedAffiliate.eps?.name }} • {{ selectedAffiliate.whatsapp_number || selectedAffiliate.phone || 'Sin teléfono' }}</span>
+                                        </p>
                                     </div>
                                 </div>
                                 <button type="button" @click="clearAffiliate" class="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors">
@@ -355,9 +382,9 @@ const submit = () => {
                             <!-- Resultados de búsqueda -->
                             <div v-if="affiliateResults.length > 0" class="bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-auto">
                                 <button 
-                                    v-for="patient in affiliateResults" 
-                                    :key="affiliate.id" 
-                                    type="button" 
+v-for="affiliate in affiliateResults"
+                                    :key="affiliate.id"
+                                    type="button"
                                     @click="selectAffiliate(affiliate)"
                                     class="w-full px-4 py-3 text-left hover:bg-brand-50 border-b last:border-0 flex items-center space-x-3 transition-colors"
                                 >
@@ -366,7 +393,10 @@ const submit = () => {
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p class="font-medium text-gray-900 truncate">{{ affiliate.full_name }}</p>
-                                        <p class="text-sm text-gray-500">{{ affiliate.document_type_abbreviation }} {{ affiliate.document_number }} • {{ affiliate.eps?.name || 'Sin EPS' }}</p>
+                                        <p class="text-sm text-gray-500 flex items-center gap-2 flex-wrap">
+                                            <span>{{ affiliate.document_type_abbreviation }} {{ affiliate.document_number }} • {{ affiliate.eps?.name || 'Sin EPS' }}</span>
+                                            <span v-if="formatAgeLabel(affiliate.birth_date)" class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium">{{ formatAgeLabel(affiliate.birth_date) }}</span>
+                                        </p>
                                     </div>
                                     <ChevronRight class="h-5 w-5 text-brand-500" />
                                 </button>

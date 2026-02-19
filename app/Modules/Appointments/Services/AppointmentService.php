@@ -272,15 +272,18 @@ class AppointmentService
         ]);
     }
 
-    protected function cancelPendingReminders(Appointment $appointment): void
+    /**
+     * Cancela todos los envíos por WhatsApp pendientes o en proceso (confirmación y recordatorio 24h)
+     * cuando la cita se cancela o se elimina.
+     */
+    public function cancelPendingReminders(Appointment $appointment): void
     {
         Reminder::query()
             ->where('appointment_id', $appointment->id)
-            ->where('type', Reminder::TYPE_REMINDER_24H)
             ->whereIn('status', [Reminder::STATUS_PENDING, Reminder::STATUS_PROCESSING])
             ->update([
                 'status' => Reminder::STATUS_CANCELLED,
-                'error_message' => 'Recordatorio cancelado por actualización de la cita',
+                'error_message' => 'Envío cancelado por cancelación o eliminación de la cita',
             ]);
     }
 
