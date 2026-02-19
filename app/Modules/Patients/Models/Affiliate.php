@@ -122,6 +122,31 @@ class Affiliate extends Model
         return $this->hasMany(\App\Modules\Appointments\Models\Appointment::class);
     }
 
+    public function novelties(): HasMany
+    {
+        return $this->hasMany(\App\Modules\SocialSecurity\Models\Novelty::class);
+    }
+
+    public function operatorCredentials(): HasMany
+    {
+        return $this->hasMany(\App\Modules\SocialSecurity\Models\OperatorCredential::class);
+    }
+
+    public function payrolls(): HasMany
+    {
+        return $this->hasMany(\App\Modules\SocialSecurity\Models\Payroll::class);
+    }
+
+    public function supportDocuments(): HasMany
+    {
+        return $this->hasMany(\App\Modules\SocialSecurity\Models\SupportDocument::class);
+    }
+
+    public function communicationLogs(): HasMany
+    {
+        return $this->hasMany(\App\Modules\SocialSecurity\Models\CommunicationLog::class);
+    }
+
     public function getWhatsAppNumber(): ?string
     {
         return $this->whatsapp ?? $this->phone;
