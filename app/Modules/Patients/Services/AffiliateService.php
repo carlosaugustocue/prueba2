@@ -3,6 +3,8 @@
 namespace App\Modules\Patients\Services;
 
 use App\Modules\Patients\Models\Affiliate;
+use App\Modules\SocialSecurity\Models\ClientType;
+use App\Modules\SocialSecurity\Models\ContributorType;
 use App\Modules\SocialSecurity\Models\SocialSecurityProfile;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -12,7 +14,16 @@ class AffiliateService
 {
     public function search(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Affiliate::query()->with(['socialSecurityProfile.eps']);
+        $query = Affiliate::query()->with([
+            'socialSecurityProfile.eps',
+            'socialSecurityProfile.clientType',
+            'socialSecurityProfile.contributorType',
+            'socialSecurityProfile.afp',
+            'socialSecurityProfile.arp',
+            'socialSecurityProfile.ccf',
+            'socialSecurityProfile.paymentOperator',
+            'socialSecurityProfile.accountingRegistry',
+        ]);
 
         if (! empty($filters['search'])) {
             $query->searchByWords($filters['search']);
@@ -45,25 +56,43 @@ class AffiliateService
     public function create(array $data): Affiliate
     {
         $ss = [
+            'client_type_id' => ! empty($data['client_type_id']) ? $data['client_type_id'] : (ClientType::where('code', 'SERVICONLI')->first()?->id),
+            'contributor_type_id' => ! empty($data['contributor_type_id']) ? $data['contributor_type_id'] : (ContributorType::where('code', '01')->first()?->id),
             'eps_id' => $data['eps_id'] ?? null,
-            'afp_name' => $data['afp_name'] ?? null,
-            'arp_name' => $data['arp_name'] ?? null,
+            'afp_id' => ! empty($data['afp_id']) ? $data['afp_id'] : null,
+            'arp_id' => ! empty($data['arp_id']) ? $data['arp_id'] : null,
             'arp_risk_class' => $data['arp_risk_class'] ?? null,
+            'ccf_id' => ! empty($data['ccf_id']) ? $data['ccf_id'] : null,
+            'payment_operator_id' => ! empty($data['payment_operator_id']) ? $data['payment_operator_id'] : null,
+            'accounting_registry_id' => ! empty($data['accounting_registry_id']) ? $data['accounting_registry_id'] : null,
         ];
-        unset($data['eps_id'], $data['afp_name'], $data['arp_name'], $data['arp_risk_class']);
+        unset(
+            $data['eps_id'],
+            $data['client_type_id'],
+            $data['contributor_type_id'],
+            $data['afp_id'],
+            $data['arp_id'],
+            $data['arp_risk_class'],
+            $data['ccf_id'],
+            $data['payment_operator_id'],
+            $data['accounting_registry_id']
+        );
 
         $data['created_by'] = Auth::id();
         $affiliate = Affiliate::create($data);
 
-        if (array_filter($ss)) {
+        if (array_filter($ss, fn ($v) => $v !== null && $v !== '')) {
             SocialSecurityProfile::create([
                 'affiliate_id' => $affiliate->id,
-                'client_type' => 'SERVICONLI',
-                'contributor_type' => '01',
+                'client_type_id' => $ss['client_type_id'],
+                'contributor_type_id' => $ss['contributor_type_id'],
                 'eps_id' => $ss['eps_id'],
-                'afp_name' => $ss['afp_name'],
-                'arp_name' => $ss['arp_name'],
+                'afp_id' => $ss['afp_id'],
+                'arp_id' => $ss['arp_id'],
                 'arp_risk_class' => $ss['arp_risk_class'],
+                'ccf_id' => $ss['ccf_id'],
+                'payment_operator_id' => $ss['payment_operator_id'],
+                'accounting_registry_id' => $ss['accounting_registry_id'],
             ]);
         }
 
@@ -74,11 +103,30 @@ class AffiliateService
     {
         $ss = [
             'eps_id' => $data['eps_id'] ?? null,
-            'afp_name' => $data['afp_name'] ?? null,
-            'arp_name' => $data['arp_name'] ?? null,
+            'afp_id' => ! empty($data['afp_id']) ? $data['afp_id'] : null,
+            'arp_id' => ! empty($data['arp_id']) ? $data['arp_id'] : null,
             'arp_risk_class' => $data['arp_risk_class'] ?? null,
+            'ccf_id' => ! empty($data['ccf_id']) ? $data['ccf_id'] : null,
+            'payment_operator_id' => ! empty($data['payment_operator_id']) ? $data['payment_operator_id'] : null,
+            'accounting_registry_id' => ! empty($data['accounting_registry_id']) ? $data['accounting_registry_id'] : null,
         ];
-        unset($data['eps_id'], $data['afp_name'], $data['arp_name'], $data['arp_risk_class']);
+        if (array_key_exists('client_type_id', $data)) {
+            $ss['client_type_id'] = ! empty($data['client_type_id']) ? $data['client_type_id'] : null;
+        }
+        if (array_key_exists('contributor_type_id', $data)) {
+            $ss['contributor_type_id'] = ! empty($data['contributor_type_id']) ? $data['contributor_type_id'] : null;
+        }
+        unset(
+            $data['eps_id'],
+            $data['client_type_id'],
+            $data['contributor_type_id'],
+            $data['afp_id'],
+            $data['arp_id'],
+            $data['arp_risk_class'],
+            $data['ccf_id'],
+            $data['payment_operator_id'],
+            $data['accounting_registry_id']
+        );
 
         $data['updated_by'] = Auth::id();
         $affiliate->update($data);
@@ -86,15 +134,20 @@ class AffiliateService
         $profile = $affiliate->socialSecurityProfile;
         if ($profile) {
             $profile->update($ss);
-        } elseif (array_filter($ss)) {
+        } elseif (array_filter($ss, fn ($v) => $v !== null && $v !== '')) {
+            $defaultClientTypeId = ClientType::where('code', 'SERVICONLI')->first()?->id;
+            $defaultContributorTypeId = ContributorType::where('code', '01')->first()?->id;
             SocialSecurityProfile::create([
                 'affiliate_id' => $affiliate->id,
-                'client_type' => 'SERVICONLI',
-                'contributor_type' => '01',
+                'client_type_id' => $ss['client_type_id'] ?? $defaultClientTypeId,
+                'contributor_type_id' => $ss['contributor_type_id'] ?? $defaultContributorTypeId,
                 'eps_id' => $ss['eps_id'],
-                'afp_name' => $ss['afp_name'],
-                'arp_name' => $ss['arp_name'],
+                'afp_id' => $ss['afp_id'],
+                'arp_id' => $ss['arp_id'],
                 'arp_risk_class' => $ss['arp_risk_class'],
+                'ccf_id' => $ss['ccf_id'],
+                'payment_operator_id' => $ss['payment_operator_id'],
+                'accounting_registry_id' => $ss['accounting_registry_id'] ?? null,
             ]);
         }
 

@@ -3,7 +3,7 @@
 use App\Modules\AppointmentRequests\Controllers\AppointmentRequestController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:atencion,supervisor,agent,admin'])->group(function () {
     Route::resource('appointment-requests', AppointmentRequestController::class)
         ->except(['edit', 'update']);
     

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog } from 'lucide-vue-next';
+import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings } from 'lucide-vue-next';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -9,15 +9,22 @@ const flash = computed(() => page.props.flash);
 
 const sidebarOpen = ref(false);
 
-const navigation = computed(() => {
-    const items = [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList },
-        { name: 'Citas', href: '/appointments', icon: CalendarDays },
-        { name: 'Afiliados', href: '/affiliates', icon: Users },
-    ];
+const ROLES_SOLO_SS = ['seguridad_social'];
 
-    if (user.value?.role === 'admin') {
+const navigation = computed(() => {
+    const role = user.value?.role;
+    const items = [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }];
+
+    if (ROLES_SOLO_SS.includes(role)) {
+        items.push({ name: 'Afiliados', href: '/affiliates', icon: Users });
+    } else {
+        items.push({ name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList });
+        items.push({ name: 'Citas', href: '/appointments', icon: CalendarDays });
+        items.push({ name: 'Afiliados', href: '/affiliates', icon: Users });
+    }
+
+    if (role === 'admin') {
+        items.push({ name: 'Configuración', href: '/admin/configuracion', icon: Settings });
         items.push({ name: 'Usuarios', href: '/admin/usuarios', icon: UserCog });
         items.push({ name: 'Métricas', href: '/admin/metricas/operadores', icon: BarChart3 });
         items.push({ name: 'Comunicaciones', href: '/admin/comunicaciones', icon: MessageSquareText });

@@ -19,7 +19,7 @@ class RoleSeeder extends Seeder
             [
                 'name' => 'supervisor',
                 'display_name' => 'Supervisor',
-                'description' => 'Puede ver reportes, historial y gestionar citas',
+                'description' => 'Puede ver reportes, historial y gestionar citas y afiliados',
                 'permissions' => ['appointments.*', 'affiliates.*', 'reports.*'],
             ],
             [
@@ -27,6 +27,18 @@ class RoleSeeder extends Seeder
                 'display_name' => 'Agente',
                 'description' => 'Puede gestionar citas y afiliados',
                 'permissions' => ['appointments.view', 'appointments.create', 'appointments.update', 'affiliates.*'],
+            ],
+            [
+                'name' => 'atencion',
+                'display_name' => 'Atención / Citas',
+                'description' => 'Solo módulo de solicitudes y citas (y consulta de afiliados para vincular)',
+                'permissions' => ['appointments.*', 'affiliates.view'],
+            ],
+            [
+                'name' => 'seguridad_social',
+                'display_name' => 'Seguridad Social',
+                'description' => 'Solo módulo de afiliados y seguridad social (sin citas)',
+                'permissions' => ['affiliates.*'],
             ],
         ];
 

@@ -3,7 +3,7 @@
 use App\Modules\Patients\Controllers\AffiliateController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_social'])->group(function () {
     // Redirecciones de rutas antiguas (patients) a las nuevas (affiliates)
     Route::get('patients', fn () => redirect()->route('affiliates.index', request()->query(), 301));
     Route::get('patients/create', fn () => redirect()->route('affiliates.create', request()->query(), 301));

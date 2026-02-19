@@ -11,6 +11,14 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             EpsSeeder::class,
+            AfpSeeder::class,
+            ArpSeeder::class,
+            CcfSeeder::class,
+            PaymentOperatorSeeder::class,
+            ClientTypeSeeder::class,
+            ContributorTypeSeeder::class,
+            NoveltyTypeSeeder::class,
+            AccountingRegistrySeeder::class,
             UserSeeder::class,
             AffiliateWithBeneficiarySeeder::class,
         ]);

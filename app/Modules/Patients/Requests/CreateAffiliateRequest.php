@@ -34,9 +34,11 @@ class CreateAffiliateRequest extends FormRequest
             'city' => ['nullable', 'string', 'max:100'],
             'department' => ['nullable', 'string', 'max:100'],
             'eps_id' => ['required', 'exists:eps,id'],
-            'afp_name' => ['nullable', 'string', 'max:150'],
-            'arp_name' => ['nullable', 'string', 'max:150'],
+            'afp_id' => ['nullable', 'exists:afps,id'],
+            'arp_id' => ['nullable', 'exists:arps,id'],
             'arp_risk_class' => ['nullable', 'string', 'max:20'],
+            'ccf_id' => ['nullable', 'exists:ccfs,id'],
+            'payment_operator_id' => ['nullable', 'exists:payment_operators,id'],
             'patient_type' => ['required', Rule::enum(PatientType::class)],
             'holder_id' => [
                 'nullable',
@@ -97,5 +99,15 @@ class CreateAffiliateRequest extends FormRequest
                 ]);
             }
         }
+
+        $this->merge([
+            'client_type_id' => $this->filled('client_type_id') ? $this->input('client_type_id') : null,
+            'contributor_type_id' => $this->filled('contributor_type_id') ? $this->input('contributor_type_id') : null,
+            'afp_id' => $this->filled('afp_id') ? $this->input('afp_id') : null,
+            'arp_id' => $this->filled('arp_id') ? $this->input('arp_id') : null,
+            'ccf_id' => $this->filled('ccf_id') ? $this->input('ccf_id') : null,
+            'payment_operator_id' => $this->filled('payment_operator_id') ? $this->input('payment_operator_id') : null,
+            'accounting_registry_id' => $this->filled('accounting_registry_id') ? $this->input('accounting_registry_id') : null,
+        ]);
     }
 }

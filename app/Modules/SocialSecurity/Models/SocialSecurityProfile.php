@@ -11,20 +11,20 @@ class SocialSecurityProfile extends Model
 
     protected $fillable = [
         'affiliate_id',
-        'client_type',
-        'contributor_type',
+        'client_type_id',
+        'contributor_type_id',
         'ibc',
         'eps_id',
-        'afp_name',
-        'arp_name',
+        'afp_id',
+        'arp_id',
         'arp_risk_class',
-        'ccf_name',
+        'ccf_id',
         'payer_id',
-        'payment_operator',
+        'payment_operator_id',
         'payment_day',
         'payment_periodicity',
         'has_parafiscales',
-        'accounting_registry',
+        'accounting_registry_id',
         'observations',
     ];
 
@@ -49,5 +49,40 @@ class SocialSecurityProfile extends Model
     public function eps(): BelongsTo
     {
         return $this->belongsTo(\App\Modules\Patients\Models\Eps::class);
+    }
+
+    public function afp(): BelongsTo
+    {
+        return $this->belongsTo(Afp::class);
+    }
+
+    public function arp(): BelongsTo
+    {
+        return $this->belongsTo(Arp::class);
+    }
+
+    public function ccf(): BelongsTo
+    {
+        return $this->belongsTo(Ccf::class);
+    }
+
+    public function paymentOperator(): BelongsTo
+    {
+        return $this->belongsTo(PaymentOperator::class);
+    }
+
+    public function clientType(): BelongsTo
+    {
+        return $this->belongsTo(ClientType::class);
+    }
+
+    public function contributorType(): BelongsTo
+    {
+        return $this->belongsTo(ContributorType::class);
+    }
+
+    public function accountingRegistry(): BelongsTo
+    {
+        return $this->belongsTo(AccountingRegistry::class);
     }
 }

@@ -6,7 +6,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [AppointmentController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [AppointmentController::class, 'dashboard'])->name('home');
+});
 
+Route::middleware(['auth', 'role:atencion,supervisor,agent,admin'])->group(function () {
     Route::resource('appointments', AppointmentController::class);
 
     Route::prefix('appointments/{appointment}')->group(function () {

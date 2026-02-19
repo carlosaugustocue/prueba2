@@ -17,9 +17,10 @@ class CheckRole
             return redirect()->route('login');
         }
 
+        $allowed = collect($roles)->flatMap(fn (string $r) => array_map('trim', explode(',', $r)))->filter()->values()->all();
         $userRole = $request->user()->role?->name;
 
-        if (! in_array($userRole, $roles)) {
+        if (! in_array($userRole, $allowed)) {
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 

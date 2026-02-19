@@ -1,14 +1,19 @@
 <script setup>
 import { computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { CalendarDays, Clock, AlertTriangle, CheckCircle, Plus, UserPlus, CalendarCheck, ArrowRight, ClipboardList, Play } from 'lucide-vue-next';
+import { CalendarDays, Clock, AlertTriangle, CheckCircle, Plus, UserPlus, CalendarCheck, ArrowRight, ClipboardList, Play, Users, Shield } from 'lucide-vue-next';
+
+const page = usePage();
+const userRole = computed(() => page.props.auth?.user?.role ?? '');
 
 const props = defineProps({
     stats: Object,
     todayAppointments: Object,
     inProgressRequests: Object,
 });
+
+const isSeguridadSocialOnly = computed(() => userRole.value === 'seguridad_social');
 
 const statCards = computed(() => [
     { name: 'Citas Hoy', value: props.stats?.today || 0, icon: CalendarDays, color: 'bg-blue-50 text-blue-600', link: '/appointments?today=1' },
@@ -25,7 +30,47 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
 <template>
     <AppLayout>
         <div class="space-y-6">
-            <!-- Header -->
+            <!-- Dashboard Seguridad Social (solo afiliados) -->
+            <template v-if="isSeguridadSocialOnly">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Seguridad Social</h1>
+                        <p class="mt-1 text-sm text-gray-500">Gestión de afiliados y datos de seguridad social</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <Link href="/affiliates" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group p-6 flex items-center gap-4">
+                        <div class="rounded-lg p-3 bg-brand-50 text-brand-600">
+                            <Users class="h-8 w-8" />
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-900">Afiliados</p>
+                            <p class="text-sm text-gray-500">Consultar y gestionar afiliados, cotizantes y beneficiarios</p>
+                        </div>
+                    </Link>
+                    <Link href="/affiliates/create" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group p-6 flex items-center gap-4">
+                        <div class="rounded-lg p-3 bg-green-50 text-green-600">
+                            <UserPlus class="h-8 w-8" />
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-900">Nuevo Afiliado</p>
+                            <p class="text-sm text-gray-500">Registrar cotizante o beneficiario</p>
+                        </div>
+                    </Link>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-start gap-3">
+                        <Shield class="h-6 w-6 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h2 class="font-semibold text-gray-900">Módulo de Seguridad Social</h2>
+                            <p class="text-sm text-gray-500 mt-1">Desde aquí puede administrar afiliados, perfiles de seguridad social (EPS, AFP, ARP, CCF) y datos necesarios para el proceso de afiliación.</p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Dashboard Citas (atención, supervisores, admin) -->
+            <template v-else>
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
@@ -155,6 +200,7 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
                     </div>
                 </div>
             </div>
+            </template>
         </div>
     </AppLayout>
 </template>

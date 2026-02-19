@@ -11,6 +11,10 @@ import {
 const props = defineProps({
     affiliate: Object,
     epsList: Array,
+    afpList: Array,
+    arpList: Array,
+    ccfList: Array,
+    paymentOperatorList: Array,
     documentTypes: Array,
     patientTypes: Array,
     relationshipTypes: Array,
@@ -34,9 +38,11 @@ const form = useForm({
     address: affiliateData.value.address || '',
     neighborhood: affiliateData.value.neighborhood || '',
     eps_id: affiliateData.value.eps?.id || affiliateData.value.eps_id || '',
-    afp_name: affiliateData.value.afp_name || '',
-    arp_name: affiliateData.value.arp_name || '',
+    afp_id: affiliateData.value.afp_id || affiliateData.value.afp?.id || '',
+    arp_id: affiliateData.value.arp_id || affiliateData.value.arp?.id || '',
     arp_risk_class: affiliateData.value.arp_risk_class || '',
+    ccf_id: affiliateData.value.ccf_id || affiliateData.value.ccf?.id || '',
+    payment_operator_id: affiliateData.value.payment_operator_id || affiliateData.value.payment_operator?.id || '',
     patient_type: affiliateData.value.patient_type || '',
     holder_id: affiliateData.value.holder_id || '',
     relationship_type: affiliateData.value.relationship_type || '',
@@ -399,8 +405,8 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                     </div>
                 </div>
 
-                <!-- Seguridad social (AFP / ARP) -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <!-- Seguridad social (AFP / ARP) - solo para cotizantes -->
+                <div v-if="form.patient_type === 'cotizante'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <Building2 class="h-5 w-5 text-brand-600" />
@@ -410,16 +416,36 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre AFP</label>
-                            <input v-model="form.afp_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: COLPENSIONES, PORVENIR..." />
+                            <label class="block text-sm font-medium text-gray-700 mb-2">AFP</label>
+                            <select v-model="form.afp_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguna</option>
+                                <option v-for="item in (afpList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre ARP</label>
-                            <input v-model="form.arp_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: POSITIVA, SURA..." />
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ARP</label>
+                            <select v-model="form.arp_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguna</option>
+                                <option v-for="item in (arpList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Clase de riesgo ARP</label>
                             <input v-model="form.arp_risk_class" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: 1, 2, 3..." />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">CCF</label>
+                            <select v-model="form.ccf_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguna</option>
+                                <option v-for="item in (ccfList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Operador de pago</label>
+                            <select v-model="form.payment_operator_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguno</option>
+                                <option v-for="item in (paymentOperatorList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
+                            </select>
                         </div>
                     </div>
                 </div>

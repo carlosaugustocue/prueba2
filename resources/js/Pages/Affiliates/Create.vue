@@ -10,6 +10,10 @@ import {
 
 const props = defineProps({
     epsList: Array,
+    afpList: Array,
+    arpList: Array,
+    ccfList: Array,
+    paymentOperatorList: Array,
     documentTypes: Array,
     patientTypes: Array,
     relationshipTypes: Array,
@@ -30,9 +34,11 @@ const form = useForm({
     address: '',
     neighborhood: '',
     eps_id: '',
-    afp_name: '',
-    arp_name: '',
+    afp_id: '',
+    arp_id: '',
     arp_risk_class: '',
+    ccf_id: '',
+    payment_operator_id: '',
     patient_type: props.preselectedHolder ? 'beneficiario' : 'cotizante',
     holder_id: props.preselectedHolder?.id || '',
     relationship_type: '',
@@ -422,16 +428,36 @@ const submit = () => form.post('/affiliates');
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre AFP</label>
-                            <input v-model="form.afp_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: COLPENSIONES, PORVENIR..." />
+                            <label class="block text-sm font-medium text-gray-700 mb-2">AFP</label>
+                            <select v-model="form.afp_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguna</option>
+                                <option v-for="item in (afpList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre ARP</label>
-                            <input v-model="form.arp_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: POSITIVA, SURA..." />
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ARP</label>
+                            <select v-model="form.arp_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguna</option>
+                                <option v-for="item in (arpList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Clase de riesgo ARP</label>
                             <input v-model="form.arp_risk_class" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: 1, 2, 3..." />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">CCF</label>
+                            <select v-model="form.ccf_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguna</option>
+                                <option v-for="item in (ccfList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Operador de pago</label>
+                            <select v-model="form.payment_operator_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguno</option>
+                                <option v-for="item in (paymentOperatorList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
+                            </select>
                         </div>
                     </div>
                 </div>

@@ -16,6 +16,7 @@ class ModuleServiceProvider extends ServiceProvider
         'AppointmentRequests',
         'Appointments',
         'AdminUsers',
+        'AdminConfig',
         'AdminMetrics',
         'AdminCommunications',
         'AdminWhatsApp',
