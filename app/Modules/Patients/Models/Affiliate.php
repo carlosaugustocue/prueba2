@@ -24,6 +24,7 @@ class Affiliate extends Model
         'uuid',
         'document_type',
         'document_number',
+        'document_issue_date',
         'first_name',
         'second_name',
         'last_name',
@@ -87,6 +88,7 @@ class Affiliate extends Model
             'patient_type' => PatientType::class,
             'relationship_type' => RelationshipType::class,
             'birth_date' => 'date',
+            'document_issue_date' => 'date',
         ];
     }
 

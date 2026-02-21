@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings } from 'lucide-vue-next';
+import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings, Building2 } from 'lucide-vue-next';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -17,10 +17,12 @@ const navigation = computed(() => {
 
     if (ROLES_SOLO_SS.includes(role)) {
         items.push({ name: 'Afiliados', href: '/affiliates', icon: Users });
+        items.push({ name: 'Pagadores', href: '/payers', icon: Building2 });
     } else {
         items.push({ name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList });
         items.push({ name: 'Citas', href: '/appointments', icon: CalendarDays });
         items.push({ name: 'Afiliados', href: '/affiliates', icon: Users });
+        items.push({ name: 'Pagadores', href: '/payers', icon: Building2 });
     }
 
     if (role === 'admin') {

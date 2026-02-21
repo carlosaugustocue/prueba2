@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Patients\Controllers\AffiliateController;
+use App\Modules\SocialSecurity\Controllers\NoveltyController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_social'])->group(function () {
@@ -11,6 +12,7 @@ Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_socia
     Route::get('patients/{id}/edit', fn ($id) => redirect()->route('affiliates.edit', $id, 301))->whereNumber('id');
 
     Route::resource('affiliates', AffiliateController::class);
+    Route::post('affiliates/{affiliate}/novelties', [NoveltyController::class, 'store'])->name('affiliates.novelties.store');
 
     Route::prefix('api/affiliates')->group(function () {
         Route::get('search', [AffiliateController::class, 'search'])->name('affiliates.search');

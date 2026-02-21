@@ -2,6 +2,7 @@
 
 namespace App\Modules\SocialSecurity\Models;
 
+use App\Modules\Patients\Enums\DocumentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -21,6 +22,7 @@ class Payer extends Model
     protected function casts(): array
     {
         return [
+            'document_type' => DocumentType::class,
             'is_active' => 'boolean',
         ];
     }

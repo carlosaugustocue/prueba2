@@ -12,6 +12,9 @@ use App\Modules\SocialSecurity\Models\ClientType;
 use App\Modules\SocialSecurity\Models\ContributorType;
 use App\Modules\SocialSecurity\Models\AccountingRegistry;
 use App\Modules\SocialSecurity\Models\PaymentOperator;
+use App\Modules\SocialSecurity\Models\Payer;
+use App\Modules\SocialSecurity\Models\NoveltyType;
+use App\Modules\SocialSecurity\Services\DueDateCalculator;
 use App\Modules\Patients\Services\AffiliateService;
 use App\Modules\Patients\Requests\CreateAffiliateRequest;
 use App\Modules\Patients\Requests\UpdateAffiliateRequest;
@@ -56,6 +59,13 @@ class AffiliateController extends Controller
                 ->first(['id', 'first_name', 'second_name', 'last_name', 'second_last_name', 'document_number', 'document_type', 'phone', 'whatsapp', 'address']);
         }
 
+        $payerList = Payer::where('is_active', true)->orderBy('name')->get()->map(fn ($p) => [
+            'id' => $p->id,
+            'name' => $p->name,
+            'document_number' => $p->document_number,
+            'document_type_abbreviation' => $p->document_type?->abbreviation(),
+        ]);
+
         return Inertia::render('Affiliates/Create', [
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'clientTypes' => ClientType::active()->orderBy('name')->get(['id', 'name', 'code']),
@@ -65,6 +75,7 @@ class AffiliateController extends Controller
             'ccfList' => Ccf::active()->orderBy('name')->get(['id', 'name', 'code']),
             'paymentOperatorList' => PaymentOperator::active()->orderBy('name')->get(['id', 'name', 'code']),
             'accountingRegistries' => AccountingRegistry::active()->orderBy('name')->get(['id', 'name', 'code']),
+            'payerList' => $payerList,
             'documentTypes' => DocumentType::toArray(),
             'patientTypes' => PatientType::toArray(),
             'relationshipTypes' => RelationshipType::toArray(),
@@ -94,25 +105,58 @@ class AffiliateController extends Controller
 
     public function show(Affiliate $affiliate): Response
     {
+        $affiliate->load([
+            'socialSecurityProfile.eps',
+            'socialSecurityProfile.clientType',
+            'socialSecurityProfile.contributorType',
+            'socialSecurityProfile.afp',
+            'socialSecurityProfile.arp',
+            'socialSecurityProfile.ccf',
+            'socialSecurityProfile.paymentOperator',
+            'socialSecurityProfile.accountingRegistry',
+            'socialSecurityProfile.payer',
+            'holder',
+            'beneficiaries',
+            'appointments',
+            'novelties.noveltyType',
+        ]);
+
+        $pilaNextDueDate = null;
+        $pilaNextDueLabel = null;
+        $calculator = app(DueDateCalculator::class);
+        $profile = $affiliate->socialSecurityProfile;
+        $paymentDay = $profile?->payment_day;
+        if ($paymentDay === null && $affiliate->document_number) {
+            $paymentDay = $calculator->paymentDayFromDocument($affiliate->document_number);
+        }
+        if ($paymentDay !== null) {
+            $now = now();
+            $nextDue = $calculator->dueDateForPeriodByPaymentDay($now->year, $now->month, (int) $paymentDay);
+            if ($nextDue->isPast()) {
+                $nextMonth = $now->copy()->addMonth();
+                $nextDue = $calculator->dueDateForPeriodByPaymentDay($nextMonth->year, $nextMonth->month, (int) $paymentDay);
+            }
+            $pilaNextDueDate = $nextDue->format('Y-m-d');
+            $pilaNextDueLabel = $nextDue->format('d/m/Y');
+        }
+
         return Inertia::render('Affiliates/Show', [
-            'affiliate' => new AffiliateResource($affiliate->load([
-                'socialSecurityProfile.eps',
-                'socialSecurityProfile.clientType',
-                'socialSecurityProfile.contributorType',
-                'socialSecurityProfile.afp',
-                'socialSecurityProfile.arp',
-                'socialSecurityProfile.ccf',
-                'socialSecurityProfile.paymentOperator',
-                'socialSecurityProfile.accountingRegistry',
-                'holder',
-                'beneficiaries',
-                'appointments',
-            ])),
+            'affiliate' => new AffiliateResource($affiliate),
+            'pila_next_due_date' => $pilaNextDueDate,
+            'pila_next_due_label' => $pilaNextDueLabel,
+            'noveltyTypes' => NoveltyType::active()->orderBy('name')->get(['id', 'name', 'code']),
         ]);
     }
 
     public function edit(Affiliate $affiliate): Response
     {
+        $payerList = Payer::where('is_active', true)->orderBy('name')->get()->map(fn ($p) => [
+            'id' => $p->id,
+            'name' => $p->name,
+            'document_number' => $p->document_number,
+            'document_type_abbreviation' => $p->document_type?->abbreviation(),
+        ]);
+
         return Inertia::render('Affiliates/Edit', [
             'affiliate' => new AffiliateResource($affiliate->load([
                 'socialSecurityProfile.eps',
@@ -123,6 +167,7 @@ class AffiliateController extends Controller
                 'socialSecurityProfile.ccf',
                 'socialSecurityProfile.paymentOperator',
                 'socialSecurityProfile.accountingRegistry',
+                'socialSecurityProfile.payer',
                 'holder',
                 'beneficiaries',
             ])),
@@ -134,6 +179,7 @@ class AffiliateController extends Controller
             'ccfList' => Ccf::active()->orderBy('name')->get(['id', 'name', 'code']),
             'paymentOperatorList' => PaymentOperator::active()->orderBy('name')->get(['id', 'name', 'code']),
             'accountingRegistries' => AccountingRegistry::active()->orderBy('name')->get(['id', 'name', 'code']),
+            'payerList' => $payerList,
             'documentTypes' => DocumentType::toArray(),
             'patientTypes' => PatientType::toArray(),
             'relationshipTypes' => RelationshipType::toArray(),

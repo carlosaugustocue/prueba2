@@ -14,6 +14,7 @@ const props = defineProps({
     arpList: Array,
     ccfList: Array,
     paymentOperatorList: Array,
+    payerList: Array,
     documentTypes: Array,
     patientTypes: Array,
     relationshipTypes: Array,
@@ -23,6 +24,7 @@ const props = defineProps({
 const form = useForm({
     document_type: 'cc',
     document_number: '',
+    document_issue_date: '',
     first_name: '',
     second_name: '',
     last_name: '',
@@ -39,6 +41,12 @@ const form = useForm({
     arp_risk_class: '',
     ccf_id: '',
     payment_operator_id: '',
+    payer_id: '',
+    ibc: '',
+    payment_day: '',
+    payment_periodicity: '',
+    has_parafiscales: false,
+    observations: '',
     patient_type: props.preselectedHolder ? 'beneficiario' : 'cotizante',
     holder_id: props.preselectedHolder?.id || '',
     relationship_type: '',
@@ -310,6 +318,11 @@ const submit = () => form.post('/affiliates');
                             <p v-if="form.errors.document_number" class="mt-1 text-sm text-red-600">{{ form.errors.document_number }}</p>
                         </div>
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de expedición del documento</label>
+                            <input v-model="form.document_issue_date" type="date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            <p v-if="form.errors.document_issue_date" class="mt-1 text-sm text-red-600">{{ form.errors.document_issue_date }}</p>
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Primer nombre *</label>
                             <input v-model="form.first_name" type="text" :class="['block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500', form.errors.first_name ? 'border-red-300' : '']" />
                             <p v-if="form.errors.first_name" class="mt-1 text-sm text-red-600">{{ form.errors.first_name }}</p>
@@ -458,6 +471,41 @@ const submit = () => form.post('/affiliates');
                                 <option value="">Ninguno</option>
                                 <option v-for="item in (paymentOperatorList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
                             </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pagador</label>
+                            <select v-model="form.payer_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">Ninguno</option>
+                                <option v-for="p in (payerList || [])" :key="p.id" :value="p.id">{{ p.name }} ({{ p.document_type_abbreviation }} {{ p.document_number }})</option>
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Quién paga los aportes (empresa o persona)</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">IBC (Ingreso base cotización)</label>
+                            <input v-model="form.ibc" type="number" min="290000" max="14235800" step="1" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="290000 - 14235800" />
+                            <p v-if="form.errors.ibc" class="mt-1 text-sm text-red-600">{{ form.errors.ibc }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Día de pago (2-16)</label>
+                            <input v-model="form.payment_day" type="number" min="2" max="16" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Según NIT/documento" />
+                            <p class="mt-1 text-xs text-gray-500">Día hábil del mes; se puede calcular automático si se deja vacío</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Periodicidad de pago</label>
+                            <select v-model="form.payment_periodicity" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option value="">—</option>
+                                <option value="CURRENT">Al día (current)</option>
+                                <option value="OVERDUE">En mora (overdue)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="has_parafiscales" v-model="form.has_parafiscales" type="checkbox" class="rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+                            <label for="has_parafiscales" class="ml-2 text-sm text-gray-700">Tiene parafiscales</label>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Observaciones (perfil SS)</label>
+                            <textarea v-model="form.observations" rows="2" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Observaciones del perfil de seguridad social..."></textarea>
+                            <p v-if="form.errors.observations" class="mt-1 text-sm text-red-600">{{ form.errors.observations }}</p>
                         </div>
                     </div>
                 </div>

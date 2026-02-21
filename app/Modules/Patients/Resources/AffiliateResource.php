@@ -18,6 +18,8 @@ class AffiliateResource extends JsonResource
             'document_type_label' => $this->document_type?->label(),
             'document_type_abbreviation' => $this->document_type?->abbreviation(),
             'document_number' => $this->document_number,
+            'document_issue_date' => $this->document_issue_date?->format('Y-m-d'),
+            'document_issue_date_formatted' => $this->document_issue_date?->format('d/m/Y'),
             'first_name' => $this->first_name,
             'second_name' => $this->second_name,
             'last_name' => $this->last_name,
@@ -49,6 +51,18 @@ class AffiliateResource extends JsonResource
             'payment_operator' => $profile?->paymentOperator?->name,
             'accounting_registry_id' => $profile?->accounting_registry_id,
             'accounting_registry' => $profile?->accountingRegistry?->name,
+            'payer_id' => $profile?->payer_id,
+            'payer' => $profile && $profile->relationLoaded('payer') && $profile->payer ? [
+                'id' => $profile->payer->id,
+                'name' => $profile->payer->name,
+                'document_number' => $profile->payer->document_number,
+                'document_type_abbreviation' => $profile->payer->document_type?->abbreviation(),
+            ] : null,
+            'ibc' => $profile?->ibc ? (float) $profile->ibc : null,
+            'payment_day' => $profile?->payment_day,
+            'payment_periodicity' => $profile?->payment_periodicity,
+            'has_parafiscales' => $profile?->has_parafiscales ?? false,
+            'observations' => $profile?->observations,
             'status' => $this->status,
             'patient_type' => $this->patient_type?->value,
             'patient_type_label' => $this->patient_type?->label(),
@@ -71,6 +85,8 @@ class AffiliateResource extends JsonResource
                 'full_name' => $this->holder->full_name,
                 'document_type_abbreviation' => $this->holder->document_type?->abbreviation(),
                 'document_number' => $this->holder->document_number,
+                'document_issue_date' => $this->holder->document_issue_date?->format('Y-m-d'),
+                'document_issue_date_formatted' => $this->holder->document_issue_date?->format('d/m/Y'),
                 'phone' => $this->holder->phone,
                 'phone_2' => $this->holder->phone_2,
                 'whatsapp' => $this->holder->whatsapp,
@@ -84,6 +100,8 @@ class AffiliateResource extends JsonResource
                     'full_name' => $b->full_name,
                     'document_type_abbreviation' => $b->document_type?->abbreviation(),
                     'document_number' => $b->document_number,
+                    'document_issue_date' => $b->document_issue_date?->format('Y-m-d'),
+                    'document_issue_date_formatted' => $b->document_issue_date?->format('d/m/Y'),
                     'phone' => $b->phone,
                     'whatsapp' => $b->whatsapp,
                     'birth_date' => $b->birth_date?->format('Y-m-d'),
@@ -112,6 +130,18 @@ class AffiliateResource extends JsonResource
                 ])
             ),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'novelties' => $this->whenLoaded('novelties', fn () =>
+                $this->novelties->map(fn ($n) => [
+                    'id' => $n->id,
+                    'novelty_type_id' => $n->novelty_type_id,
+                    'novelty_type' => $n->noveltyType ? ['id' => $n->noveltyType->id, 'name' => $n->noveltyType->name, 'code' => $n->noveltyType->code] : null,
+                    'effective_date' => $n->effective_date?->format('Y-m-d'),
+                    'effective_date_formatted' => $n->effective_date?->format('d/m/Y'),
+                    'description' => $n->description,
+                    'old_value' => $n->old_value,
+                    'new_value' => $n->new_value,
+                ])
+            ),
         ];
     }
 }

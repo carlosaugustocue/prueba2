@@ -24,6 +24,7 @@ class UpdateAffiliateRequest extends FormRequest
         return [
             'document_type' => ['required', Rule::enum(DocumentType::class)],
             'document_number' => ['required', 'string', 'max:20', Rule::unique('affiliates', 'document_number')->ignore($affiliateId)],
+            'document_issue_date' => ['nullable', 'date'],
             'first_name' => ['required', 'string', 'max:100'],
             'second_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
@@ -45,6 +46,12 @@ class UpdateAffiliateRequest extends FormRequest
             'ccf_id' => ['nullable', 'exists:ccfs,id'],
             'payment_operator_id' => ['nullable', 'exists:payment_operators,id'],
             'accounting_registry_id' => ['nullable', 'exists:accounting_registries,id'],
+            'payer_id' => ['nullable', 'exists:payers,id'],
+            'ibc' => ['nullable', 'numeric', 'min:290000', 'max:14235800'],
+            'payment_day' => ['nullable', 'integer', 'min:2', 'max:16'],
+            'payment_periodicity' => ['nullable', 'string', 'in:CURRENT,OVERDUE'],
+            'has_parafiscales' => ['boolean'],
+            'observations' => ['nullable', 'string', 'max:2000'],
             'patient_type' => [
                 'required',
                 Rule::enum(PatientType::class),
@@ -127,6 +134,12 @@ class UpdateAffiliateRequest extends FormRequest
             'ccf_id' => $this->filled('ccf_id') ? $this->input('ccf_id') : null,
             'payment_operator_id' => $this->filled('payment_operator_id') ? $this->input('payment_operator_id') : null,
             'accounting_registry_id' => $this->filled('accounting_registry_id') ? $this->input('accounting_registry_id') : null,
+            'payer_id' => $this->filled('payer_id') ? $this->input('payer_id') : null,
+            'ibc' => $this->filled('ibc') ? $this->input('ibc') : null,
+            'payment_day' => $this->filled('payment_day') ? $this->input('payment_day') : null,
+            'payment_periodicity' => $this->filled('payment_periodicity') ? $this->input('payment_periodicity') : null,
+            'has_parafiscales' => $this->boolean('has_parafiscales'),
+            'observations' => $this->filled('observations') ? $this->input('observations') : null,
         ]);
     }
 }
