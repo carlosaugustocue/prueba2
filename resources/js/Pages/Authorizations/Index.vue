@@ -159,6 +159,7 @@ const list = computed(() => props.authorizations?.data || []);
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Afiliado</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">EPS</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo servicio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Radicado EPS</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vigencia</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
@@ -173,6 +174,9 @@ const list = computed(() => props.authorizations?.data || []);
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600">{{ auth.eps?.name || '—' }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600">{{ auth.service_type }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 font-mono">
+                                {{ auth.radicado_number || '—' }}
+                            </td>
                             <td class="px-6 py-4">
                                 <span :class="[auth.status_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">
                                     {{ auth.status_label }}
@@ -190,7 +194,7 @@ const list = computed(() => props.authorizations?.data || []);
                             </td>
                         </tr>
                         <tr v-if="!list.length">
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                                 No hay autorizaciones. <Link href="/authorizations/create" class="text-brand-600 hover:underline">Crear una</Link>.
                             </td>
                         </tr>

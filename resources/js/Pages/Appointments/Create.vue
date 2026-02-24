@@ -75,6 +75,17 @@ const authorizationValidUntil = computed(() => {
     return until; // Y-m-d
 });
 
+const authorizedIpsName = computed(() => props.fromRequest?.authorization?.authorized_ips_name || '');
+
+const hasIpsMismatch = computed(() => {
+    if (!authorizedIpsName.value || !form.location_name) return false;
+    const authIps = authorizedIpsName.value.toLowerCase().trim();
+    const location = form.location_name.toLowerCase().trim();
+    if (!authIps || !location) return false;
+    return !location.includes(authIps) && !authIps.includes(location);
+});
+
+
 const currentMonth = ref(new Date());
 const calendarDays = computed(() => {
     const year = currentMonth.value.getFullYear();
@@ -707,6 +718,14 @@ v-for="affiliate in affiliateResults"
                                     placeholder="Nombre del centro médico"
                                     class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                 />
+                                <p
+                                    v-if="fromRequest?.authorization?.authorized_ips_name && hasIpsMismatch"
+                                    class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"
+                                >
+                                    La EPS autorizó esta atención para
+                                    <span class="font-semibold">{{ fromRequest.authorization.authorized_ips_name }}</span>.
+                                    Verifique que el lugar de la cita coincida con la IPS autorizada.
+                                </p>
                             </div>
                             <div>
                                 <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
