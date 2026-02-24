@@ -49,6 +49,25 @@ class AppointmentRequestResource extends JsonResource
             
             // Especialidad
             'specialty' => $this->specialty,
+
+            // Requiere autorización EPS
+            'requires_authorization' => (bool) $this->requires_authorization,
+
+            // Autorización vinculada (cuando la solicitud requiere autorización)
+            'authorization' => $this->whenLoaded('authorization', function () {
+                if (!$this->authorization) return null;
+                $a = $this->authorization;
+                return [
+                    'id' => $a->id,
+                    'status' => $a->status?->value ?? $a->getRawOriginal('status'),
+                    'status_label' => $a->status?->label() ?? '—',
+                    'status_badge_class' => $a->status?->badgeClass() ?? 'bg-gray-100 text-gray-800',
+                    'authorization_number' => $a->authorization_number,
+                    'radicado_number' => $a->radicado_number ?? null,
+                    'valid_until_formatted' => $a->valid_until?->format('d/m/Y'),
+                    'is_approved' => $a->status === \App\Modules\Authorizations\Enums\AuthorizationStatus::APPROVED,
+                ];
+            }),
             // Fechas/times de seguimiento (solo admin)
             'requested_at' => $isAdmin ? $this->requested_at?->format('Y-m-d H:i:s') : null,
             'requested_at_formatted' => $isAdmin ? $this->requested_at?->format('d/m/Y H:i') : null,

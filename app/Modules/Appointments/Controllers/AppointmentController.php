@@ -80,9 +80,28 @@ class AppointmentController extends Controller
         $appointment = $this->appointmentService->create($request->validated());
         $message = 'Cita creada correctamente.';
         if ($request->boolean('send_confirmation')) {
-            $message .= ' La confirmación será enviada al paciente.';
+            $message .= ' La confirmación será enviada al afiliado.';
         }
-        return redirect()->route('appointments.show', $appointment)->with('success', $message);
+
+        $redirect = redirect()->route('appointments.show', $appointment)->with('success', $message);
+
+        // RF-AUT-14: advertir si la IPS/lugar no coincide con la IPS autorizada
+        $appointment->load('authorization');
+        if ($appointment->authorization
+            && $appointment->authorization->authorized_ips_name
+            && $appointment->location_name
+        ) {
+            $ips = mb_strtolower(trim($appointment->authorization->authorized_ips_name));
+            $loc = mb_strtolower(trim($appointment->location_name));
+            if ($ips !== '' && $loc !== '' && ! str_contains($loc, $ips) && ! str_contains($ips, $loc)) {
+                $redirect->with(
+                    'warning',
+                    'La IPS o lugar indicado no coincide con la IPS autorizada por la EPS: ' . $appointment->authorization->authorized_ips_name . '. Verifique si la cita debe agendarse en la IPS autorizada.'
+                );
+            }
+        }
+
+        return $redirect;
     }
 
     public function show(Appointment $appointment): Response

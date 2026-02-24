@@ -238,7 +238,7 @@ const savePhoneCommunication = () => {
                             <div v-if="apt.specifications" class="mt-6 pt-6 border-t border-gray-200">
                                 <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
                                     <ClipboardList class="h-4 w-4" />
-                                    Especificaciones para el paciente
+                                    Especificaciones para el afiliado
                                 </h3>
                                 <div class="bg-yellow-50 border border-yellow-100 rounded-lg p-4">
                                     <p class="text-gray-800 whitespace-pre-line">{{ apt.specifications }}</p>
@@ -249,7 +249,7 @@ const savePhoneCommunication = () => {
                             <div v-if="apt.internal_notes" class="mt-6 pt-6 border-t border-gray-200">
                                 <h3 class="flex items-center gap-2 text-sm font-medium text-gray-500 mb-2">
                                     <Lock class="h-4 w-4" />
-                                    Notas internas (no se envían al paciente)
+                                    Notas internas (no se envían al afiliado)
                                 </h3>
                                 <div class="bg-gray-50 border border-gray-100 rounded-lg p-4">
                                     <p class="text-gray-700 whitespace-pre-line">{{ apt.internal_notes }}</p>
@@ -399,7 +399,7 @@ const savePhoneCommunication = () => {
                         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                             <div class="flex items-center gap-2">
                                 <User class="h-5 w-5 text-brand-600" />
-                                <h2 class="text-lg font-semibold text-gray-900">Paciente</h2>
+                                <h2 class="text-lg font-semibold text-gray-900">Afiliado</h2>
                             </div>
                         </div>
                         <div class="p-6">

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { CalendarDays, Clock, AlertTriangle, CheckCircle, Plus, UserPlus, CalendarCheck, ArrowRight, ClipboardList, Play, Users, Shield } from 'lucide-vue-next';
+import { CalendarDays, Clock, AlertTriangle, CheckCircle, Plus, UserPlus, CalendarCheck, ArrowRight, ClipboardList, Play, Users, Shield, FileCheck, Send, CalendarClock, AlertCircle } from 'lucide-vue-next';
 
 const page = usePage();
 const userRole = computed(() => page.props.auth?.user?.role ?? '');
@@ -21,6 +21,14 @@ const statCards = computed(() => [
     { name: 'Solicitudes en Progreso', value: props.stats?.in_progress_requests || 0, icon: Play, color: 'bg-indigo-50 text-indigo-600', link: '/appointment-requests?status=in_progress' },
     { name: 'Solicitudes Urgentes', value: props.stats?.urgent_requests || 0, icon: AlertTriangle, color: 'bg-red-50 text-red-600', link: '/appointment-requests?priority=urgent' },
     { name: 'Citas Confirmadas', value: props.stats?.confirmed || 0, icon: CheckCircle, color: 'bg-green-50 text-green-600', link: '/appointments?status=confirmed' },
+]);
+
+// RF-AUT-16: tarjetas de autorizaciones
+const authorizationStatCards = computed(() => [
+    { name: 'Pendientes radicación', value: props.stats?.authorizations_pending_radication || 0, icon: FileCheck, color: 'bg-amber-50 text-amber-600', link: '/authorizations?status=pending_radication' },
+    { name: 'Radicadas', value: props.stats?.authorizations_radicated || 0, icon: Send, color: 'bg-blue-50 text-blue-600', link: '/authorizations?status=radicated' },
+    { name: 'Aprobadas sin cita', value: props.stats?.authorizations_approved_without_appointment || 0, icon: CalendarCheck, color: 'bg-green-50 text-green-600', link: '/authorizations?status=approved&without_appointment=1' },
+    { name: 'Próximas a vencer', value: props.stats?.authorizations_expiring_soon || 0, icon: AlertCircle, color: 'bg-orange-50 text-orange-600', link: '/authorizations?expiring_soon=1' },
 ]);
 
 const appointments = computed(() => props.todayAppointments?.data || []);
@@ -74,7 +82,7 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-                    <p class="mt-1 text-sm text-gray-500">Resumen de la Central de Citas</p>
+                    <p class="mt-1 text-sm text-gray-500">Resumen operativo de la central de citas</p>
                 </div>
                 <Link href="/appointment-requests/create" class="inline-flex items-center justify-center gap-2 px-4 py-2 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors">
                     <ClipboardList class="h-5 w-5" />
@@ -82,21 +90,65 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
                 </Link>
             </div>
 
-            <!-- Stats -->
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Link v-for="stat in statCards" :key="stat.name" :href="stat.link" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div :class="[stat.color, 'rounded-lg p-3']">
-                                <component :is="stat.icon" class="h-6 w-6" />
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500 group-hover:text-gray-700">{{ stat.name }}</p>
-                                <p class="text-2xl font-bold text-gray-900">{{ stat.value }}</p>
-                            </div>
-                        </div>
+            <!-- Bloque de indicadores principales (citas + autorizaciones) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold text-gray-900">Indicadores principales</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Visión rápida de carga de trabajo y estado de autorizaciones</p>
                     </div>
-                </Link>
+                    <Link href="/authorizations" class="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700">
+                        Ver autorizaciones <ArrowRight class="h-4 w-4" />
+                    </Link>
+                </div>
+                <div class="px-6 py-5 space-y-6">
+                    <!-- Métricas de solicitudes y citas -->
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <Link
+                            v-for="stat in statCards"
+                            :key="stat.name"
+                            :href="stat.link"
+                            class="rounded-xl border border-gray-100 bg-gray-50/60 hover:bg-white hover:shadow-sm transition-all group"
+                        >
+                            <div class="p-4 flex items-center">
+                                <div :class="[stat.color, 'rounded-lg p-3 ring-1 ring-inset ring-white/60']">
+                                    <component :is="stat.icon" class="h-5 w-5" />
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-xs font-medium text-gray-500 group-hover:text-gray-700">{{ stat.name }}</p>
+                                    <p class="text-xl font-semibold text-gray-900">{{ stat.value }}</p>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+
+                    <!-- Métricas de autorizaciones -->
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <Link
+                            v-for="stat in authorizationStatCards"
+                            :key="stat.name"
+                            :href="stat.link"
+                            class="rounded-xl border border-gray-100 bg-gray-50/60 hover:bg-white hover:shadow-sm transition-all group"
+                        >
+                            <div class="p-4 flex items-center">
+                                <div :class="[stat.color, 'rounded-lg p-3 ring-1 ring-inset ring-white/60']">
+                                    <component :is="stat.icon" class="h-5 w-5" />
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-xs font-medium text-gray-500 group-hover:text-gray-700">{{ stat.name }}</p>
+                                    <p class="text-xl font-semibold text-gray-900">{{ stat.value }}</p>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1 text-xs text-gray-500">
+                        <p>Haz clic en cualquier tarjeta para ir directamente al listado filtrado.</p>
+                        <Link href="/authorizations" class="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 sm:hidden">
+                            Ver autorizaciones <ArrowRight class="h-3 w-3" />
+                        </Link>
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -59,12 +59,23 @@ class AppointmentService
 
     public function getDashboardStats(): array
     {
+        $auth = \App\Modules\Authorizations\Models\Authorization::class;
+
         return [
             'today' => Appointment::today()->confirmed()->count(),
             'pending_requests' => \App\Modules\AppointmentRequests\Models\AppointmentRequest::where('status', 'pending')->count(),
             'in_progress_requests' => \App\Modules\AppointmentRequests\Models\AppointmentRequest::where('status', 'in_progress')->count(),
             'urgent_requests' => \App\Modules\AppointmentRequests\Models\AppointmentRequest::whereIn('status', ['pending', 'in_progress'])->where('priority', 'urgent')->count(),
             'confirmed' => Appointment::confirmed()->count(),
+            // RF-AUT-16: estadísticas de autorizaciones
+            'authorizations_pending_radication' => $auth::pendingRadication()->count(),
+            'authorizations_radicated' => $auth::radicated()->count(),
+            'authorizations_approved_without_appointment' => $auth::approved()->whereDoesntHave('appointment')->count(),
+            'authorizations_expiring_soon' => $auth::approved()
+                ->whereNotNull('valid_until')
+                ->where('valid_until', '>=', now()->startOfDay())
+                ->where('valid_until', '<=', now()->addDays(7)->endOfDay())
+                ->count(),
         ];
     }
 
@@ -82,6 +93,17 @@ class AppointmentService
     {
         $data['created_by'] = Auth::id();
         $data['status'] = $data['status'] ?? AppointmentStatus::CONFIRMED->value;
+
+        // RF-AUT-13: si la cita viene de una solicitud con autorización aprobada, asignar authorization_id
+        if (!empty($data['appointment_request_id'])) {
+            $request = AppointmentRequest::with('authorization')->find($data['appointment_request_id']);
+            if ($request?->authorization) {
+                $data['authorization_id'] = $request->authorization->id;
+                if (empty($data['authorization_number']) && $request->authorization->authorization_number) {
+                    $data['authorization_number'] = $request->authorization->authorization_number;
+                }
+            }
+        }
 
         $appointment = Appointment::create($data);
 

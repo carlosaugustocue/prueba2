@@ -18,6 +18,7 @@ Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_socia
         Route::get('search', [AffiliateController::class, 'search'])->name('affiliates.search');
         Route::get('search-holders', [AffiliateController::class, 'searchHolders'])->name('affiliates.search.holders');
         Route::get('{affiliate}/beneficiaries', [AffiliateController::class, 'getBeneficiaries'])->name('affiliates.beneficiaries');
+        Route::get('{affiliate}/authorizations', [AffiliateController::class, 'authorizations'])->name('affiliates.authorizations');
         Route::post('/', [AffiliateController::class, 'storeApi'])->name('affiliates.store.api');
     });
 });

@@ -129,6 +129,19 @@ class AffiliateResource extends JsonResource
                     'location_name' => $apt->location_name,
                 ])
             ),
+            'authorizations' => $this->whenLoaded('authorizations', fn () =>
+                $this->authorizations->map(fn ($a) => [
+                    'id' => $a->id,
+                    'uuid' => $a->uuid,
+                    'status' => $a->status?->value,
+                    'status_label' => $a->status?->label(),
+                    'status_badge_class' => $a->status?->badgeClass(),
+                    'service_type' => $a->service_type,
+                    'authorization_number' => $a->authorization_number,
+                    'valid_until' => $a->valid_until?->format('Y-m-d'),
+                    'valid_until_formatted' => $a->valid_until?->format('d/m/Y'),
+                ])
+            ),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'novelties' => $this->whenLoaded('novelties', fn () =>
                 $this->novelties->map(fn ($n) => [

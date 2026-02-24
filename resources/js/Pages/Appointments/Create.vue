@@ -22,7 +22,7 @@ const props = defineProps({
     preselectedAffiliate: Object, // Datos precargados desde perfil del afiliado
 });
 
-// Form principal de cita
+// Form principal de cita (si viene de solicitud con autorización, se precarga el número)
 const form = useForm({
     affiliate_id: props.fromRequest?.affiliate?.id || props.preselectedAffiliate?.data?.id || props.preselectedAffiliate?.id || '',
     type: props.fromRequest?.type || 'general',
@@ -34,7 +34,7 @@ const form = useForm({
     location_name: '',
     location_address: '',
     location_phone: '',
-    authorization_number: '',
+    authorization_number: props.fromRequest?.authorization?.authorization_number || '',
     specifications: '',
     internal_notes: props.fromRequest?.client_notes ? `Notas del cliente: ${props.fromRequest.client_notes}` : '',
     send_confirmation: true,
@@ -68,7 +68,13 @@ const commonTimes = [
     '16:30', '17:00', '17:30', '18:00'
 ];
 
-// Calendario mini
+// RF-AUT-15: vigencia de la autorización (la cita no puede ser después de esta fecha)
+const authorizationValidUntil = computed(() => {
+    const until = props.fromRequest?.authorization?.valid_until;
+    if (!until) return null;
+    return until; // Y-m-d
+});
+
 const currentMonth = ref(new Date());
 const calendarDays = computed(() => {
     const year = currentMonth.value.getFullYear();
@@ -76,23 +82,27 @@ const calendarDays = computed(() => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const days = [];
-    
+    const today = new Date();
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const validUntil = authorizationValidUntil.value;
+
     // Días del mes anterior para completar la primera semana
     const startDay = firstDay.getDay();
     for (let i = startDay - 1; i >= 0; i--) {
         const d = new Date(year, month, -i);
-        days.push({ date: d, isCurrentMonth: false, isToday: false });
+        days.push({ date: d, isCurrentMonth: false, isToday: false, isPast: false, isAfterValidUntil: false });
     }
-    
+
     // Días del mes actual
-    const today = new Date();
     for (let i = 1; i <= lastDay.getDate(); i++) {
         const d = new Date(year, month, i);
         const isToday = d.toDateString() === today.toDateString();
-        const isPast = d < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        days.push({ date: d, isCurrentMonth: true, isToday, isPast });
+        const isPast = d < todayDate;
+        const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const isAfterValidUntil = validUntil ? dStr > validUntil : false;
+        days.push({ date: d, isCurrentMonth: true, isToday, isPast, isAfterValidUntil });
     }
-    
+
     return days;
 });
 
@@ -108,7 +118,7 @@ const nextMonth = () => {
 };
 
 const selectDate = (day) => {
-    if (day.isPast || !day.isCurrentMonth) return;
+    if (day.isPast || !day.isCurrentMonth || day.isAfterValidUntil) return;
     const d = day.date;
     form.appointment_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
@@ -341,7 +351,7 @@ const submit = () => {
                         </div>
                     </div>
                     <div class="px-6 py-4 space-y-4">
-                        <!-- Paciente seleccionado -->
+                        <!-- Afiliado seleccionado -->
                         <div v-if="selectedAffiliate" class="bg-brand-50 border border-brand-200 rounded-xl p-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-4">
@@ -417,7 +427,7 @@ v-for="affiliate in affiliateResults"
                                             class="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
                                         >
                                             <UserPlus class="h-5 w-5" />
-                                            Crear Nuevo Paciente
+                                            Crear Nuevo Afiliado
                                         </button>
                                     </div>
                                 </div>
@@ -594,12 +604,12 @@ v-for="affiliate in affiliateResults"
                                         :key="index"
                                         type="button"
                                         @click="selectDate(day)"
-                                        :disabled="day.isPast || !day.isCurrentMonth"
+                                        :disabled="day.isPast || !day.isCurrentMonth || day.isAfterValidUntil"
                                         :class="[
                                             'aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all',
                                             !day.isCurrentMonth ? 'text-gray-300' : '',
-                                            day.isCurrentMonth && !day.isPast && !isSelectedDate(day) ? 'text-gray-700 hover:bg-brand-100 hover:text-brand-700' : '',
-                                            day.isPast && day.isCurrentMonth ? 'text-gray-300 cursor-not-allowed' : '',
+                                            day.isCurrentMonth && !day.isPast && !day.isAfterValidUntil && !isSelectedDate(day) ? 'text-gray-700 hover:bg-brand-100 hover:text-brand-700' : '',
+                                            (day.isPast || day.isAfterValidUntil) && day.isCurrentMonth ? 'text-gray-300 cursor-not-allowed' : '',
                                             day.isToday && !isSelectedDate(day) ? 'bg-brand-100 text-brand-700 font-bold' : '',
                                             isSelectedDate(day) ? 'bg-brand-500 text-white shadow-lg' : ''
                                         ]"
@@ -609,6 +619,10 @@ v-for="affiliate in affiliateResults"
                                 </div>
                             </div>
                             
+                            <!-- RF-AUT-15: aviso vigencia autorización -->
+                            <p v-if="authorizationValidUntil && fromRequest?.authorization?.valid_until_formatted" class="mt-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                La cita debe agendarse antes del <strong>{{ fromRequest.authorization.valid_until_formatted }}</strong>. Después de esa fecha requiere renovación ante la EPS.
+                            </p>
                             <!-- Fecha seleccionada -->
                             <div v-if="form.appointment_date" class="mt-4 p-3 bg-brand-50 border border-brand-200 rounded-lg">
                                 <p class="text-sm text-brand-700">
@@ -719,6 +733,14 @@ v-for="affiliate in affiliateResults"
                                 />
                             </div>
                             <div>
+                                <!-- Bloque visible cuando la solicitud ya tiene autorización tramitada -->
+                                <div v-if="fromRequest?.authorization" class="mb-3 rounded-xl border-2 border-green-200 bg-green-50 p-4">
+                                    <p class="text-xs font-semibold text-green-800 uppercase tracking-wide mb-1">Autorización vinculada a esta solicitud</p>
+                                    <p class="text-lg font-bold font-mono text-green-900">{{ fromRequest.authorization.authorization_number || fromRequest.authorization.radicado_number || '—' }}</p>
+                                    <p v-if="fromRequest.authorization.valid_until_formatted" class="text-sm text-green-700 mt-1">Vigente hasta {{ fromRequest.authorization.valid_until_formatted }}</p>
+                                    <p v-if="fromRequest.authorization.service_type" class="text-sm text-green-600 mt-0.5">{{ fromRequest.authorization.service_type }}</p>
+                                    <p v-if="fromRequest.authorization.authorized_ips_name" class="text-sm text-green-800 font-medium mt-1">IPS autorizada por la EPS: {{ fromRequest.authorization.authorized_ips_name }}</p>
+                                </div>
                                 <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                                     <FileText class="h-4 w-4 text-gray-400" />
                                     Número de Autorización
@@ -782,7 +804,7 @@ v-for="affiliate in affiliateResults"
                                 <MessageSquare class="h-5 w-5 text-brand-600" />
                                 <span class="font-semibold text-gray-900">Enviar confirmación por WhatsApp</span>
                             </div>
-                            <p class="text-sm text-gray-500 mt-1">Se enviará un mensaje automático al paciente con los detalles de la cita</p>
+                            <p class="text-sm text-gray-500 mt-1">Se enviará un mensaje automático al afiliado con los detalles de la cita</p>
                         </div>
                     </label>
                 </div>
@@ -880,7 +902,7 @@ v-for="affiliate in affiliateResults"
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Correo electrónico</label>
-                                <input v-model="affiliateForm.email" type="email" placeholder="paciente@email.com" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                                <input v-model="affiliateForm.email" type="email" placeholder="afiliado@email.com" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                             </div>
                         </div>
 

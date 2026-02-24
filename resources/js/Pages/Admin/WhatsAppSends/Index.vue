@@ -37,7 +37,7 @@ function statusBadgeClass(status, isPending) {
 async function cancelSend(reminderId) {
     const ok = await confirmDialog({
         title: 'Cancelar envío por WhatsApp',
-        text: '¿Cancelar este envío? No se enviará el mensaje al paciente.',
+        text: '¿Cancelar este envío? No se enviará el mensaje al afiliado.',
         icon: 'warning',
         confirmButtonText: 'Sí, cancelar envío',
         cancelButtonText: 'No, mantener',
@@ -107,7 +107,7 @@ async function cancelSend(reminderId) {
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cita</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Afiliado</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Destino</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
                             </tr>

@@ -157,7 +157,7 @@ const getPriorityClass = (priority) => {
                             type="text"
                             :value="filters.search || ''"
                             @input="applyFilter('search', $event.target.value)"
-                            placeholder="Buscar paciente..."
+                            placeholder="Buscar afiliado..."
                             class="w-full pl-10 pr-4 py-2 rounded-lg border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500"
                         />
                     </div>

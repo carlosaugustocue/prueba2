@@ -64,7 +64,7 @@ const appointments = computed(() => props.appointments?.data || []);
                     <div class="flex-1">
                         <div class="relative">
                             <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <input v-model="search" type="text" placeholder="Buscar por paciente, doctor..." class="block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            <input v-model="search" type="text" placeholder="Buscar por afiliado, doctor..." class="block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                     </div>
                     <select v-model="status" @change="applyFilters" class="block w-full sm:w-48 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
@@ -84,7 +84,7 @@ const appointments = computed(() => props.appointments?.data || []);
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cita</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Afiliado</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha / Hora</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>

@@ -20,6 +20,9 @@ use App\Modules\Patients\Requests\CreateAffiliateRequest;
 use App\Modules\Patients\Requests\UpdateAffiliateRequest;
 use App\Modules\Patients\Resources\AffiliateResource;
 use App\Modules\Patients\Enums\DocumentType;
+use App\Modules\Authorizations\Models\Authorization;
+use App\Modules\Authorizations\Enums\AuthorizationStatus;
+use App\Modules\Authorizations\Resources\AuthorizationResource;
 use App\Modules\Patients\Enums\PatientType;
 use App\Modules\Patients\Enums\RelationshipType;
 use Illuminate\Http\Request;
@@ -118,6 +121,7 @@ class AffiliateController extends Controller
             'holder',
             'beneficiaries',
             'appointments',
+            'authorizations' => fn ($q) => $q->orderByDesc('created_at'),
             'novelties.noveltyType',
         ]);
 
@@ -200,8 +204,15 @@ class AffiliateController extends Controller
 
     public function search(Request $request): JsonResponse
     {
-        $request->validate(['term' => 'required|string|min:2']);
-        $affiliates = $this->affiliateService->searchForAutocomplete($request->input('term'));
+        $request->validate([
+            'term' => 'required|string|min:2',
+            'serviconli_only' => 'sometimes|boolean',
+        ]);
+        $affiliates = $this->affiliateService->searchForAutocomplete(
+            $request->input('term'),
+            10,
+            $request->boolean('serviconli_only')
+        );
         return response()->json(AffiliateResource::collection($affiliates));
     }
 
@@ -272,6 +283,42 @@ class AffiliateController extends Controller
 
         return response()->json([
             'data' => AffiliateResource::collection($beneficiaries),
+        ]);
+    }
+
+    /**
+     * Lista autorizaciones aprobadas y vigentes del afiliado, reutilizables para vincular a una solicitud.
+     * Opcional: for_request_id para incluir las ya vinculadas a esa solicitud.
+     */
+    public function authorizations(Request $request, Affiliate $affiliate): JsonResponse
+    {
+        $forRequestId = $request->integer('for_request_id');
+
+        $query = Authorization::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('status', AuthorizationStatus::APPROVED)
+            ->where(function ($q) {
+                $q->whereNull('valid_until')
+                    ->orWhere('valid_until', '>=', now()->startOfDay());
+            })
+            ->with('eps:id,name,code')
+            ->orderByDesc('valid_until')
+            ->orderByDesc('created_at');
+
+        // Solo autorizaciones no vinculadas o ya vinculadas a esta solicitud
+        if ($forRequestId > 0) {
+            $query->where(function ($q) use ($forRequestId) {
+                $q->whereNull('appointment_request_id')
+                    ->orWhere('appointment_request_id', $forRequestId);
+            });
+        } else {
+            $query->whereNull('appointment_request_id');
+        }
+
+        $authorizations = $query->get();
+
+        return response()->json([
+            'data' => AuthorizationResource::collection($authorizations),
         ]);
     }
 }

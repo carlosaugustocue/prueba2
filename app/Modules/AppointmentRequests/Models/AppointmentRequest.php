@@ -22,6 +22,7 @@ class AppointmentRequest extends Model
         'type',
         'priority',
         'specialty',
+        'requires_authorization',
         'status',
         'requested_at',
         'started_at',
@@ -48,6 +49,7 @@ class AppointmentRequest extends Model
             'type' => AppointmentType::class,
             'priority' => Priority::class,
             'status' => RequestStatus::class,
+            'requires_authorization' => 'boolean',
             'requested_at' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
@@ -64,6 +66,11 @@ class AppointmentRequest extends Model
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(\App\Modules\Appointments\Models\Appointment::class);
+    }
+
+    public function authorization(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Modules\Authorizations\Models\Authorization::class);
     }
 
     public function creator(): BelongsTo

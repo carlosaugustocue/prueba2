@@ -3,10 +3,11 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { confirmDialog, toast } from '@/Utils/swal';
+import axios from 'axios';
 import {
     ChevronLeft, Clock, User, Calendar, Play, XCircle, AlertTriangle,
     CheckCircle, Phone, Mail, Building2, FileText, MessageSquare, ArrowRight,
-    Loader2, ClipboardList, Info, Trash2
+    Loader2, ClipboardList, Info, Trash2, FileCheck, Unlink
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -121,11 +122,88 @@ const statusIcon = (status) => {
     const map = {
         pending: Clock,
         in_progress: Loader2,
+        pending_authorization: FileCheck,
         completed: CheckCircle,
         cancelled: XCircle,
         failed: AlertTriangle,
     };
     return map[status] || Clock;
+};
+
+// Crear cita: permitido si está en trámite y (no requiere autorización o autorización aprobada) y aún no tiene cita
+const canCreateAppointment = computed(() => {
+    if (request.value.appointment) return false;
+    if (request.value.status !== 'in_progress') return false;
+    if (request.value.requires_authorization) {
+        return request.value.authorization?.is_approved === true;
+    }
+    return true;
+});
+
+// Mensaje cuando requiere autorización pero no está aprobada
+const authorizationBlockMessage = computed(() => {
+    if (!request.value.requires_authorization || request.value.appointment) return null;
+    if (request.value.authorization?.is_approved) return null;
+    if (!request.value.authorization) return 'Esta solicitud requiere autorización EPS. Cree la autorización y cuando esté aprobada podrá crear la cita.';
+    return `Autorización en estado: ${request.value.authorization?.status_label || '—'}. Cuando la EPS la apruebe podrá crear la cita.`;
+});
+
+// Modal: usar autorización existente del afiliado
+const showExistingAuthModal = ref(false);
+const existingAuthorizations = ref([]);
+const loadingExistingAuth = ref(false);
+const attachingAuthId = ref(null);
+
+const openExistingAuthModal = async () => {
+    showExistingAuthModal.value = true;
+    existingAuthorizations.value = [];
+    loadingExistingAuth.value = true;
+    try {
+        const res = await axios.get(`/api/affiliates/${request.value.affiliate_id}/authorizations`, {
+            params: { for_request_id: request.value.id },
+        });
+        const data = res.data?.data ?? res.data;
+        existingAuthorizations.value = Array.isArray(data) ? data : (data?.data ?? []);
+    } catch (e) {
+        console.error(e);
+        toast({ title: 'No se pudieron cargar las autorizaciones.', icon: 'error' });
+    } finally {
+        loadingExistingAuth.value = false;
+    }
+};
+
+const attachAuthorization = (authorizationId) => {
+    attachingAuthId.value = authorizationId;
+    router.post(`/appointment-requests/${request.value.id}/attach-authorization`, {
+        authorization_id: authorizationId,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showExistingAuthModal.value = false;
+            toast({ title: 'Autorización vinculada. Ya puede crear la cita.' });
+        },
+        onError: () => {
+            toast({ title: 'No se pudo vincular la autorización.', icon: 'error' });
+        },
+        onFinish: () => {
+            attachingAuthId.value = null;
+        },
+    });
+};
+
+const detachAuthorizationFromRequest = () => {
+    confirmDialog({
+        title: 'Desvincular autorización',
+        text: 'La autorización dejará de estar vinculada a esta solicitud y la solicitud volverá a "Pendiente de autorización". Podrá volver a elegir otra autorización o crear una nueva. ¿Continuar?',
+        confirmButtonText: 'Desvincular',
+    }).then((ok) => {
+        if (!ok) return;
+        router.post(`/authorizations/${request.value.authorization.id}/detach-request`, {}, {
+            preserveScroll: true,
+            onSuccess: () => toast({ title: 'Autorización desvinculada.' }),
+            onError: () => toast({ title: 'No se pudo desvincular.', icon: 'error' }),
+        });
+    });
 };
 </script>
 
@@ -155,13 +233,21 @@ const statusIcon = (status) => {
                     </button>
                     
                     <Link 
-                        v-if="request.status === 'in_progress'"
+                        v-if="canCreateAppointment"
                         :href="`/appointment-requests/${request.id}/create-appointment`"
                         class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
                     >
                         <Calendar class="h-5 w-5" />
                         Crear Cita
                     </Link>
+                    <span
+                        v-else-if="authorizationBlockMessage"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-sm"
+                        :title="authorizationBlockMessage"
+                    >
+                        <FileCheck class="h-5 w-5 flex-shrink-0" />
+                        <span class="max-w-xs truncate">{{ authorizationBlockMessage }}</span>
+                    </span>
 
                     <button 
                         v-if="request.is_active"
@@ -338,6 +424,128 @@ const statusIcon = (status) => {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Autorización EPS (cuando la solicitud requiere autorización) -->
+                    <div v-if="request.requires_authorization" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                            <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                                <FileCheck class="h-5 w-5 text-brand-600" />
+                                Autorización EPS
+                            </h2>
+                            <div v-if="!request.authorization" class="flex flex-wrap gap-2">
+                                <Link
+                                    :href="`/authorizations/create?appointment_request_id=${request.id}&affiliate_id=${request.affiliate_id}`"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 text-sm font-medium"
+                                >
+                                    <FileCheck class="h-4 w-4" />
+                                    Crear autorización
+                                </Link>
+                                <button
+                                    type="button"
+                                    @click="openExistingAuthModal"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-brand-300 text-brand-700 rounded-lg hover:bg-brand-50 text-sm font-medium"
+                                >
+                                    <ClipboardList class="h-4 w-4" />
+                                    Usar autorización existente
+                                </button>
+                            </div>
+                            <div v-else class="flex flex-wrap gap-2">
+                                <Link
+                                    :href="`/authorizations/${request.authorization.id}`"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                                >
+                                    Ver autorización
+                                    <ArrowRight class="h-4 w-4" />
+                                </Link>
+                                <button
+                                    v-if="!request.appointment"
+                                    type="button"
+                                    @click="detachAuthorizationFromRequest"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg hover:bg-amber-100 text-sm font-medium"
+                                >
+                                    <Unlink class="h-4 w-4" />
+                                    Desvincular autorización
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <template v-if="request.authorization">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <span :class="[request.authorization.status_badge_class, 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium']">
+                                        {{ request.authorization.status_label }}
+                                    </span>
+                                    <span v-if="request.authorization.authorization_number" class="font-mono text-gray-900 font-medium">
+                                        N.º autorización: {{ request.authorization.authorization_number }}
+                                    </span>
+                                    <span v-if="request.authorization.radicado_number" class="text-sm text-gray-500">
+                                        Radicado: {{ request.authorization.radicado_number }}
+                                    </span>
+                                    <span v-if="request.authorization.valid_until_formatted" class="text-sm text-gray-500">
+                                        Vigente hasta {{ request.authorization.valid_until_formatted }}
+                                    </span>
+                                </div>
+                                <p v-if="request.authorization.is_approved" class="mt-2 text-sm text-green-700 font-medium">
+                                    Autorización aprobada. Puede crear la cita con el botón «Crear Cita» arriba.
+                                </p>
+                            </template>
+                            <p v-else class="text-gray-500 text-sm">
+                                Esta solicitud requiere autorización ante la EPS. Cree una nueva o use una autorización ya aprobada del afiliado (botón «Usar autorización existente»).
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Modal: Usar autorización existente -->
+                    <Teleport to="body">
+                        <div v-if="showExistingAuthModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="showExistingAuthModal = false">
+                            <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col" @click.stop>
+                                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-900">Usar autorización existente</h3>
+                                    <button type="button" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg" @click="showExistingAuthModal = false" aria-label="Cerrar">
+                                        <XCircle class="h-5 w-5" />
+                                    </button>
+                                </div>
+                                <div class="p-6 overflow-y-auto flex-1">
+                                    <p class="text-sm text-gray-500 mb-4">
+                                        Autorizaciones aprobadas y vigentes del afiliado. Elija una para vincularla a esta solicitud.
+                                    </p>
+                                    <div v-if="loadingExistingAuth" class="flex items-center justify-center py-12">
+                                        <Loader2 class="h-8 w-8 text-brand-500 animate-spin" />
+                                    </div>
+                                    <div v-else-if="existingAuthorizations.length === 0" class="text-center py-8 text-gray-500">
+                                        No hay autorizaciones aprobadas y vigentes para este afiliado. Cree una nueva desde «Crear autorización».
+                                    </div>
+                                    <ul v-else class="space-y-3">
+                                        <li
+                                            v-for="a in existingAuthorizations"
+                                            :key="a.id"
+                                            class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-gray-200 hover:border-brand-200 bg-gray-50/50"
+                                        >
+                                            <div class="min-w-0 flex-1">
+                                                <p class="font-medium text-gray-900">
+                                                    {{ a.authorization_number || a.radicado_number || `Autorización #${a.id}` }}
+                                                </p>
+                                                <p class="text-sm text-gray-600 mt-0.5">{{ a.service_type }}</p>
+                                                <p class="text-xs text-gray-500">
+                                                    {{ a.eps?.name || '—' }}
+                                                    <span v-if="a.valid_until_formatted"> · Vigente hasta {{ a.valid_until_formatted }}</span>
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                :disabled="attachingAuthId !== null"
+                                                @click="attachAuthorization(a.id)"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 text-sm font-medium disabled:opacity-50"
+                                            >
+                                                <Loader2 v-if="attachingAuthId === a.id" class="h-4 w-4 animate-spin" />
+                                                <CheckCircle v-else class="h-4 w-4" />
+                                                Vincular a esta solicitud
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </Teleport>
 
                     <!-- Cita relacionada -->
                     <div v-if="request.appointment" class="bg-white rounded-xl shadow-sm border border-green-200 overflow-hidden">

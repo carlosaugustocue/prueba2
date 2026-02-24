@@ -11,7 +11,7 @@ namespace App\Modules\Appointments\Enums;
 enum AppointmentStatus: string
 {
     case CONFIRMED = 'confirmed';   // Cita programada/confirmada por la EPS/IPS
-    case CANCELLED = 'cancelled';   // Cancelada (por la EPS/IPS o el paciente)
+    case CANCELLED = 'cancelled';   // Cancelada (por la EPS/IPS o el afiliado)
 
     public function label(): string
     {

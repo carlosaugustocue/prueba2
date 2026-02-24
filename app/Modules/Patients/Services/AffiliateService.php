@@ -41,17 +41,22 @@ class AffiliateService
         return $query->orderBy('first_name')->orderBy('last_name')->paginate($perPage)->withQueryString();
     }
 
-    public function searchForAutocomplete(string $term, int $limit = 10): Collection
+    public function searchForAutocomplete(string $term, int $limit = 10, bool $serviconliOnly = false): Collection
     {
-        return Affiliate::query()
-            ->with(['socialSecurityProfile'])
+        $query = Affiliate::query()
+            ->with(['socialSecurityProfile.eps'])
             ->searchByWords($term)
-            ->limit($limit)
-            ->get([
-                'id', 'uuid', 'document_type', 'document_number',
-                'first_name', 'second_name', 'last_name', 'second_last_name',
-                'phone', 'whatsapp', 'status',
-            ]);
+            ->limit($limit);
+
+        if ($serviconliOnly) {
+            $query->whereServiconliManaged();
+        }
+
+        return $query->get([
+            'id', 'uuid', 'document_type', 'document_number',
+            'first_name', 'second_name', 'last_name', 'second_last_name',
+            'phone', 'whatsapp', 'status',
+        ]);
     }
 
     public function create(array $data): Affiliate

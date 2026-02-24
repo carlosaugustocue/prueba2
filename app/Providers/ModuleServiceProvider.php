@@ -16,6 +16,7 @@ class ModuleServiceProvider extends ServiceProvider
         'SocialSecurity',
         'AppointmentRequests',
         'Appointments',
+        'Authorizations',
         'AdminUsers',
         'AdminConfig',
         'AdminMetrics',

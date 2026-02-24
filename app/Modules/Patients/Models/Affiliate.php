@@ -153,4 +153,33 @@ class Affiliate extends Model
     {
         return $this->whatsapp ?? $this->phone;
     }
+
+    /**
+     * Solo afiliados cuyo pagador directo es Serviconli (citas y autorizaciones se gestionan solo para estos).
+     */
+    public function scopeWhereServiconliAsPayer(Builder $query): Builder
+    {
+        return $query->whereHas('socialSecurityProfile', function (Builder $q) {
+            $q->whereHas('payer', fn (Builder $p) => $p->where('is_serviconli', true));
+        });
+    }
+
+    /**
+     * Afiliados gestionados por Serviconli: con pagador Serviconli O con tipo de cliente SERVICONLI.
+     * Usado en búsqueda de autorizaciones para incluir a quienes tienen "Tipo de cliente: SERVICONLI" en la ficha.
+     */
+    public function scopeWhereServiconliManaged(Builder $query): Builder
+    {
+        return $query->whereHas('socialSecurityProfile', function (Builder $q) {
+            $q->where(function (Builder $inner) {
+                $inner->whereHas('payer', fn (Builder $p) => $p->where('is_serviconli', true))
+                    ->orWhereHas('clientType', fn (Builder $ct) => $ct->where('code', 'SERVICONLI'));
+            });
+        });
+    }
+
+    public function authorizations(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Authorizations\Models\Authorization::class);
+    }
 }

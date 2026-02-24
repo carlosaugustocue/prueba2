@@ -99,7 +99,7 @@ const csvUrl = computed(() => {
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Solicitud</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operador</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Afiliado</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">EPS</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Anotación</th>

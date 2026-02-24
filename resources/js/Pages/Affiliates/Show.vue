@@ -5,7 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import {
     ChevronLeft, CalendarPlus, Pencil, Phone, Mail, MapPin,
     User, Users, Heart, UserPlus, Calendar, ArrowRight,
-    MessageSquare, Building2, CalendarClock, FileText, Plus, X
+    MessageSquare, Building2, CalendarClock, FileText, FileCheck, Plus, X
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -60,6 +60,7 @@ const isBeneficiary = computed(() => affiliate.value.is_beneficiary);
 const beneficiaries = computed(() => affiliate.value.beneficiaries || []);
 const holder = computed(() => affiliate.value.holder);
 const novelties = computed(() => affiliate.value.novelties || []);
+const authorizations = computed(() => affiliate.value.authorizations || []);
 const isAffiliateActive = computed(() => {
     const s = (affiliate.value?.status || '').toString().toUpperCase();
     return s === '' || s === 'ACTIVO';
@@ -407,6 +408,49 @@ const isAffiliateActive = computed(() => {
                             <div v-if="!affiliate.appointments?.length" class="px-6 py-12 text-center">
                                 <Calendar class="h-12 w-12 mx-auto text-gray-300 mb-3" />
                                 <p class="text-gray-500">No hay citas registradas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RF-AUT-17: Autorizaciones del afiliado -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-white flex items-center justify-between">
+                            <h3 class="flex items-center gap-2 font-semibold text-gray-900">
+                                <FileCheck class="h-5 w-5 text-emerald-600" />
+                                Autorizaciones
+                                <span v-if="authorizations.length" class="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full">{{ authorizations.length }}</span>
+                            </h3>
+                            <Link :href="`/authorizations?affiliate_id=${affiliate.id}`" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
+                                Ver en listado →
+                            </Link>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            <Link
+                                v-for="auth in authorizations"
+                                :key="auth.id"
+                                :href="`/authorizations/${auth.id}`"
+                                class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors group"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-1 rounded">#{{ auth.id }}</span>
+                                    <div>
+                                        <p class="font-medium text-gray-900 group-hover:text-brand-700">{{ auth.service_type || 'Autorización' }}</p>
+                                        <p class="text-sm text-gray-500">
+                                            {{ auth.authorization_number ? `N.º ${auth.authorization_number}` : 'Sin número' }}
+                                            <span v-if="auth.valid_until_formatted"> · Vigente hasta {{ auth.valid_until_formatted }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <span :class="[auth.status_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">
+                                    {{ auth.status_label }}
+                                </span>
+                            </Link>
+                            <div v-if="!authorizations.length" class="px-6 py-12 text-center">
+                                <FileCheck class="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                                <p class="text-gray-500">No hay autorizaciones registradas</p>
+                                <Link :href="`/authorizations/create?affiliate_id=${affiliate.id}`" class="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+                                    Crear autorización
+                                </Link>
                             </div>
                         </div>
                     </div>

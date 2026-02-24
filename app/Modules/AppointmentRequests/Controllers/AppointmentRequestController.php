@@ -11,6 +11,8 @@ use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
 use App\Modules\Patients\Models\Eps;
 use App\Modules\Patients\Enums\DocumentType;
+use App\Modules\Authorizations\Models\Authorization;
+use App\Modules\Authorizations\Enums\AuthorizationStatus;
 use App\Modules\Patients\Enums\PatientType;
 use App\Modules\Auth\Models\User;
 use Illuminate\Http\Request;
@@ -98,6 +100,7 @@ class AppointmentRequestController extends Controller
         $data = $request->validated();
         $data['created_by'] = auth()->id();
         $data['status'] = RequestStatus::PENDING->value;
+        $data['requires_authorization'] = $request->boolean('requires_authorization');
         // Tracking oculto: el timestamp de solicitud se registra automáticamente al crear la solicitud
         $data['requested_at'] = now();
 
@@ -110,7 +113,7 @@ class AppointmentRequestController extends Controller
 
     public function show(AppointmentRequest $appointmentRequest): Response
     {
-        $appointmentRequest->load(['affiliate.socialSecurityProfile.eps', 'creator', 'assignee', 'appointment', 'notes.author']);
+        $appointmentRequest->load(['affiliate.socialSecurityProfile.eps', 'creator', 'assignee', 'appointment', 'notes.author', 'authorization']);
 
         return Inertia::render('AppointmentRequests/Show', [
             'appointmentRequest' => new AppointmentRequestResource($appointmentRequest),
@@ -137,11 +140,48 @@ class AppointmentRequestController extends Controller
      */
     public function createAppointment(AppointmentRequest $appointmentRequest): Response
     {
-        $appointmentRequest->load(['affiliate.socialSecurityProfile.eps']);
+        $appointmentRequest->load(['affiliate.socialSecurityProfile.eps', 'authorization']);
 
         // Si no está en progreso, iniciarla
         if ($appointmentRequest->status === RequestStatus::PENDING) {
             $appointmentRequest->startProcessing(auth()->id());
+        }
+
+        $fromRequest = [
+            'id' => $appointmentRequest->id,
+            'affiliate' => [
+                'id' => $appointmentRequest->affiliate->id,
+                'first_name' => $appointmentRequest->affiliate->first_name,
+                'last_name' => $appointmentRequest->affiliate->last_name,
+                'full_name' => $appointmentRequest->affiliate->full_name,
+                'document_type_abbreviation' => $appointmentRequest->affiliate->document_type?->abbreviation(),
+                'document_number' => $appointmentRequest->affiliate->document_number,
+                'birth_date' => $appointmentRequest->affiliate->birth_date?->format('Y-m-d'),
+                'phone' => $appointmentRequest->affiliate->phone,
+                'whatsapp' => $appointmentRequest->affiliate->whatsapp,
+                'whatsapp_number' => $appointmentRequest->affiliate->getWhatsAppNumber(),
+                'eps' => $appointmentRequest->affiliate->socialSecurityProfile?->eps ? [
+                    'id' => $appointmentRequest->affiliate->socialSecurityProfile->eps->id,
+                    'name' => $appointmentRequest->affiliate->socialSecurityProfile->eps->name,
+                ] : null,
+            ],
+            'type' => $appointmentRequest->type->value,
+            'priority' => $appointmentRequest->priority->value,
+            'specialty' => $appointmentRequest->specialty,
+            'client_notes' => $appointmentRequest->client_notes,
+        ];
+
+        if ($appointmentRequest->authorization) {
+            $auth = $appointmentRequest->authorization;
+            $fromRequest['authorization'] = [
+                'id' => $auth->id,
+                'authorization_number' => $auth->authorization_number,
+                'radicado_number' => $auth->radicado_number,
+                'valid_until_formatted' => $auth->valid_until?->format('d/m/Y'),
+                'valid_until' => $auth->valid_until?->format('Y-m-d'),
+                'service_type' => $auth->service_type,
+                'authorized_ips_name' => $auth->authorized_ips_name,
+            ];
         }
 
         return Inertia::render('Appointments/Create', [
@@ -150,30 +190,7 @@ class AppointmentRequestController extends Controller
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'documentTypes' => DocumentType::toArray(),
             'patientTypes' => PatientType::toArray(),
-            // Datos precargados de la solicitud
-            'fromRequest' => [
-                'id' => $appointmentRequest->id,
-                'affiliate' => [
-                    'id' => $appointmentRequest->affiliate->id,
-                    'first_name' => $appointmentRequest->affiliate->first_name,
-                    'last_name' => $appointmentRequest->affiliate->last_name,
-                    'full_name' => $appointmentRequest->affiliate->full_name,
-                    'document_type_abbreviation' => $appointmentRequest->affiliate->document_type?->abbreviation(),
-                    'document_number' => $appointmentRequest->affiliate->document_number,
-                    'birth_date' => $appointmentRequest->affiliate->birth_date?->format('Y-m-d'),
-                    'phone' => $appointmentRequest->affiliate->phone,
-                    'whatsapp' => $appointmentRequest->affiliate->whatsapp,
-                    'whatsapp_number' => $appointmentRequest->affiliate->getWhatsAppNumber(),
-                    'eps' => $appointmentRequest->affiliate->socialSecurityProfile?->eps ? [
-                        'id' => $appointmentRequest->affiliate->socialSecurityProfile->eps->id,
-                        'name' => $appointmentRequest->affiliate->socialSecurityProfile->eps->name,
-                    ] : null,
-                ],
-                'type' => $appointmentRequest->type->value,
-                'priority' => $appointmentRequest->priority->value,
-                'specialty' => $appointmentRequest->specialty,
-                'client_notes' => $appointmentRequest->client_notes,
-            ],
+            'fromRequest' => $fromRequest,
         ]);
     }
 
@@ -278,6 +295,35 @@ class AppointmentRequestController extends Controller
         $appointmentRequest->save();
 
         return back()->with('success', 'Anotaciones internas guardadas.');
+    }
+
+    /**
+     * Vincular una autorización ya aprobada del afiliado a esta solicitud.
+     */
+    public function attachAuthorization(Request $request, AppointmentRequest $appointmentRequest): RedirectResponse
+    {
+        $request->validate([
+            'authorization_id' => ['required', 'integer', 'exists:authorizations,id'],
+        ]);
+
+        $authorization = Authorization::find($request->integer('authorization_id'));
+
+        if ($authorization->affiliate_id !== $appointmentRequest->affiliate_id) {
+            return back()->with('error', 'La autorización no corresponde al afiliado de esta solicitud.');
+        }
+
+        if ($authorization->status !== AuthorizationStatus::APPROVED) {
+            return back()->with('error', 'Solo se pueden vincular autorizaciones aprobadas.');
+        }
+
+        if ($authorization->valid_until && $authorization->valid_until->isPast()) {
+            return back()->with('error', 'La autorización está vencida.');
+        }
+
+        $authorization->update(['appointment_request_id' => $appointmentRequest->id]);
+        $appointmentRequest->update(['status' => RequestStatus::IN_PROGRESS]);
+
+        return back()->with('success', 'Autorización vinculada. Ya puede crear la cita.');
     }
 
     public function destroy(AppointmentRequest $appointmentRequest): RedirectResponse

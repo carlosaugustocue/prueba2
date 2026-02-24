@@ -23,5 +23,8 @@ Route::middleware(['auth', 'role:atencion,supervisor,agent,admin'])->group(funct
 
         Route::post('notes', [AppointmentRequestController::class, 'saveNotes'])
             ->name('appointment-requests.notes');
+
+        Route::post('attach-authorization', [AppointmentRequestController::class, 'attachAuthorization'])
+            ->name('appointment-requests.attach-authorization');
     });
 });

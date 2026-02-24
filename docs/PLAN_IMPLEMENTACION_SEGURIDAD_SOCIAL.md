@@ -5,8 +5,11 @@
 **Stack:** Laravel 12 + Vue 3 + Inertia.js + MySQL  
 **Principio:** Modelo normalizado atómico — cada tabla una responsabilidad.
 
-**Documento de referencia obligatorio:** **[docs/mapeo_datasegura_a_base_de_datos.md](mapeo_datasegura_a_base_de_datos.md)**  
-Define el mapeo DataSegura (Excel) → tablas `affiliates`, `social_security_profiles`, `payers`, `novelties`, `operator_credentials`. Todas las decisiones de campos, enums, validaciones e ImportService deben alinearse con ese documento.
+**Documentos de referencia obligatorios:**
+
+- **[docs/mapeo_datasegura_a_base_de_datos.md](mapeo_datasegura_a_base_de_datos.md)** — Mapeo DataSegura (Excel) → tablas `affiliates`, `social_security_profiles`, `payers`, `novelties`, `operator_credentials`. Todas las decisiones de campos, enums, validaciones e ImportService deben alinearse con ese documento.
+- **[docs/TAREAS_SEGURIDAD_SOCIAL.md](TAREAS_SEGURIDAD_SOCIAL.md)** — Tareas concretas y meticulosas por ítem (catálogos, pagadores, perfil SS, novedades, planillas, dashboard, roles, ImportService, Fase 2, Fase 3, post-MVP historia clínica). Criterios de aceptación por tarea y principios operativos (una sola fuente de verdad, trazabilidad, consistencia, claridad para el operador) para un sistema confiable y ordenado.
+- **[docs/NORMATIVA_Y_COMPLEJIDAD_SEGURIDAD_SOCIAL.md](NORMATIVA_Y_COMPLEJIDAD_SEGURIDAD_SOCIAL.md)** — Complejidad normativa colombiana (múltiples entidades, legislación cambiante, cálculos complejos, PILA, tipos de contratación, plazos y sanciones). Recomendaciones obligatorias: parametrización, históricos por fecha, validaciones robustas, logging/trazabilidad, flexibilidad. Checklist de diseño antes de implementar cálculos o PILA.
 
 ---
 
@@ -24,6 +27,42 @@ Define el mapeo DataSegura (Excel) → tablas `affiliates`, `social_security_pro
 | **6** | Matriz de riesgos |
 | **7** | Orden de ejecución en una sola vista |
 | **8** | Mapeo DataSegura (referencia e ImportService) |
+| **9** | Contexto de negocio y normas (Serviconli) |
+| **10** | Después del MVP (backlog) |
+
+---
+
+## 9. Contexto de negocio y normas — Seguridad Social
+
+**Tener muy claro en todo el desarrollo del módulo de Seguridad Social:**
+
+El alcance es la **Administración de Seguridad Social para independientes o contratistas del sector privado**. Serviconli respalda a todos los independientes, con personal especializado dispuesto a servir y acompañar en el proceso de seguridad social, en temas como: cuánto debe pagar según el monto del contrato, en qué tiempo debe hacerlo, cómo debe hacerlo para tener planilla, entre otros.
+
+**Con Serviconli se puede contar para:**
+
+- **Administración de los pagos de seguridad social mes a mes** como independiente.
+- **Trámite de afiliaciones y retiros.**
+- **Acompañamiento legal** para sus contratistas ante las entidades de seguridad social colombianas.
+
+**Además, y de forma explícita en el producto:**
+
+- **Administración de los pagos de seguridad social de empleados y contratistas** bajo el NIT correspondiente (pagadores / empresas).
+- **Trámite de afiliaciones y retiros de contratistas.**
+
+Todas las funcionalidades del módulo (afiliados, perfil SS, pagadores, planillas, novedades, vencimientos PILA, etc.) deben alinearse con estas normas y con la normativa colombiana (PILA, Decreto 1990 de 2016, etc.).
+
+---
+
+## 10. Después del MVP (backlog)
+
+Una vez terminado el **MVP del módulo de Seguridad Social** (Fase 1 completada), se debe contemplar:
+
+### 10.1 Soporte de historia clínica en citas
+
+- Disponer de **soporte de historia clínica** asociado al afiliado (o a la cita), de modo que **en el momento de gestionar las citas** se pueda consultar dicha información cuando sea necesario.
+- Incluye: diseño de almacenamiento (documentos, resúmenes, o módulo de historia clínica), permisos, y acceso desde la ficha del afiliado y/o desde la cita.
+
+Otros ítems post-MVP se irán sumando aquí (Fase 2, Fase 3 y mejoras posteriores).
 
 ---
 

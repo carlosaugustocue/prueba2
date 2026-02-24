@@ -29,6 +29,10 @@ class CreateAppointmentRequestRequest extends FormRequest
                     $status = strtoupper(trim((string) ($affiliate->status ?? '')));
                     if ($status === 'INACTIVO' || $status === 'SUSPENDIDO') {
                         $fail('No se pueden crear solicitudes de cita para un afiliado inactivo o suspendido.');
+                        return;
+                    }
+                    if (! Affiliate::where('id', $value)->whereServiconliManaged()->exists()) {
+                        $fail('Solo se pueden crear solicitudes de cita para afiliados con Serviconli como pagador (o tipo de cliente SERVICONLI). Este afiliado no cumple esa condición.');
                     }
                 },
             ],
@@ -40,6 +44,7 @@ class CreateAppointmentRequestRequest extends FormRequest
                 'max:100',
                 Rule::requiredIf(fn () => $this->input('type') === AppointmentType::SPECIALIST->value),
             ],
+            'requires_authorization' => ['nullable', 'boolean'],
             'client_notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

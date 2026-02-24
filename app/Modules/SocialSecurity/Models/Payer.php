@@ -17,6 +17,7 @@ class Payer extends Model
         'email',
         'contact_person',
         'is_active',
+        'is_serviconli',
     ];
 
     protected function casts(): array
@@ -24,7 +25,13 @@ class Payer extends Model
         return [
             'document_type' => DocumentType::class,
             'is_active' => 'boolean',
+            'is_serviconli' => 'boolean',
         ];
+    }
+
+    public function scopeServiconli($query)
+    {
+        return $query->where('is_serviconli', true);
     }
 
     public function socialSecurityProfiles(): HasMany

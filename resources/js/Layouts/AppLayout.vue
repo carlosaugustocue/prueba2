@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings, Building2 } from 'lucide-vue-next';
+import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings, Building2, FileCheck } from 'lucide-vue-next';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -21,6 +21,7 @@ const navigation = computed(() => {
     } else {
         items.push({ name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList });
         items.push({ name: 'Citas', href: '/appointments', icon: CalendarDays });
+        items.push({ name: 'Autorizaciones', href: '/authorizations', icon: FileCheck });
         items.push({ name: 'Afiliados', href: '/affiliates', icon: Users });
         items.push({ name: 'Pagadores', href: '/payers', icon: Building2 });
     }
@@ -40,7 +41,7 @@ const isActive = (href) => window.location.pathname.startsWith(href);
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50">
+    <div class="min-h-screen bg-brand-50">
         <!-- Desktop sidebar -->
         <div class="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
             <div class="flex flex-col flex-grow bg-white border-r border-gray-200">

@@ -7,6 +7,8 @@ use Illuminate\Validation\Rule;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
 use App\Modules\Patients\Models\Affiliate;
+use App\Modules\AppointmentRequests\Models\AppointmentRequest;
+use App\Modules\Authorizations\Enums\AuthorizationStatus;
 
 class CreateAppointmentRequest extends FormRequest
 {
@@ -69,8 +71,39 @@ class CreateAppointmentRequest extends FormRequest
     public function withValidator(\Illuminate\Validation\Validator $validator): void
     {
         $validator->after(function (\Illuminate\Validation\Validator $validator) {
+            $requestId = $this->input('appointment_request_id');
             $date = $this->input('appointment_date');
             $time = $this->input('appointment_time');
+
+            // RF-AUT-12: si la cita viene de una solicitud que requiere autorización, validar autorización aprobada y vigente
+            if ($requestId) {
+                $request = AppointmentRequest::with('authorization')->find($requestId);
+                if ($request?->requires_authorization) {
+                    if (! $request->authorization) {
+                        $validator->errors()->add('appointment_request_id', 'Esta solicitud requiere una autorización EPS aprobada. Cree o vincule una autorización desde la ficha de la solicitud.');
+                        return;
+                    }
+                    if ($request->authorization->status !== AuthorizationStatus::APPROVED) {
+                        $validator->errors()->add('appointment_request_id', 'La autorización vinculada no está aprobada. Solo puede crear la cita cuando la EPS haya aprobado la autorización.');
+                        return;
+                    }
+                    if ($request->authorization->valid_until && $request->authorization->valid_until->isPast()) {
+                        $validator->errors()->add('appointment_request_id', 'La autorización está vencida. Solicite renovación ante la EPS antes de agendar la cita.');
+                        return;
+                    }
+                }
+            }
+
+            // RF-AUT-15: fecha de cita no puede ser posterior a la vigencia de la autorización
+            if ($requestId && $date) {
+                $request = $request ?? AppointmentRequest::with('authorization')->find($requestId);
+                if ($request?->authorization?->valid_until) {
+                    $validUntil = $request->authorization->valid_until->format('Y-m-d');
+                    if ($date > $validUntil) {
+                        $validator->errors()->add('appointment_date', 'La fecha de la cita no puede ser posterior a la vigencia de la autorización (' . $request->authorization->valid_until->format('d/m/Y') . '). Requiere renovación ante la EPS.');
+                    }
+                }
+            }
 
             if (! $date || ! $time) {
                 return;

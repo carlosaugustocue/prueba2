@@ -20,7 +20,7 @@ class Appointment extends Model
 
     protected $fillable = [
         'uuid', 'affiliate_id', 'created_by', 'assigned_to',
-        'appointment_request_id',
+        'appointment_request_id', 'authorization_id',
         'type', 'status', 'priority', 'specialty',
         'appointment_date', 'appointment_time', 'doctor_name',
         'location_name', 'location_address', 'location_phone', 'authorization_number',
@@ -59,6 +59,11 @@ class Appointment extends Model
     public function appointmentRequest(): BelongsTo
     {
         return $this->belongsTo(\App\Modules\AppointmentRequests\Models\AppointmentRequest::class);
+    }
+
+    public function authorization(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Authorizations\Models\Authorization::class);
     }
 
     public function creator(): BelongsTo

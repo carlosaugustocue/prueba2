@@ -7,7 +7,7 @@ import { alertDialog } from '@/Utils/swal';
 import {
     ChevronLeft, User, Search, Loader2, X, Check,
     Stethoscope, Heart, FlaskConical, Scan, ClipboardList,
-    AlertCircle, Flag, Zap, FileText, MessageSquare
+    AlertCircle, Flag, Zap, FileText, MessageSquare, FileCheck
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -23,6 +23,7 @@ const form = useForm({
     type: 'general',
     priority: 'medium',
     specialty: '',
+    requires_authorization: false,
     client_notes: '',
 });
 
@@ -31,7 +32,7 @@ const isAffiliateActive = (affiliate) => {
     return s === '' || s === 'ACTIVO';
 };
 
-const patientStatusBadge = (status) => {
+const affiliateStatusBadge = (status) => {
     const s = (status || '').toString().toUpperCase();
     if (s === 'ACTIVO') return { label: 'Activo', class: 'bg-green-100 text-green-800' };
     if (s === 'INACTIVO') return { label: 'Inactivo', class: 'bg-red-100 text-red-800' };
@@ -89,7 +90,7 @@ const searchAffiliates = async () => {
     
     try {
         const response = await axios.get('/api/affiliates/search', {
-            params: { term: affiliateSearch.value }
+            params: { term: affiliateSearch.value, serviconli_only: 1 }
         });
         affiliateResults.value = response.data.data || response.data || [];
         showNoResults.value = affiliateResults.value.length === 0;
@@ -168,14 +169,14 @@ const submit = () => {
                     </ul>
                 </div>
 
-                <!-- Paciente -->
+                <!-- Afiliado -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
                         <User class="h-5 w-5 text-brand-600" />
-                        Paciente *
+                        Afiliado *
                     </h2>
 
-                    <!-- Paciente seleccionado -->
+                    <!-- Afiliado seleccionado -->
                     <div v-if="selectedAffiliate" :class="[
                         'rounded-xl p-4 border',
                         isAffiliateActive(selectedAffiliate)
@@ -190,14 +191,14 @@ const submit = () => {
                                 <div>
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <p class="font-semibold text-gray-900">{{ selectedAffiliate.full_name }}</p>
-                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium', patientStatusBadge(selectedAffiliate.status).class]">
-                                            {{ patientStatusBadge(selectedAffiliate.status).label }}
+                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium', affiliateStatusBadge(selectedAffiliate.status).class]">
+                                            {{ affiliateStatusBadge(selectedAffiliate.status).label }}
                                         </span>
                                     </div>
                                     <p class="text-sm text-gray-600">{{ selectedAffiliate.document_type_abbreviation }} {{ selectedAffiliate.document_number }}</p>
                                     <p class="text-sm text-gray-500">{{ selectedAffiliate.whatsapp_number || selectedAffiliate.phone || 'Sin teléfono' }}</p>
                                     <p v-if="!isAffiliateActive(selectedAffiliate)" class="text-sm text-red-700 font-medium mt-1">
-                                        No se pueden crear solicitudes de cita para este paciente.
+                                        No se pueden crear solicitudes de cita para este afiliado.
                                     </p>
                                 </div>
                             </div>
@@ -242,8 +243,8 @@ const submit = () => {
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <p class="font-medium text-gray-900 truncate">{{ affiliate.full_name }}</p>
-                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium flex-shrink-0', patientStatusBadge(affiliate.status).class]">
-                                            {{ patientStatusBadge(affiliate.status).label }}
+                                        <span :class="['inline-flex px-2 py-0.5 rounded text-xs font-medium flex-shrink-0', affiliateStatusBadge(affiliate.status).class]">
+                                            {{ affiliateStatusBadge(affiliate.status).label }}
                                         </span>
                                     </div>
                                     <p class="text-sm text-gray-500">{{ affiliate.document_type_abbreviation }} {{ affiliate.document_number }}</p>
@@ -254,7 +255,7 @@ const submit = () => {
                         </div>
 
                         <p v-if="showNoResults" class="text-sm text-amber-600 text-center py-2">
-                            No se encontraron pacientes. Puede crear uno nuevo desde el módulo de pacientes.
+                            No se encontraron afiliados con Serviconli como pagador. Solo se pueden crear solicitudes para afiliados gestionados por Serviconli.
                         </p>
                     </div>
                     <p v-if="form.errors.affiliate_id" class="mt-2 text-sm text-red-600">{{ form.errors.affiliate_id }}</p>
@@ -339,6 +340,29 @@ const submit = () => {
                             ]" />
                             <span class="text-sm font-medium">{{ p.label }}</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Requiere autorización EPS -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="flex items-center h-6">
+                            <input
+                                id="requires_authorization"
+                                v-model="form.requires_authorization"
+                                type="checkbox"
+                                class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <label for="requires_authorization" class="flex items-center gap-2 text-sm font-semibold text-gray-900 cursor-pointer">
+                                <FileCheck class="h-5 w-5 text-brand-600" />
+                                Requiere autorización EPS
+                            </label>
+                            <p class="mt-1 text-sm text-gray-500">
+                                Marque si esta solicitud necesita trámite de autorización ante la EPS antes de poder agendar la cita. Luego podrá crear la autorización desde la ficha de la solicitud.
+                            </p>
+                        </div>
                     </div>
                 </div>
 

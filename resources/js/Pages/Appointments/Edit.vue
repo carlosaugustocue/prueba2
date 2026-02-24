@@ -212,7 +212,7 @@ const submit = () => {
                     <div class="px-6 py-4 space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Especificaciones para el paciente
+                                Especificaciones para el afiliado
                             </label>
                             <textarea v-model="form.specifications" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: Ayuno de 8 horas..."></textarea>
                         </div>
