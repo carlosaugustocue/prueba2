@@ -1,6 +1,7 @@
 <script setup>
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import { computed, onMounted } from 'vue';
 import {
     ArrowLeft, User, Building2, Phone, BadgeInfo,
@@ -163,8 +164,7 @@ const submit = () => {
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                            <input v-model="form.appointment_date" type="date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            <DatePicker v-model="form.appointment_date" label="Fecha" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
