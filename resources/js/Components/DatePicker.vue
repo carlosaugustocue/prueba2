@@ -164,38 +164,38 @@ watch(() => props.modelValue, (v) => {
         >
             <div
                 v-show="popoverOpen"
-                class="absolute z-50 mt-2 w-full min-w-[280px] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5"
+                class="absolute z-50 mt-2 w-[280px] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 left-0"
             >
-                <div class="p-4 bg-gradient-to-b from-brand-50 to-white rounded-t-xl border-b border-brand-100">
-                    <div class="flex items-center justify-between mb-3">
+                <div class="p-3 bg-gradient-to-b from-brand-50 to-white rounded-t-xl border-b border-brand-100">
+                    <div class="flex items-center justify-between mb-2">
                         <button
                             type="button"
-                            class="p-2 rounded-lg text-gray-600 hover:bg-brand-100 hover:text-brand-700 transition-colors"
+                            class="p-1.5 rounded-lg text-gray-600 hover:bg-brand-100 hover:text-brand-700 transition-colors"
                             @click.stop="prevMonth"
                         >
-                            <ChevronLeft class="h-5 w-5" />
+                            <ChevronLeft class="h-4 w-4" />
                         </button>
-                        <span class="font-semibold text-gray-900">
+                        <span class="text-sm font-semibold text-gray-900">
                             {{ monthNames[currentMonth.getMonth()] }} {{ currentMonth.getFullYear() }}
                         </span>
                         <button
                             type="button"
-                            class="p-2 rounded-lg text-gray-600 hover:bg-brand-100 hover:text-brand-700 transition-colors"
+                            class="p-1.5 rounded-lg text-gray-600 hover:bg-brand-100 hover:text-brand-700 transition-colors"
                             @click.stop="nextMonth"
                         >
-                            <ChevronRight class="h-5 w-5" />
+                            <ChevronRight class="h-4 w-4" />
                         </button>
                     </div>
-                    <div class="grid grid-cols-7 gap-1 mb-2">
+                    <div class="grid grid-cols-7 gap-0.5 mb-1">
                         <div
                             v-for="day in dayNames"
                             :key="day"
-                            class="text-center text-xs font-semibold text-brand-700 py-1"
+                            class="text-center text-[11px] font-semibold text-brand-700 py-0.5"
                         >
                             {{ day }}
                         </div>
                     </div>
-                    <div class="grid grid-cols-7 gap-1">
+                    <div class="grid grid-cols-7 gap-0.5">
                         <button
                             v-for="(day, index) in calendarDays"
                             :key="index"
@@ -203,7 +203,7 @@ watch(() => props.modelValue, (v) => {
                             @click.stop="selectDay(day)"
                             :disabled="day.isDisabled"
                             :class="[
-                                'aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all',
+                                'aspect-square flex items-center justify-center rounded-md text-xs font-medium transition-all',
                                 !day.isCurrentMonth ? 'text-gray-300' : '',
                                 day.isCurrentMonth && !day.isDisabled && !isSelected(day) && !day.isToday
                                     ? 'text-gray-700 hover:bg-brand-100 hover:text-brand-700' : '',

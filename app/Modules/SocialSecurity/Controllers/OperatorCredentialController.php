@@ -5,6 +5,7 @@ namespace App\Modules\SocialSecurity\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Patients\Models\Affiliate;
 use App\Modules\SocialSecurity\Models\OperatorCredential;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,22 @@ class OperatorCredentialController extends Controller
         'EPS' => 'EPS',
         'AFP' => 'AFP',
     ];
+
+    /**
+     * Devuelve usuario y contraseña desencriptados para mostrar en modal (solo lectura).
+     */
+    public function show(Affiliate $affiliate, OperatorCredential $operatorCredential): JsonResponse
+    {
+        if ($operatorCredential->affiliate_id !== $affiliate->id) {
+            abort(404);
+        }
+        $credentials = $operatorCredential->credentials ?? [];
+        return response()->json([
+            'provider_type' => $operatorCredential->provider_type,
+            'username' => $credentials['username'] ?? '',
+            'password' => $credentials['password'] ?? '',
+        ]);
+    }
 
     public function store(Request $request, Affiliate $affiliate): RedirectResponse
     {

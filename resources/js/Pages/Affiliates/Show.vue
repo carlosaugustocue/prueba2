@@ -7,7 +7,7 @@ import {
     ChevronLeft, CalendarPlus, Pencil, Phone, Mail, MapPin,
     User, Users, Heart, UserPlus, Calendar, ArrowRight,
     MessageSquare, Building2, CalendarClock, FileText, FileCheck, Plus, X,
-    Key, Paperclip, Download, Trash2, Loader2
+    Key, Paperclip, Download, Trash2, Loader2, Eye, EyeOff, Copy
 } from 'lucide-vue-next';
 import { confirmDialog } from '@/Utils/swal';
 
@@ -112,6 +112,38 @@ function deleteCredential(cred) {
             if (!ok) return;
             router.delete(`/affiliates/${affiliateId.value}/operator-credentials/${cred.id}`, { preserveScroll: true });
         });
+}
+
+// Modal Ver credencial (usuario y contraseña)
+const showViewCredentialModal = ref(false);
+const viewCredentialLoading = ref(false);
+const viewCredentialData = ref(null);
+const viewCredentialCred = ref(null); // cred del listado (id, provider_type) para Editar
+const viewCredentialShowPassword = ref(false);
+
+function openViewCredentialModal(cred) {
+    viewCredentialData.value = null;
+    viewCredentialCred.value = cred;
+    viewCredentialShowPassword.value = false;
+    showViewCredentialModal.value = true;
+    viewCredentialLoading.value = true;
+    const url = `/affiliates/${affiliateId.value}/operator-credentials/${cred.id}`;
+    fetch(url, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        .then((r) => r.json())
+        .then((data) => {
+            viewCredentialData.value = data;
+        })
+        .catch(() => {
+            viewCredentialData.value = { provider_type: cred.provider_type, username: '—', password: '—' };
+        })
+        .finally(() => {
+            viewCredentialLoading.value = false;
+        });
+}
+
+function copyToClipboard(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).catch(() => {});
 }
 
 const showSupportForm = ref(false);
@@ -249,8 +281,8 @@ const isAffiliateActive = computed(() => {
                         </div>
 
                         <template v-else>
-                            <!-- Bloque 1: Afiliación (EPS, tipo cliente, tipo cotizante) -->
-                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                            <!-- Bloque 1: Afiliación (EPS; tipo cliente y cotizante solo para cotizantes) -->
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50" :class="{ 'border-b-0': isBeneficiary && !affiliate.observations }">
                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Afiliación</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div class="bg-white rounded-lg px-4 py-3 border border-gray-100">
@@ -258,19 +290,21 @@ const isAffiliateActive = computed(() => {
                                         <p class="font-semibold text-gray-900">{{ affiliate.eps?.name || '—' }}</p>
                                         <p v-if="affiliate.eps?.code" class="text-xs text-gray-500 mt-0.5">Cód. {{ affiliate.eps.code }}</p>
                                     </div>
-                                    <div class="bg-white rounded-lg px-4 py-3 border border-gray-100">
-                                        <p class="text-xs text-gray-500 mb-0.5">Tipo de cliente</p>
-                                        <p class="font-medium text-gray-900">{{ affiliate.client_type || '—' }}</p>
-                                    </div>
-                                    <div class="bg-white rounded-lg px-4 py-3 border border-gray-100">
-                                        <p class="text-xs text-gray-500 mb-0.5">Tipo de cotizante</p>
-                                        <p class="font-medium text-gray-900">{{ affiliate.contributor_type && affiliate.contributor_type_code ? affiliate.contributor_type + ' (' + affiliate.contributor_type_code + ')' : (affiliate.contributor_type || affiliate.contributor_type_code || '—') }}</p>
-                                    </div>
+                                    <template v-if="!isBeneficiary">
+                                        <div class="bg-white rounded-lg px-4 py-3 border border-gray-100">
+                                            <p class="text-xs text-gray-500 mb-0.5">Tipo de cliente</p>
+                                            <p class="font-medium text-gray-900">{{ affiliate.client_type || '—' }}</p>
+                                        </div>
+                                        <div class="bg-white rounded-lg px-4 py-3 border border-gray-100">
+                                            <p class="text-xs text-gray-500 mb-0.5">Tipo de cotizante</p>
+                                            <p class="font-medium text-gray-900">{{ affiliate.contributor_type && affiliate.contributor_type_code ? affiliate.contributor_type + ' (' + affiliate.contributor_type_code + ')' : (affiliate.contributor_type || affiliate.contributor_type_code || '—') }}</p>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
 
-                            <!-- Bloque 2: Entidades (AFP, ARP, CCF, operador, registro contable) -->
-                            <div class="px-6 py-4 border-b border-gray-100">
+                            <!-- Bloque 2: Entidades (AFP, ARP, CCF) — solo cotizantes -->
+                            <div v-if="!isBeneficiary" class="px-6 py-4 border-b border-gray-100">
                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Entidades (AFP, ARP, CCF)</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     <div class="flex flex-col py-2">
@@ -296,8 +330,8 @@ const isAffiliateActive = computed(() => {
                                 </div>
                             </div>
 
-                            <!-- Bloque 3: Pago y vencimiento (Pagador, IBC, día, periodicidad, parafiscales) -->
-                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/30">
+                            <!-- Bloque 3: Pago y vencimiento — solo cotizantes -->
+                            <div v-if="!isBeneficiary" class="px-6 py-4 border-b border-gray-100 bg-gray-50/30">
                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Pago y vencimiento</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     <div class="flex flex-col py-2">
@@ -545,8 +579,8 @@ const isAffiliateActive = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Credenciales de operadores (SS) -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <!-- Credenciales de operadores (SS) — solo cotizantes -->
+                    <div v-if="!isBeneficiary" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white flex items-center justify-between">
                             <h3 class="flex items-center gap-2 font-semibold text-gray-900">
                                 <Key class="h-5 w-5 text-amber-600" />
@@ -559,9 +593,13 @@ const isAffiliateActive = computed(() => {
                             </button>
                         </div>
                         <div class="divide-y divide-gray-100">
-                            <div v-for="cred in operatorCredentials" :key="cred.id" class="px-6 py-3 flex items-center justify-between">
-                                <span class="font-medium text-gray-900">{{ providerLabels[cred.provider_type] || cred.provider_type }}</span>
-                                <div class="flex items-center gap-2">
+                            <div v-for="cred in operatorCredentials" :key="cred.id" class="px-6 py-3 flex items-center justify-between group">
+                                <button type="button" @click="openViewCredentialModal(cred)" class="text-left flex-1 min-w-0 font-medium text-gray-900 hover:text-amber-700 transition-colors flex items-center gap-2">
+                                    <span>{{ providerLabels[cred.provider_type] || cred.provider_type }}</span>
+                                    <Eye class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </button>
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <button type="button" @click="openViewCredentialModal(cred)" class="inline-flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded">Ver</button>
                                     <button type="button" @click="openCredentialModal(cred)" class="inline-flex items-center gap-1 px-2 py-1 text-sm text-amber-700 hover:bg-amber-50 rounded">Editar</button>
                                     <button type="button" @click="deleteCredential(cred)" class="inline-flex items-center gap-1 px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded">Eliminar</button>
                                 </div>
@@ -738,6 +776,57 @@ const isAffiliateActive = computed(() => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Ver credencial (usuario y contraseña) -->
+            <div v-if="showViewCredentialModal" class="fixed inset-0 z-50 overflow-y-auto" aria-modal="true">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div class="fixed inset-0 bg-black/50 transition-opacity" @click="showViewCredentialModal = false" />
+                    <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                {{ viewCredentialData ? (providerLabels[viewCredentialData.provider_type] || viewCredentialData.provider_type) : 'Credencial' }}
+                            </h3>
+                            <button type="button" @click="showViewCredentialModal = false" class="text-gray-400 hover:text-gray-600 rounded-lg p-1">
+                                <X class="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div v-if="viewCredentialLoading" class="py-8 flex justify-center">
+                            <Loader2 class="h-8 w-8 text-amber-500 animate-spin" />
+                        </div>
+                        <div v-else-if="viewCredentialData" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Usuario</label>
+                                <div class="flex items-center gap-2">
+                                    <input :value="viewCredentialData.username" type="text" readonly class="flex-1 rounded-lg border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono" />
+                                    <button type="button" @click="copyToClipboard(viewCredentialData.username)" class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg" title="Copiar">
+                                        <Copy class="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Contraseña</label>
+                                <div class="flex items-center gap-2">
+                                    <input :value="viewCredentialData.password" :type="viewCredentialShowPassword ? 'text' : 'password'" readonly class="flex-1 rounded-lg border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono" />
+                                    <button type="button" @click="viewCredentialShowPassword = !viewCredentialShowPassword" class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg" :title="viewCredentialShowPassword ? 'Ocultar' : 'Mostrar'">
+                                        <EyeOff v-if="viewCredentialShowPassword" class="h-4 w-4" />
+                                        <Eye v-else class="h-4 w-4" />
+                                    </button>
+                                    <button type="button" @click="copyToClipboard(viewCredentialData.password)" class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg" title="Copiar">
+                                        <Copy class="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="py-4 text-sm text-gray-500">No se pudo cargar la credencial.</div>
+                        <div v-if="viewCredentialData" class="mt-6 flex gap-3 pt-2 border-t border-gray-100">
+                            <button type="button" @click="showViewCredentialModal = false" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50">Cerrar</button>
+                            <button type="button" @click="showViewCredentialModal = false; openCredentialModal(viewCredentialCred)" class="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700">
+                                Editar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

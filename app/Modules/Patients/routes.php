@@ -17,6 +17,7 @@ Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_socia
     Route::post('affiliates/{affiliate}/novelties', [NoveltyController::class, 'store'])->name('affiliates.novelties.store');
 
     Route::post('affiliates/{affiliate}/operator-credentials', [OperatorCredentialController::class, 'store'])->name('affiliates.operator-credentials.store');
+    Route::get('affiliates/{affiliate}/operator-credentials/{operatorCredential}', [OperatorCredentialController::class, 'show'])->name('affiliates.operator-credentials.show');
     Route::put('affiliates/{affiliate}/operator-credentials/{operatorCredential}', [OperatorCredentialController::class, 'update'])->name('affiliates.operator-credentials.update');
     Route::delete('affiliates/{affiliate}/operator-credentials/{operatorCredential}', [OperatorCredentialController::class, 'destroy'])->name('affiliates.operator-credentials.destroy');
 

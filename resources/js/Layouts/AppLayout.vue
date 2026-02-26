@@ -78,32 +78,34 @@ const sectionWithActiveLink = computed(() => {
     return null;
 });
 
-/** Secciones expandidas: Principal y Seguridad Social abiertas por defecto; la que contiene la ruta actual también. */
-const openSections = ref(new Set(['principal', 'seguridad_social']));
+/** Solo una sección abierta a la vez: la que contiene la ruta actual. Al cambiar de sección, las demás se colapsan. */
+const openSections = ref(new Set());
 
 watch(
     () => sectionWithActiveLink.value,
     (key) => {
-        if (key && !openSections.value.has(key)) {
-            openSections.value = new Set([...openSections.value, key]);
-        }
+        openSections.value = key ? new Set([key]) : new Set();
     },
     { immediate: true }
 );
 
 const toggleSection = (key) => {
-    const next = new Set(openSections.value);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    openSections.value = next;
+    if (openSections.value.has(key)) {
+        openSections.value = new Set();
+    } else {
+        openSections.value = new Set([key]);
+    }
 };
 
 const isSectionOpen = (key) => openSections.value.has(key);
 const isActive = (href) => currentPath.value.startsWith(href) || (href !== '/dashboard' && currentPath.value === href);
+
+/** Estilo del título de sección: un solo color para todos (evitar confusión). */
+const sectionHeaderClass = () => 'border-gray-200/80 bg-gray-100 text-gray-700 hover:bg-gray-200/90 border-gray-300';
 </script>
 
 <template>
-    <div class="min-h-screen bg-brand-50">
+    <div class="min-h-screen bg-gray-100">
         <!-- Desktop sidebar -->
         <div class="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
             <div class="flex flex-col flex-grow bg-white border-r border-gray-200">
@@ -125,17 +127,22 @@ const isActive = (href) => currentPath.value.startsWith(href) || (href !== '/das
                             v-if="section.items.length > 1"
                             type="button"
                             @click="toggleSection(section.key)"
-                            class="flex items-center w-full px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                            class="flex items-center w-full px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors border-l-2"
+                            :class="sectionHeaderClass(section.key)"
                         >
-                            <component :is="section.icon" class="mr-2 h-4 w-4 text-gray-400" />
+                            <component :is="section.icon" class="mr-2.5 h-4 w-4 flex-shrink-0" />
                             {{ section.title }}
-                            <component :is="isSectionOpen(section.key) ? ChevronDown : ChevronRight" class="ml-auto h-4 w-4 text-gray-400" />
+                            <component :is="isSectionOpen(section.key) ? ChevronDown : ChevronRight" class="ml-auto h-4 w-4 opacity-70" />
                         </button>
-                        <div v-else class="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                            <component :is="section.icon" class="h-4 w-4 text-gray-400" />
+                        <div
+                            v-else
+                            class="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-lg flex items-center gap-2 border-l-2"
+                            :class="sectionHeaderClass(section.key)"
+                        >
+                            <component :is="section.icon" class="h-4 w-4 flex-shrink-0" />
                             {{ section.title }}
                         </div>
-                        <div v-show="section.items.length === 1 || isSectionOpen(section.key)" class="mt-0.5 space-y-0.5">
+                        <div v-show="section.items.length === 1 || isSectionOpen(section.key)" class="mt-0.5 ml-1 space-y-0.5">
                             <Link
                                 v-for="item in section.items"
                                 :key="item.name"
@@ -207,17 +214,22 @@ const isActive = (href) => currentPath.value.startsWith(href) || (href !== '/das
                             v-if="section.items.length > 1"
                             type="button"
                             @click="toggleSection(section.key)"
-                            class="flex items-center w-full px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                            class="flex items-center w-full px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors border-l-2"
+                            :class="sectionHeaderClass(section.key)"
                         >
-                            <component :is="section.icon" class="mr-2 h-4 w-4 text-gray-400" />
+                            <component :is="section.icon" class="mr-2.5 h-4 w-4 flex-shrink-0" />
                             {{ section.title }}
-                            <component :is="isSectionOpen(section.key) ? ChevronDown : ChevronRight" class="ml-auto h-4 w-4 text-gray-400" />
+                            <component :is="isSectionOpen(section.key) ? ChevronDown : ChevronRight" class="ml-auto h-4 w-4 opacity-70" />
                         </button>
-                        <div v-else class="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                            <component :is="section.icon" class="h-4 w-4 text-gray-400" />
+                        <div
+                            v-else
+                            class="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-lg flex items-center gap-2 border-l-2"
+                            :class="sectionHeaderClass(section.key)"
+                        >
+                            <component :is="section.icon" class="h-4 w-4 flex-shrink-0" />
                             {{ section.title }}
                         </div>
-                        <div v-show="section.items.length === 1 || isSectionOpen(section.key)" class="mt-0.5 space-y-0.5">
+                        <div v-show="section.items.length === 1 || isSectionOpen(section.key)" class="mt-0.5 ml-1 space-y-0.5">
                             <Link
                                 v-for="item in section.items"
                                 :key="item.name"
