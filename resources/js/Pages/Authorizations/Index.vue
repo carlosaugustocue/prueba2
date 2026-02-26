@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import { FileCheck, Search, X, Eye, Plus } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -122,12 +123,10 @@ const list = computed(() => props.authorizations?.data || []);
                         <input v-model="authorizationNumber" type="text" placeholder="Número EPS" @change="applyFilters" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Desde fecha</label>
-                        <input v-model="dateFrom" type="date" @change="applyFilters" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" />
+                        <DatePicker v-model="dateFrom" label="Desde fecha" @update:modelValue="applyFilters" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Hasta fecha</label>
-                        <input v-model="dateTo" type="date" @change="applyFilters" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" />
+                        <DatePicker v-model="dateTo" label="Hasta fecha" @update:modelValue="applyFilters" />
                     </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-4 pt-2 border-t border-gray-100">
@@ -160,6 +159,7 @@ const list = computed(() => props.authorizations?.data || []);
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">EPS</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo servicio</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Radicado EPS</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Solicitud</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vigencia</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
@@ -176,6 +176,16 @@ const list = computed(() => props.authorizations?.data || []);
                             <td class="px-6 py-4 text-sm text-gray-600">{{ auth.service_type }}</td>
                             <td class="px-6 py-4 text-sm text-gray-900 font-mono">
                                 {{ auth.radicado_number || '—' }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <Link
+                                    v-if="auth.appointment_request_id"
+                                    :href="`/appointment-requests/${auth.appointment_request_id}`"
+                                    class="text-brand-600 hover:text-brand-700 hover:underline font-medium"
+                                >
+                                    Solicitud #{{ auth.appointment_request_id }}
+                                </Link>
+                                <span v-else class="text-gray-400">—</span>
                             </td>
                             <td class="px-6 py-4">
                                 <span :class="[auth.status_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">

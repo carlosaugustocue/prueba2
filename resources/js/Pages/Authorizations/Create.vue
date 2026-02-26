@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import axios from 'axios';
-import { ChevronLeft, ChevronRight, FileCheck, User, Search, Loader2, X, Check, Building2, Calendar } from 'lucide-vue-next';
+import { ChevronLeft, FileCheck, Search, Loader2, X, Check, Building2 } from 'lucide-vue-next';
 
 const props = defineProps({
     epsList: Array,
@@ -97,66 +98,6 @@ watch(() => props.preselectedAffiliate, (aff) => {
     }
 }, { immediate: true });
 
-// Mini calendario para Fecha de radicación (permite cualquier fecha: pasada o futura)
-const radicatedCalendarMonth = ref(new Date());
-const radicatedMonthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-const radicatedDayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-
-const radicatedCalendarDays = computed(() => {
-    const year = radicatedCalendarMonth.value.getFullYear();
-    const month = radicatedCalendarMonth.value.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const days = [];
-    const startDay = firstDay.getDay();
-    for (let i = startDay - 1; i >= 0; i--) {
-        const d = new Date(year, month, -i);
-        days.push({ date: d, isCurrentMonth: false });
-    }
-    const today = new Date();
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-        const d = new Date(year, month, i);
-        const isToday = d.toDateString() === today.toDateString();
-        days.push({ date: d, isCurrentMonth: true, isToday });
-    }
-    return days;
-});
-
-const prevRadicatedMonth = () => {
-    radicatedCalendarMonth.value = new Date(radicatedCalendarMonth.value.getFullYear(), radicatedCalendarMonth.value.getMonth() - 1, 1);
-};
-const nextRadicatedMonth = () => {
-    radicatedCalendarMonth.value = new Date(radicatedCalendarMonth.value.getFullYear(), radicatedCalendarMonth.value.getMonth() + 1, 1);
-};
-
-const selectRadicatedDate = (day) => {
-    if (!day.isCurrentMonth) return;
-    const d = day.date;
-    form.radicated_at = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
-const isSelectedRadicatedDate = (day) => {
-    if (!form.radicated_at || !day.isCurrentMonth) return false;
-    const d = day.date;
-    const selected = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return form.radicated_at === selected;
-};
-
-const formattedRadicatedDate = computed(() => {
-    if (!form.radicated_at) return null;
-    const [y, m, day] = form.radicated_at.split('-');
-    const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(day, 10));
-    return `${radicatedDayNames[date.getDay()]} ${day} de ${radicatedMonthNames[date.getMonth()]} ${y}`;
-});
-
-const setRadicatedToday = () => {
-    const t = new Date();
-    form.radicated_at = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
-};
-
-const clearRadicatedDate = () => {
-    form.radicated_at = '';
-};
 </script>
 
 <template>
@@ -261,12 +202,13 @@ const clearRadicatedDate = () => {
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Tipo de servicio *</label>
                         <input
-                            v-model="form.service_type"
+                            :value="form.service_type"
+                            @input="form.service_type = ($event.target.value || '').toUpperCase()"
                             type="text"
-                            placeholder="Ej. Consulta especializada, procedimiento, examen, cirugía"
+                            placeholder="Ej. CONSULTA ESPECIALIZADA, PROCEDIMIENTO, EXAMEN"
                             required
                             maxlength="100"
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 uppercase"
                         />
                         <p v-if="form.errors.service_type" class="mt-1 text-sm text-red-600">{{ form.errors.service_type }}</p>
                     </div>
@@ -281,62 +223,12 @@ const clearRadicatedDate = () => {
                         <p v-if="form.errors.diagnosis_or_reason" class="mt-1 text-sm text-red-600">{{ form.errors.diagnosis_or_reason }}</p>
                     </div>
 
-                    <div class="bg-white rounded-xl border border-gray-200 p-6" :class="{ 'ring-2 ring-red-200': form.errors.radicated_at }">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
-                            <Calendar class="h-5 w-5 text-brand-600" />
-                            Fecha de radicación ante la EPS
-                        </label>
-                        <p class="text-sm text-gray-500 mb-3">Opcional. Seleccione la fecha si ya radicó la autorización ante la EPS.</p>
-
-                        <!-- Mini calendario -->
-                        <div class="bg-gray-50 rounded-xl p-4 max-w-sm">
-                            <div class="flex items-center justify-between mb-3">
-                                <button type="button" @click="prevRadicatedMonth" class="p-2 hover:bg-white rounded-lg transition-colors" aria-label="Mes anterior">
-                                    <ChevronLeft class="h-5 w-5 text-gray-600" />
-                                </button>
-                                <span class="font-semibold text-gray-900 text-sm">
-                                    {{ radicatedMonthNames[radicatedCalendarMonth.getMonth()] }} {{ radicatedCalendarMonth.getFullYear() }}
-                                </span>
-                                <button type="button" @click="nextRadicatedMonth" class="p-2 hover:bg-white rounded-lg transition-colors" aria-label="Mes siguiente">
-                                    <ChevronRight class="h-5 w-5 text-gray-600" />
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-7 gap-0.5 mb-2">
-                                <div v-for="d in radicatedDayNames" :key="d" class="text-center text-xs font-medium text-gray-500 py-1">{{ d }}</div>
-                            </div>
-                            <div class="grid grid-cols-7 gap-0.5">
-                                <button
-                                    v-for="(day, index) in radicatedCalendarDays"
-                                    :key="index"
-                                    type="button"
-                                    @click="selectRadicatedDate(day)"
-                                    :disabled="!day.isCurrentMonth"
-                                    :class="[
-                                        'aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all min-h-8',
-                                        !day.isCurrentMonth ? 'text-gray-300 cursor-default' : 'text-gray-700 hover:bg-brand-100 hover:text-brand-700',
-                                        day.isToday && !isSelectedRadicatedDate(day) ? 'bg-brand-100 text-brand-700 font-bold' : '',
-                                        isSelectedRadicatedDate(day) ? 'bg-brand-500 text-white shadow-md' : ''
-                                    ]"
-                                >
-                                    {{ day.date.getDate() }}
-                                </button>
-                            </div>
-                            <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200">
-                                <button type="button" @click="setRadicatedToday" class="text-xs font-medium text-brand-600 hover:text-brand-700">
-                                    Usar hoy
-                                </button>
-                                <button v-if="form.radicated_at" type="button" @click="clearRadicatedDate" class="text-xs font-medium text-gray-500 hover:text-gray-700">
-                                    Limpiar fecha
-                                </button>
-                            </div>
-                        </div>
-
-                        <div v-if="form.radicated_at" class="mt-3 p-3 bg-brand-50 border border-brand-200 rounded-lg">
-                            <p class="text-sm text-brand-800"><span class="font-medium">Fecha seleccionada:</span> {{ formattedRadicatedDate }}</p>
-                            <p class="text-xs text-brand-600 mt-0.5">Se enviará al servidor como {{ form.radicated_at }} (YYYY-MM-DD)</p>
-                        </div>
-                        <p v-if="form.errors.radicated_at" class="mt-2 text-sm text-red-600">{{ form.errors.radicated_at }}</p>
-                    </div>
+                    <DatePicker
+                        v-model="form.radicated_at"
+                        label="Fecha de radicación ante la EPS"
+                        hint="Opcional. Seleccione la fecha si ya radicó la autorización ante la EPS."
+                    />
+                    <p v-if="form.errors.radicated_at" class="mt-1 text-sm text-red-600">{{ form.errors.radicated_at }}</p>
                 </div>
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
                     <Link href="/authorizations" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">

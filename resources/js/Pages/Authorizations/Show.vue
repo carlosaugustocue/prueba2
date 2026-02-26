@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import { confirmDialog, toast } from '@/Utils/swal';
 import { ChevronLeft, FileText, Upload, Download, History, User, Building2, Calendar, ClipboardList, ArrowRight, Unlink, Trash2 } from 'lucide-vue-next';
 
@@ -330,22 +331,27 @@ const deactivateAuthorization = () => {
                         </div>
                         <div v-if="statusForm.status === 'radicated'" class="p-3 bg-blue-50 rounded-lg border border-blue-100 space-y-3">
                             <p class="text-sm text-blue-800 font-medium">Registre la radicación ante la EPS</p>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Fecha de radicación</label>
-                                <input v-model="statusForm.radicated_at" type="date" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm" />
-                            </div>
+                            <DatePicker v-model="statusForm.radicated_at" label="Fecha de radicación" hint="Seleccione la fecha en que se radicó ante la EPS" />
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Número de radicado (EPS) *</label>
                                 <input v-model="statusForm.radicado_number" type="text" placeholder="Ej. RAD-2026-001234 — número que entrega la EPS para seguimiento" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm" />
                             </div>
                         </div>
-                        <div v-if="statusForm.status === 'approved'">
-                            <label class="block text-sm font-medium text-gray-700">Número de autorización *</label>
-                            <input v-model="statusForm.authorization_number" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm" />
-                            <label class="block text-sm font-medium text-gray-700 mt-2">IPS autorizada</label>
-                            <input v-model="statusForm.authorized_ips_name" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm" />
-                            <label class="block text-sm font-medium text-gray-700 mt-2">Vigencia hasta *</label>
-                            <input v-model="statusForm.valid_until" type="date" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm" />
+                        <div v-if="statusForm.status === 'approved'" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Número de autorización *</label>
+                                <input v-model="statusForm.authorization_number" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">IPS autorizada</label>
+                                <input v-model="statusForm.authorized_ips_name" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            </div>
+                            <DatePicker
+                                v-model="statusForm.valid_until"
+                                label="Vigencia hasta"
+                                required
+                                hint="Haga clic en el ícono del calendario o en el campo para elegir la fecha. Se guarda en el formato correcto (AAAA-MM-DD)."
+                            />
                         </div>
                         <div v-if="statusForm.status === 'denied'">
                             <label class="block text-sm font-medium text-gray-700">Motivo de negación *</label>
