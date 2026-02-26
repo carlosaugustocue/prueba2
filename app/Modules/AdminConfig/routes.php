@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\AdminConfig\Controllers\CatalogController;
+use App\Modules\SocialSecurity\Controllers\ContributionParameterController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:admin'])
@@ -63,4 +64,11 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('configuracion/accounting-registries/{id}/edit', [CatalogController::class, 'catalogEdit'])->name('admin.configuracion.accounting-registries.edit')->defaults('type', 'accounting-registries');
         Route::put('configuracion/accounting-registries/{id}', [CatalogController::class, 'catalogUpdate'])->name('admin.configuracion.accounting-registries.update')->defaults('type', 'accounting-registries');
         Route::delete('configuracion/accounting-registries/{id}', [CatalogController::class, 'catalogDestroy'])->name('admin.configuracion.accounting-registries.destroy')->defaults('type', 'accounting-registries');
+
+        Route::get('configuracion/contribution-parameters', [ContributionParameterController::class, 'index'])->name('admin.configuracion.contribution-parameters.index');
+        Route::get('configuracion/contribution-parameters/create', [ContributionParameterController::class, 'create'])->name('admin.configuracion.contribution-parameters.create');
+        Route::post('configuracion/contribution-parameters', [ContributionParameterController::class, 'store'])->name('admin.configuracion.contribution-parameters.store');
+        Route::get('configuracion/contribution-parameters/{contributionParameter}/edit', [ContributionParameterController::class, 'edit'])->name('admin.configuracion.contribution-parameters.edit');
+        Route::put('configuracion/contribution-parameters/{contributionParameter}', [ContributionParameterController::class, 'update'])->name('admin.configuracion.contribution-parameters.update');
+        Route::delete('configuracion/contribution-parameters/{contributionParameter}', [ContributionParameterController::class, 'destroy'])->name('admin.configuracion.contribution-parameters.destroy');
     });

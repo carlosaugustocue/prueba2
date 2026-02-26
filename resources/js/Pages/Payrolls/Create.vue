@@ -1,0 +1,177 @@
+<script setup>
+import { ref, computed } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import { ChevronLeft, Calculator, User, FileText } from 'lucide-vue-next';
+
+const props = defineProps({
+    payers: Array,
+    affiliates: Array,
+    defaultYear: Number,
+    defaultMonth: Number,
+    months: Array,
+});
+
+const page = usePage();
+const flash = computed(() => page.props.flash);
+const previewData = computed(() => page.props.flash?.preview || null);
+
+const affiliateId = ref('');
+const year = ref(props.defaultYear || new Date().getFullYear());
+const month = ref(props.defaultMonth || new Date().getMonth() + 1);
+const payerFilter = ref('');
+const loading = ref(false);
+
+const filteredAffiliates = computed(() => {
+    let list = props.affiliates || [];
+    if (payerFilter.value) {
+        list = list.filter((a) => String(a.payer_id) === String(payerFilter.value));
+    }
+    return list;
+});
+
+const selectedAffiliate = computed(() => {
+    if (!affiliateId.value) return null;
+    return (props.affiliates || []).find((a) => String(a.id) === String(affiliateId.value));
+});
+
+const runPreview = () => {
+    if (!affiliateId.value || !year.value || !month.value) {
+        alert('Seleccione afiliado, año y mes.');
+        return;
+    }
+    loading.value = true;
+    router.post('/payrolls/preview', {
+        affiliate_id: affiliateId.value,
+        year: year.value,
+        month: month.value,
+    }, {
+        preserveScroll: true,
+        onFinish: () => { loading.value = false; },
+    });
+};
+
+const createPayroll = () => {
+    if (!affiliateId.value || !year.value || !month.value) {
+        alert('Seleccione afiliado, año y mes.');
+        return;
+    }
+    loading.value = true;
+    router.post('/payrolls', {
+        affiliate_id: affiliateId.value,
+        year: year.value,
+        month: month.value,
+    }, {
+        preserveScroll: true,
+        onFinish: () => { loading.value = false; },
+    });
+};
+
+const formatMoney = (n) => {
+    if (n == null) return '—';
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
+};
+</script>
+
+<template>
+    <AppLayout>
+        <div class="max-w-2xl mx-auto space-y-6">
+            <div>
+                <Link href="/payrolls" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-brand-600 transition-colors">
+                    <ChevronLeft class="h-4 w-4" />
+                    Volver a planillas
+                </Link>
+                <h1 class="mt-2 text-2xl font-bold text-gray-900">Nueva planilla</h1>
+                <p class="mt-1 text-sm text-gray-500">Seleccione afiliado y período; simule y luego cree la planilla.</p>
+            </div>
+
+            <div v-if="flash?.error" class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+                {{ flash.error }}
+            </div>
+            <div v-if="flash?.success" class="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-700">
+                {{ flash.success }}
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Datos de la planilla</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pagador (filtrar)</label>
+                        <select v-model="payerFilter" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                            <option value="">Todos</option>
+                            <option v-for="p in payers" :key="p.id" :value="p.id">{{ p.name }} — {{ p.document_number }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Afiliado <span class="text-red-500">*</span></label>
+                        <select v-model="affiliateId" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                            <option value="">Seleccione un afiliado</option>
+                            <option v-for="a in filteredAffiliates" :key="a.id" :value="a.id">
+                                {{ a.full_name }} — {{ a.document_number }}{{ a.payer_name ? ` (${a.payer_name})` : '' }}
+                            </option>
+                        </select>
+                        <p v-if="!filteredAffiliates.length" class="mt-1 text-xs text-amber-600">No hay afiliados con perfil SS{{ payerFilter ? ' para este pagador' : '' }}.</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+                            <select v-model="year" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option v-for="y in [new Date().getFullYear(), new Date().getFullYear()-1]" :key="y" :value="y">{{ y }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
+                            <select v-model="month" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex gap-3">
+                    <button type="button" :disabled="loading || !affiliateId" @click="runPreview" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium disabled:opacity-50 disabled:pointer-events-none">
+                        <Calculator class="h-4 w-4" />
+                        {{ loading ? '...' : 'Simular aportes' }}
+                    </button>
+                    <button type="button" :disabled="loading || !affiliateId" @click="createPayroll" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 text-white hover:bg-brand-600 font-medium disabled:opacity-50 disabled:pointer-events-none">
+                        <FileText class="h-4 w-4" />
+                        Crear planilla
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="previewData" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                    <Calculator class="h-5 w-5 text-brand-600" />
+                    Simulación de aportes
+                </h2>
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">IBC</dt>
+                        <dd class="font-medium">{{ formatMoney(previewData.ibc) }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Salud</dt>
+                        <dd class="font-medium">{{ formatMoney(previewData.health_total) }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Pensión</dt>
+                        <dd class="font-medium">{{ formatMoney(previewData.pension_total) }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">ARL</dt>
+                        <dd class="font-medium">{{ formatMoney(previewData.arl_amount) }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">CCF</dt>
+                        <dd class="font-medium">{{ formatMoney(previewData.ccf_amount) }}</dd>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t border-gray-200 font-medium">
+                        <dt class="text-gray-700">Total</dt>
+                        <dd class="text-gray-900">{{ formatMoney(previewData.total_amount) }}</dd>
+                    </div>
+                </dl>
+                <p class="mt-3 text-xs text-gray-500">Período: {{ previewData.period_date }}. Use "Crear planilla" para generar la planilla con estos montos (se liquidará al crearla si el perfil es válido).</p>
+            </div>
+        </div>
+    </AppLayout>
+</template>

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ContributorTypeSeeder::class,
             NoveltyTypeSeeder::class,
             AccountingRegistrySeeder::class,
+            ContributionParameterSeeder::class,
             ColombianHolidaySeeder::class,
             UserSeeder::class,
             AffiliateWithBeneficiarySeeder::class,

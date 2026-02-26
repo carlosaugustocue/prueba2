@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Modules\Appointments\Models\Reminder;
 use App\Modules\Appointments\Jobs\SendReminderJob;
+use App\Modules\SocialSecurity\Services\PayrollBatchService;
+use App\Modules\SocialSecurity\Services\PayrollService;
 
 Artisan::command('serve:network-info', function () {
     $ips = [];
@@ -67,3 +69,57 @@ Artisan::command('appointments:dispatch-due-reminders', function () {
 Schedule::command('appointments:dispatch-due-reminders')
     ->everyMinute()
     ->withoutOverlapping();
+
+// Seguridad Social: generar planillas del mes (opciones --year= y --month=)
+Artisan::command('payroll:generate-monthly {--year= : Año (default: actual)} {--month= : Mes (default: actual)}', function () {
+    $year = (int) ($this->option('year') ?: now()->format('Y'));
+    $month = (int) ($this->option('month') ?: now()->format('n'));
+    if ($month < 1 || $month > 12) {
+        $this->error('Mes debe estar entre 1 y 12.');
+        return 1;
+    }
+    $result = app(PayrollBatchService::class)->generateMonthlyPayrolls($year, $month);
+    $this->info("Creadas: {$result['created']}, Omitidas: {$result['skipped']}");
+    if (!empty($result['errors'])) {
+        $this->warn('Errores por afiliado: ' . count($result['errors']));
+        foreach (array_slice($result['errors'], 0, 10, true) as $affiliateId => $msg) {
+            $this->line("  Afiliado {$affiliateId}: {$msg}");
+        }
+        if (count($result['errors']) > 10) {
+            $this->line('  ... y ' . (count($result['errors']) - 10) . ' más.');
+        }
+    }
+    return 0;
+})->purpose('Genera planillas para todos los afiliados activos con perfil SS en el año/mes indicado');
+
+// Seguridad Social: marcar planillas vencidas como OVERDUE
+Artisan::command('payroll:mark-overdue', function () {
+    $count = app(PayrollService::class)->markOverduePayrolls();
+    $this->info("Planillas marcadas en mora: {$count}");
+    return 0;
+})->purpose('Marca como OVERDUE las planillas con due_date pasado que no están pagadas');
+
+// Seguridad Social: liquidar (settle) todas las planillas pendientes del mes
+Artisan::command('payroll:settle-monthly {--year= : Año (default: actual)} {--month= : Mes (default: actual)} {--payer= : Opcional ID de pagador}', function () {
+    $year = (int) ($this->option('year') ?: now()->format('Y'));
+    $month = (int) ($this->option('month') ?: now()->format('n'));
+    $payerId = $this->option('payer') ? (int) $this->option('payer') : null;
+    if ($month < 1 || $month > 12) {
+        $this->error('Mes debe estar entre 1 y 12.');
+        return 1;
+    }
+    $result = app(PayrollBatchService::class)->settleMonthlyPayrolls($year, $month, $payerId);
+    $this->info("Liquidadas: {$result['settled']}");
+    if (!empty($result['errors'])) {
+        $this->warn('Errores: ' . count($result['errors']));
+        foreach (array_slice($result['errors'], 0, 10, true) as $payrollId => $msg) {
+            $this->line("  Planilla {$payrollId}: {$msg}");
+        }
+        if (count($result['errors']) > 10) {
+            $this->line('  ... y ' . (count($result['errors']) - 10) . ' más.');
+        }
+    }
+    return 0;
+})->purpose('Liquida todas las planillas PENDING del año/mes indicado');
+
+Schedule::command('payroll:mark-overdue')->daily();

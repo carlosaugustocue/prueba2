@@ -6,14 +6,17 @@ import DatePicker from '@/Components/DatePicker.vue';
 import {
     ChevronLeft, CalendarPlus, Pencil, Phone, Mail, MapPin,
     User, Users, Heart, UserPlus, Calendar, ArrowRight,
-    MessageSquare, Building2, CalendarClock, FileText, FileCheck, Plus, X
+    MessageSquare, Building2, CalendarClock, FileText, FileCheck, Plus, X,
+    Key, Paperclip, Download, Trash2, Loader2
 } from 'lucide-vue-next';
+import { confirmDialog } from '@/Utils/swal';
 
 const props = defineProps({
     affiliate: Object,
     pila_next_due_date: String,
     pila_next_due_label: String,
     noveltyTypes: { type: Array, default: () => [] },
+    operatorCredentialProviderLabels: { type: Object, default: () => ({}) },
 });
 
 const showNoveltyModal = ref(false);
@@ -62,6 +65,90 @@ const beneficiaries = computed(() => affiliate.value.beneficiaries || []);
 const holder = computed(() => affiliate.value.holder);
 const novelties = computed(() => affiliate.value.novelties || []);
 const authorizations = computed(() => affiliate.value.authorizations || []);
+const operatorCredentials = computed(() => affiliate.value.operator_credentials || []);
+const supportDocuments = computed(() => affiliate.value.support_documents || []);
+
+const providerLabels = computed(() => props.operatorCredentialProviderLabels || {});
+
+const showCredentialModal = ref(false);
+const credentialForm = useForm({
+    provider_type: '',
+    username: '',
+    password: '',
+});
+const editingCredentialId = ref(null);
+
+function openCredentialModal(credential = null) {
+    editingCredentialId.value = credential?.id ?? null;
+    credentialForm.reset();
+    if (credential) {
+        credentialForm.username = '';
+        credentialForm.password = '';
+        credentialForm.provider_type = credential.provider_type;
+    } else {
+        credentialForm.provider_type = 'PAYMENT_OPERATOR';
+    }
+    showCredentialModal.value = true;
+}
+
+function submitCredential() {
+    const base = `/affiliates/${affiliateId.value}/operator-credentials`;
+    if (editingCredentialId.value) {
+        credentialForm.put(`${base}/${editingCredentialId.value}`, {
+            preserveScroll: true,
+            onSuccess: () => { showCredentialModal.value = false; },
+        });
+    } else {
+        credentialForm.post(base, {
+            preserveScroll: true,
+            onSuccess: () => { showCredentialModal.value = false; },
+        });
+    }
+}
+
+function deleteCredential(cred) {
+    confirmDialog({ title: 'Eliminar credencial', text: `¿Eliminar credencial de ${providerLabels.value[cred.provider_type] || cred.provider_type}?`, confirmButtonText: 'Eliminar', icon: 'warning' })
+        .then((ok) => {
+            if (!ok) return;
+            router.delete(`/affiliates/${affiliateId.value}/operator-credentials/${cred.id}`, { preserveScroll: true });
+        });
+}
+
+const showSupportForm = ref(false);
+const supportForm = useForm({
+    title: '',
+    document: null,
+});
+
+function submitSupportDocument() {
+    const fd = new FormData();
+    fd.append('title', supportForm.title);
+    if (supportForm.document) fd.append('document', supportForm.document);
+    router.post(`/affiliates/${affiliateId.value}/support-documents`, fd, {
+        preserveScroll: true,
+        forceFormData: true,
+        onSuccess: () => {
+            showSupportForm.value = false;
+            supportForm.reset();
+            supportForm.document = null;
+        },
+    });
+}
+
+function deleteSupportDoc(doc) {
+    confirmDialog({ title: 'Eliminar documento', text: `¿Eliminar "${doc.title}"?`, confirmButtonText: 'Eliminar', icon: 'warning' })
+        .then((ok) => {
+            if (!ok) return;
+            router.delete(`/affiliates/${affiliateId.value}/support-documents/${doc.id}`, { preserveScroll: true });
+        });
+}
+
+function formatFileSize(bytes) {
+    if (bytes == null) return '—';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
 const isAffiliateActive = computed(() => {
     const s = (affiliate.value?.status || '').toString().toUpperCase();
     return s === '' || s === 'ACTIVO';
@@ -458,6 +545,80 @@ const isAffiliateActive = computed(() => {
                         </div>
                     </div>
 
+                    <!-- Credenciales de operadores (SS) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white flex items-center justify-between">
+                            <h3 class="flex items-center gap-2 font-semibold text-gray-900">
+                                <Key class="h-5 w-5 text-amber-600" />
+                                Credenciales de operadores
+                                <span v-if="operatorCredentials.length" class="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">{{ operatorCredentials.length }}</span>
+                            </h3>
+                            <button type="button" @click="openCredentialModal()" class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 rounded-lg transition-colors">
+                                <Plus class="h-4 w-4" />
+                                Agregar credencial
+                            </button>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            <div v-for="cred in operatorCredentials" :key="cred.id" class="px-6 py-3 flex items-center justify-between">
+                                <span class="font-medium text-gray-900">{{ providerLabels[cred.provider_type] || cred.provider_type }}</span>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="openCredentialModal(cred)" class="inline-flex items-center gap-1 px-2 py-1 text-sm text-amber-700 hover:bg-amber-50 rounded">Editar</button>
+                                    <button type="button" @click="deleteCredential(cred)" class="inline-flex items-center gap-1 px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded">Eliminar</button>
+                                </div>
+                            </div>
+                            <div v-if="!operatorCredentials.length" class="px-6 py-8 text-center text-sm text-gray-500">
+                                No hay credenciales. Usuario y clave se guardan cifrados.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Soportes documentales -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-white flex items-center justify-between">
+                            <h3 class="flex items-center gap-2 font-semibold text-gray-900">
+                                <Paperclip class="h-5 w-5 text-indigo-600" />
+                                Soportes documentales
+                                <span v-if="supportDocuments.length" class="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">{{ supportDocuments.length }}</span>
+                            </h3>
+                            <button type="button" @click="showSupportForm = !showSupportForm" class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors">
+                                <Plus class="h-4 w-4" />
+                                Subir documento
+                            </button>
+                        </div>
+                        <div v-if="showSupportForm" class="px-6 py-4 bg-gray-50 border-b border-gray-100">
+                            <form @submit.prevent="submitSupportDocument" class="space-y-3">
+                                <input v-model="supportForm.title" type="text" required maxlength="255" placeholder="Título del documento" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" />
+                                <input type="file" @change="supportForm.document = $event.target.files?.[0]" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-700" />
+                                <p v-if="supportForm.errors.title" class="text-sm text-red-600">{{ supportForm.errors.title }}</p>
+                                <p v-if="supportForm.errors.document" class="text-sm text-red-600">{{ supportForm.errors.document }}</p>
+                                <div class="flex gap-2">
+                                    <button type="button" @click="showSupportForm = false" class="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200 rounded-lg">Cancelar</button>
+                                    <button type="submit" :disabled="supportForm.processing" class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">Subir</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            <div v-for="doc in supportDocuments" :key="doc.id" class="px-6 py-3 flex items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <p class="font-medium text-gray-900 truncate">{{ doc.title }}</p>
+                                    <p class="text-xs text-gray-500">{{ doc.original_name || '—' }} · {{ formatFileSize(doc.size) }} · {{ doc.created_at }}</p>
+                                </div>
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <a :href="`/affiliates/${affiliate.id}/support-documents/${doc.id}/download`" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2 py-1 text-sm text-indigo-600 hover:bg-indigo-50 rounded">
+                                        <Download class="h-4 w-4" />
+                                        Descargar
+                                    </a>
+                                    <button type="button" @click="deleteSupportDoc(doc)" class="inline-flex items-center gap-1 px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded">
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div v-if="!supportDocuments.length && !showSupportForm" class="px-6 py-8 text-center text-sm text-gray-500">
+                                No hay documentos. Sube títulos, recibos o soportes del afiliado.
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Historia clínica (solo roles atencion/admin; backend restringe acceso) -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-white">
@@ -532,6 +693,48 @@ const isAffiliateActive = computed(() => {
                                 </button>
                                 <button type="submit" :disabled="noveltyForm.processing" class="flex-1 px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 disabled:opacity-50">
                                     {{ noveltyForm.processing ? 'Guardando...' : 'Guardar novedad' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Credencial operador -->
+            <div v-if="showCredentialModal" class="fixed inset-0 z-50 overflow-y-auto" aria-modal="true">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div class="fixed inset-0 bg-black/50 transition-opacity" @click="showCredentialModal = false" />
+                    <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ editingCredentialId ? 'Editar credencial' : 'Agregar credencial' }}</h3>
+                            <button type="button" @click="showCredentialModal = false" class="text-gray-400 hover:text-gray-600 rounded-lg p-1">
+                                <X class="h-5 w-5" />
+                            </button>
+                        </div>
+                        <form @submit.prevent="submitCredential" class="space-y-4">
+                            <div v-if="editingCredentialId">
+                                <p class="text-sm text-gray-600">{{ providerLabels[credentialForm.provider_type] || credentialForm.provider_type }}</p>
+                            </div>
+                            <div v-else>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor *</label>
+                                <select v-model="credentialForm.provider_type" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm">
+                                    <option v-for="(label, key) in providerLabels" :key="key" :value="key">{{ label }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Usuario *</label>
+                                <input v-model="credentialForm.username" type="text" required maxlength="255" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Usuario o correo" />
+                                <p v-if="credentialForm.errors.username" class="mt-1 text-sm text-red-600">{{ credentialForm.errors.username }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ editingCredentialId ? 'Nueva contraseña (dejar en blanco para no cambiar)' : 'Contraseña *' }}</label>
+                                <input v-model="credentialForm.password" :type="'password'" :required="!editingCredentialId" maxlength="500" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="••••••••" autocomplete="off" />
+                                <p v-if="credentialForm.errors.password" class="mt-1 text-sm text-red-600">{{ credentialForm.errors.password }}</p>
+                            </div>
+                            <div class="flex gap-3 pt-2">
+                                <button type="button" @click="showCredentialModal = false" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50">Cancelar</button>
+                                <button type="submit" :disabled="credentialForm.processing" class="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50">
+                                    {{ credentialForm.processing ? 'Guardando...' : (editingCredentialId ? 'Actualizar' : 'Guardar') }}
                                 </button>
                             </div>
                         </form>

@@ -8,6 +8,7 @@ use App\Modules\Patients\Enums\DocumentType;
 use App\Modules\Patients\Enums\PatientType;
 use App\Modules\Patients\Enums\RelationshipType;
 use App\Modules\Patients\Models\Affiliate;
+use App\Modules\SocialSecurity\Services\ContributionParametersResolver;
 
 class CreateAffiliateRequest extends FormRequest
 {
@@ -18,6 +19,12 @@ class CreateAffiliateRequest extends FormRequest
 
     public function rules(): array
     {
+        $resolver = app(ContributionParametersResolver::class);
+        $date = now();
+        $ibcMin = $resolver->getIbcMin($date) ?? 0;
+        $ibcMax = $resolver->getIbcMax($date) ?? 999999999;
+        $paymentBounds = $resolver->getPaymentDayBounds($date);
+
         return [
             'document_type' => ['required', Rule::enum(DocumentType::class)],
             'document_number' => ['required', 'string', 'max:20', 'unique:affiliates,document_number'],
@@ -42,8 +49,8 @@ class CreateAffiliateRequest extends FormRequest
             'payment_operator_id' => ['nullable', 'exists:payment_operators,id'],
             'accounting_registry_id' => ['nullable', 'exists:accounting_registries,id'],
             'payer_id' => ['nullable', 'exists:payers,id'],
-            'ibc' => ['nullable', 'numeric', 'min:290000', 'max:14235800'],
-            'payment_day' => ['nullable', 'integer', 'min:2', 'max:16'],
+            'ibc' => ['nullable', 'numeric', 'min:'.$ibcMin, 'max:'.$ibcMax],
+            'payment_day' => ['nullable', 'integer', 'min:'.$paymentBounds['min'], 'max:'.$paymentBounds['max']],
             'payment_periodicity' => ['nullable', 'string', 'in:CURRENT,OVERDUE'],
             'has_parafiscales' => ['boolean'],
             'observations' => ['nullable', 'string', 'max:2000'],

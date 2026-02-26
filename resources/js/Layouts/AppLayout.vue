@@ -1,43 +1,105 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings, Building2, FileCheck } from 'lucide-vue-next';
+import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings, Building2, FileCheck, FileText, ChevronDown, ChevronRight, Shield, Briefcase, Sliders } from 'lucide-vue-next';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const flash = computed(() => page.props.flash);
+const currentPath = computed(() => window.location.pathname);
 
 const sidebarOpen = ref(false);
 
 const ROLES_SOLO_SS = ['seguridad_social'];
 
-const navigation = computed(() => {
+/** Secciones del menú. Cada una tiene key, title, icon, items[] y opcionalmente roles (solo se muestra si el usuario tiene uno de esos roles). */
+const sections = computed(() => {
     const role = user.value?.role;
-    const items = [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }];
+    const list = [];
 
-    if (ROLES_SOLO_SS.includes(role)) {
-        items.push({ name: 'Afiliados', href: '/affiliates', icon: Users });
-        items.push({ name: 'Pagadores', href: '/payers', icon: Building2 });
-    } else {
-        items.push({ name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList });
-        items.push({ name: 'Citas', href: '/appointments', icon: CalendarDays });
-        items.push({ name: 'Autorizaciones', href: '/authorizations', icon: FileCheck });
-        items.push({ name: 'Afiliados', href: '/affiliates', icon: Users });
-        items.push({ name: 'Pagadores', href: '/payers', icon: Building2 });
+    list.push({
+        key: 'principal',
+        title: 'Principal',
+        icon: LayoutDashboard,
+        items: [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }],
+    });
+
+    if (!ROLES_SOLO_SS.includes(role)) {
+        list.push({
+            key: 'atencion',
+            title: 'Atención',
+            icon: Briefcase,
+            items: [
+                { name: 'Solicitudes', href: '/appointment-requests', icon: ClipboardList },
+                { name: 'Citas', href: '/appointments', icon: CalendarDays },
+                { name: 'Autorizaciones', href: '/authorizations', icon: FileCheck },
+            ],
+        });
     }
+
+    list.push({
+        key: 'seguridad_social',
+        title: 'Seguridad Social',
+        icon: Shield,
+        items: [
+            { name: 'Dashboard SS', href: '/dashboard-ss', icon: LayoutDashboard },
+            { name: 'Afiliados', href: '/affiliates', icon: Users },
+            { name: 'Pagadores', href: '/payers', icon: Building2 },
+            { name: 'Planillas', href: '/payrolls', icon: FileText },
+        ],
+    });
 
     if (role === 'admin') {
-        items.push({ name: 'Configuración', href: '/admin/configuracion', icon: Settings });
-        items.push({ name: 'Usuarios', href: '/admin/usuarios', icon: UserCog });
-        items.push({ name: 'Métricas', href: '/admin/metricas/operadores', icon: BarChart3 });
-        items.push({ name: 'Comunicaciones', href: '/admin/comunicaciones', icon: MessageSquareText });
-        items.push({ name: 'Envíos WhatsApp', href: '/admin/whatsapp-envios', icon: Send });
+        list.push({
+            key: 'admin',
+            title: 'Administración',
+            icon: Sliders,
+            roles: ['admin'],
+            items: [
+                { name: 'Configuración', href: '/admin/configuracion', icon: Settings },
+                { name: 'Usuarios', href: '/admin/usuarios', icon: UserCog },
+                { name: 'Métricas', href: '/admin/metricas/operadores', icon: BarChart3 },
+                { name: 'Comunicaciones', href: '/admin/comunicaciones', icon: MessageSquareText },
+                { name: 'Envíos WhatsApp', href: '/admin/whatsapp-envios', icon: Send },
+            ],
+        });
     }
 
-    return items;
+    return list;
 });
 
-const isActive = (href) => window.location.pathname.startsWith(href);
+/** Qué sección tiene un ítem activo (para abrirla por defecto). */
+const sectionWithActiveLink = computed(() => {
+    const path = currentPath.value;
+    for (const section of sections.value) {
+        const hasActive = section.items.some((item) => path.startsWith(item.href) || (item.href !== '/dashboard' && path === item.href));
+        if (hasActive) return section.key;
+    }
+    return null;
+});
+
+/** Secciones expandidas: Principal y Seguridad Social abiertas por defecto; la que contiene la ruta actual también. */
+const openSections = ref(new Set(['principal', 'seguridad_social']));
+
+watch(
+    () => sectionWithActiveLink.value,
+    (key) => {
+        if (key && !openSections.value.has(key)) {
+            openSections.value = new Set([...openSections.value, key]);
+        }
+    },
+    { immediate: true }
+);
+
+const toggleSection = (key) => {
+    const next = new Set(openSections.value);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    openSections.value = next;
+};
+
+const isSectionOpen = (key) => openSections.value.has(key);
+const isActive = (href) => currentPath.value.startsWith(href) || (href !== '/dashboard' && currentPath.value === href);
 </script>
 
 <template>
@@ -57,21 +119,39 @@ const isActive = (href) => window.location.pathname.startsWith(href);
                 </Link>
 
                 <!-- Navigation -->
-                <nav class="flex-1 mt-6 px-3 space-y-1">
-                    <Link
-                        v-for="item in navigation"
-                        :key="item.name"
-                        :href="item.href"
-                        :class="[
-                            isActive(item.href)
-                                ? 'bg-brand-50 text-brand-700 border-l-4 border-brand-500'
-                                : 'text-gray-600 hover:bg-gray-50 border-l-4 border-transparent',
-                            'group flex items-center px-3 py-2.5 rounded-r-lg text-sm font-medium transition-colors'
-                        ]"
-                    >
-                        <component :is="item.icon" class="mr-3 h-5 w-5" />
-                        {{ item.name }}
-                    </Link>
+                <nav class="flex-1 mt-4 px-3 space-y-1 overflow-y-auto">
+                    <div v-for="section in sections" :key="section.key" class="mb-3">
+                        <button
+                            v-if="section.items.length > 1"
+                            type="button"
+                            @click="toggleSection(section.key)"
+                            class="flex items-center w-full px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                        >
+                            <component :is="section.icon" class="mr-2 h-4 w-4 text-gray-400" />
+                            {{ section.title }}
+                            <component :is="isSectionOpen(section.key) ? ChevronDown : ChevronRight" class="ml-auto h-4 w-4 text-gray-400" />
+                        </button>
+                        <div v-else class="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                            <component :is="section.icon" class="h-4 w-4 text-gray-400" />
+                            {{ section.title }}
+                        </div>
+                        <div v-show="section.items.length === 1 || isSectionOpen(section.key)" class="mt-0.5 space-y-0.5">
+                            <Link
+                                v-for="item in section.items"
+                                :key="item.name"
+                                :href="item.href"
+                                :class="[
+                                    isActive(item.href)
+                                        ? 'bg-brand-50 text-brand-700 border-l-4 border-brand-500'
+                                        : 'text-gray-600 hover:bg-gray-50 border-l-4 border-transparent',
+                                    'group flex items-center px-3 py-2 rounded-r-lg text-sm font-medium transition-colors'
+                                ]"
+                            >
+                                <component :is="item.icon" class="mr-3 h-5 w-5 flex-shrink-0" />
+                                <span class="truncate">{{ item.name }}</span>
+                            </Link>
+                        </div>
+                    </div>
                 </nav>
 
                 <!-- User menu -->
@@ -122,21 +202,39 @@ const isActive = (href) => window.location.pathname.startsWith(href);
 
                 <!-- Navigation -->
                 <nav class="flex-1 mt-4 px-3 space-y-1 overflow-y-auto">
-                    <Link
-                        v-for="item in navigation"
-                        :key="item.name"
-                        :href="item.href"
-                        @click="sidebarOpen = false"
-                        :class="[
-                            isActive(item.href)
-                                ? 'bg-brand-50 text-brand-700 border-l-4 border-brand-500'
-                                : 'text-gray-600 hover:bg-gray-50 border-l-4 border-transparent',
-                            'group flex items-center px-3 py-2.5 rounded-r-lg text-sm font-medium transition-colors'
-                        ]"
-                    >
-                        <component :is="item.icon" class="mr-3 h-5 w-5" />
-                        {{ item.name }}
-                    </Link>
+                    <div v-for="section in sections" :key="section.key" class="mb-3">
+                        <button
+                            v-if="section.items.length > 1"
+                            type="button"
+                            @click="toggleSection(section.key)"
+                            class="flex items-center w-full px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                        >
+                            <component :is="section.icon" class="mr-2 h-4 w-4 text-gray-400" />
+                            {{ section.title }}
+                            <component :is="isSectionOpen(section.key) ? ChevronDown : ChevronRight" class="ml-auto h-4 w-4 text-gray-400" />
+                        </button>
+                        <div v-else class="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                            <component :is="section.icon" class="h-4 w-4 text-gray-400" />
+                            {{ section.title }}
+                        </div>
+                        <div v-show="section.items.length === 1 || isSectionOpen(section.key)" class="mt-0.5 space-y-0.5">
+                            <Link
+                                v-for="item in section.items"
+                                :key="item.name"
+                                :href="item.href"
+                                @click="sidebarOpen = false"
+                                :class="[
+                                    isActive(item.href)
+                                        ? 'bg-brand-50 text-brand-700 border-l-4 border-brand-500'
+                                        : 'text-gray-600 hover:bg-gray-50 border-l-4 border-transparent',
+                                    'group flex items-center px-3 py-2 rounded-r-lg text-sm font-medium transition-colors'
+                                ]"
+                            >
+                                <component :is="item.icon" class="mr-3 h-5 w-5 flex-shrink-0" />
+                                <span class="truncate">{{ item.name }}</span>
+                            </Link>
+                        </div>
+                    </div>
                 </nav>
 
                 <!-- User menu -->

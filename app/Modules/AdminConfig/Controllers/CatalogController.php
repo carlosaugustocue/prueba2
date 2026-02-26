@@ -80,6 +80,7 @@ class CatalogController extends Controller
             ['key' => 'contributor-types', 'label' => 'Tipos de cotizante', 'description' => 'Catálogo PILA (01–59)', 'href' => route('admin.configuracion.contributor-types.index')],
             ['key' => 'novelty-types', 'label' => 'Tipos de novedad', 'description' => 'Ingreso, Retiro, Traslado EPS', 'href' => route('admin.configuracion.novelty-types.index')],
             ['key' => 'accounting-registries', 'label' => 'Registros contables', 'description' => 'RECIBO_CAJA, FACTURA_ELECTRONICA', 'href' => route('admin.configuracion.accounting-registries.index')],
+            ['key' => 'contribution-parameters', 'label' => 'Parámetros de aportes', 'description' => 'Porcentajes, SMLMV, vigencia normativa', 'href' => route('admin.configuracion.contribution-parameters.index')],
         ];
 
         return Inertia::render('Admin/Config/Index', [

@@ -1,7 +1,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Settings, Building2, Shield, Wallet, Truck, UserCircle, FileText, ClipboardList, BookOpen } from 'lucide-vue-next';
+import { Settings, Building2, Shield, Wallet, Truck, UserCircle, FileText, ClipboardList, BookOpen, Percent } from 'lucide-vue-next';
 
 const props = defineProps({
     catalogs: Array,
@@ -16,6 +16,7 @@ const icons = {
     'contributor-types': FileText,
     'novelty-types': ClipboardList,
     'accounting-registries': BookOpen,
+    'contribution-parameters': Percent,
 };
 </script>
 

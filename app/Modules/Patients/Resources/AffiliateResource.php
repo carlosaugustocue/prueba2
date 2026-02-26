@@ -155,6 +155,21 @@ class AffiliateResource extends JsonResource
                     'new_value' => $n->new_value,
                 ])
             ),
+            'operator_credentials' => $this->whenLoaded('operatorCredentials', fn () =>
+                $this->operatorCredentials->map(fn ($c) => [
+                    'id' => $c->id,
+                    'provider_type' => $c->provider_type,
+                ])
+            ),
+            'support_documents' => $this->whenLoaded('supportDocuments', fn () =>
+                $this->supportDocuments->map(fn ($d) => [
+                    'id' => $d->id,
+                    'title' => $d->title,
+                    'original_name' => $d->original_name,
+                    'size' => $d->size,
+                    'created_at' => $d->created_at?->format('Y-m-d H:i'),
+                ])
+            ),
         ];
     }
 }

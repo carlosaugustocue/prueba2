@@ -21,9 +21,13 @@ class Payroll extends Model
         'pension_amount',
         'arl_amount',
         'ccf_amount',
+        'parafiscal_amount',
+        'fsp_amount',
+        'total_amount',
         'sent_at',
         'paid_at',
         'notes',
+        'calculation_metadata',
     ];
 
     protected function casts(): array
@@ -36,6 +40,10 @@ class Payroll extends Model
             'pension_amount' => 'decimal:2',
             'arl_amount' => 'decimal:2',
             'ccf_amount' => 'decimal:2',
+            'parafiscal_amount' => 'decimal:2',
+            'fsp_amount' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'calculation_metadata' => 'array',
         ];
     }
 

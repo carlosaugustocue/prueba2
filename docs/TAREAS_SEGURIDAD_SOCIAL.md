@@ -232,6 +232,22 @@
 
 ---
 
+## Post-MVP — Multi-aportante y contratos por días (PRIORIDAD ALTA)
+
+**Contexto:** En Serviconli son frecuentes los casos de independientes con **varios contratos** y contratos **por días**. Debe implementarse después del MVP; es prioritario para la operación real.
+
+**Referencia normativa:** [NORMATIVA_Y_COMPLEJIDAD_SEGURIDAD_SOCIAL.md](NORMATIVA_Y_COMPLEJIDAD_SEGURIDAD_SOCIAL.md) — tipo cotizante 51 (Circular 093/2025), aportes proporcionales por semanas; multi-aportante (un afiliado, varios contratos, una planilla).
+
+| # | Tarea concreta | Criterio de aceptación |
+|---|----------------|------------------------|
+| M.1 | **Multi-aportante:** Modelo de datos para varios contratos/líneas por afiliado (ej. tabla `affiliate_contracts` o `payroll_lines`: affiliate_id, período, IBC o valor, tipo cotizante, días/semanas opcionales). Una planilla por afiliado por mes que **agrupe** todos los contratos y calcule IBC total (o líneas) según PILA. | Un afiliado con 3 contratos en el mismo mes genera una sola planilla con aportes sobre la base consolidada (o por línea según normativa). |
+| M.2 | **Contratos por días / tipo 51:** Registrar días o semanas trabajadas (y valor si aplica). Tipo cotizante 51 en catálogo y en perfil. Cálculo proporcional: aporte = (días trabajados / días del mes) × aporte mensual mínimo, según Circular 093/2025 (ingresos &lt; 1 SMLMV). | Independiente que trabaja 10 días en el mes paga aporte proporcional a 10/30 (o semanas 2/4); planilla refleja IBC/aporte correcto. |
+| M.3 | UI: alta/edición de contratos o líneas por afiliado (período, IBC o valor, días/semanas); en creación de planilla o en perfil SS, poder cargar varios conceptos y consolidar. | Operador puede registrar varios contratos por afiliado y el sistema genera una planilla correcta. |
+
+**Nota:** Hoy el sistema tiene un solo IBC por afiliado (perfil SS) y una planilla por afiliado/mes. Esta funcionalidad amplía el modelo sin romper lo existente.
+
+---
+
 ## Post-MVP — Historia clínica para citas
 
 **Objetivo operativo:** En el momento de gestionar una cita, poder consultar información de historia clínica del afiliado si es necesario.

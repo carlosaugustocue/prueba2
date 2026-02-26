@@ -481,7 +481,15 @@ const submit = () => form.post('/affiliates');
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">IBC (Ingreso base cotización)</label>
-                            <input v-model="form.ibc" type="number" min="290000" max="14235800" step="1" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="290000 - 14235800" />
+                            <input
+                                :value="ibcDisplay"
+                                type="text"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                placeholder="Ej: 1.500.000"
+                                @input="onIbcInput"
+                            />
                             <p v-if="form.errors.ibc" class="mt-1 text-sm text-red-600">{{ form.errors.ibc }}</p>
                         </div>
                         <div>

@@ -29,6 +29,26 @@ const affiliateData = computed(() => props.affiliate?.data || props.affiliate ||
 const currentHolder = computed(() => affiliateData.value.holder || null);
 const hasBeneficiaries = computed(() => affiliateData.value.beneficiaries_count > 0);
 
+// IBC: mostrar en pantalla con formato miles/millones (ej. 1.500.000), enviar número al backend
+const formatIbcDisplay = (n) => {
+    if (n === '' || n === null || n === undefined) return '';
+    const num = Number(n);
+    if (Number.isNaN(num)) return '';
+    return num.toLocaleString('es-CO', { maximumFractionDigits: 0 });
+};
+const parseIbcInput = (s) => {
+    const digits = String(s).replace(/\D/g, '');
+    if (digits === '') return '';
+    return parseInt(digits, 10);
+};
+const ibcDisplay = ref(formatIbcDisplay(affiliateData.value.ibc ?? ''));
+const onIbcInput = (e) => {
+    const raw = e.target.value;
+    const parsed = parseIbcInput(raw);
+    form.ibc = parsed === '' ? '' : parsed;
+    ibcDisplay.value = formatIbcDisplay(form.ibc);
+};
+
 const form = useForm({
     document_type: affiliateData.value.document_type || '',
     document_number: affiliateData.value.document_number || '',
@@ -127,6 +147,13 @@ watch(() => form.patient_type, (newType) => {
         form.relationship_type = '';
     }
 });
+
+// Mantener display IBC sincronizado si el form.ibc cambia por fuera (ej. validación)
+watch(() => form.ibc, (v) => {
+    const current = parseIbcInput(ibcDisplay.value);
+    const next = v === '' || v === null ? '' : Number(v);
+    if (current !== next) ibcDisplay.value = formatIbcDisplay(v);
+}, { immediate: true });
 
 // Obtener la descripción del tipo de parentesco seleccionado
 const selectedRelationshipDescription = ref('');
@@ -506,7 +533,15 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">IBC (Ingreso base cotización)</label>
-                            <input v-model="form.ibc" type="number" min="290000" max="14235800" step="1" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="290000 - 14235800" />
+                            <input
+                                :value="ibcDisplay"
+                                type="text"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                placeholder="Ej: 1.500.000"
+                                @input="onIbcInput"
+                            />
                             <p v-if="form.errors.ibc" class="mt-1 text-sm text-red-600">{{ form.errors.ibc }}</p>
                         </div>
                         <div>

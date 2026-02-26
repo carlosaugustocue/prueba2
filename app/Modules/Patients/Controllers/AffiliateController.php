@@ -14,6 +14,7 @@ use App\Modules\SocialSecurity\Models\AccountingRegistry;
 use App\Modules\SocialSecurity\Models\PaymentOperator;
 use App\Modules\SocialSecurity\Models\Payer;
 use App\Modules\SocialSecurity\Models\NoveltyType;
+use App\Modules\SocialSecurity\Controllers\OperatorCredentialController;
 use App\Modules\SocialSecurity\Services\DueDateCalculator;
 use App\Modules\Patients\Services\AffiliateService;
 use App\Modules\Patients\Requests\CreateAffiliateRequest;
@@ -123,6 +124,8 @@ class AffiliateController extends Controller
             'appointments',
             'authorizations' => fn ($q) => $q->orderByDesc('created_at'),
             'novelties.noveltyType',
+            'operatorCredentials',
+            'supportDocuments',
         ]);
 
         $pilaNextDueDate = null;
@@ -149,6 +152,7 @@ class AffiliateController extends Controller
             'pila_next_due_date' => $pilaNextDueDate,
             'pila_next_due_label' => $pilaNextDueLabel,
             'noveltyTypes' => NoveltyType::active()->orderBy('name')->get(['id', 'name', 'code']),
+            'operatorCredentialProviderLabels' => OperatorCredentialController::PROVIDER_LABELS,
         ]);
     }
 
