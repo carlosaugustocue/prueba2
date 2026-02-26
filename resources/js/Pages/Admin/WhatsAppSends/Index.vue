@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import { MessageCircle, Filter, Clock, CheckCircle, XCircle, Send, Ban } from 'lucide-vue-next';
 import Pagination from '@/Components/Pagination.vue';
 import { confirmDialog } from '@/Utils/swal';
@@ -88,8 +89,8 @@ async function cancelSend(reminderId) {
                         <option value="">Todos los tipos</option>
                         <option v-for="t in types" :key="t.value" :value="t.value">{{ t.label }}</option>
                     </select>
-                    <input type="date" :value="filters.from" @change="apply('from', $event.target.value)" class="rounded-lg border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500" />
-                    <input type="date" :value="filters.to" @change="apply('to', $event.target.value)" class="rounded-lg border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500" />
+                    <DatePicker :modelValue="filters?.from" @update:modelValue="apply('from', $event)" label="Desde" />
+                    <DatePicker :modelValue="filters?.to" @update:modelValue="apply('to', $event)" label="Hasta" />
                 </div>
             </div>
 

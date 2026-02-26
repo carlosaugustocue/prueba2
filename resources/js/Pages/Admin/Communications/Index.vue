@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import { Download, Filter, MessageSquare, Send, Clock } from 'lucide-vue-next';
 import Pagination from '@/Components/Pagination.vue';
 
@@ -71,8 +72,8 @@ const isPendingWhatsApp = (r) => r.channel === 'whatsapp' && (r.status === 'pend
                         <Filter class="h-4 w-4" />
                         <span class="text-sm font-medium">Filtros</span>
                     </div>
-                    <input type="date" :value="filters.from" @change="apply('from', $event.target.value)" class="rounded-lg border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500" />
-                    <input type="date" :value="filters.to" @change="apply('to', $event.target.value)" class="rounded-lg border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500" />
+                    <DatePicker :modelValue="filters?.from" @update:modelValue="apply('from', $event)" label="Desde" />
+                    <DatePicker :modelValue="filters?.to" @update:modelValue="apply('to', $event)" label="Hasta" />
 
                     <select :value="filters.channel || ''" @change="apply('channel', $event.target.value)" class="rounded-lg border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="">Todos los canales</option>
