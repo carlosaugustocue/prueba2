@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { Link, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import {
     ChevronLeft, CalendarPlus, Pencil, Phone, Mail, MapPin,
     User, Users, Heart, UserPlus, Calendar, ArrowRight,
@@ -534,8 +535,7 @@ const isAffiliateActive = computed(() => {
                                 <p v-if="noveltyForm.errors.novelty_type_id" class="mt-1 text-sm text-red-600">{{ noveltyForm.errors.novelty_type_id }}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha efectiva *</label>
-                                <input v-model="noveltyForm.effective_date" type="date" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" />
+                                <DatePicker v-model="noveltyForm.effective_date" label="Fecha efectiva" required />
                                 <p v-if="noveltyForm.errors.effective_date" class="mt-1 text-sm text-red-600">{{ noveltyForm.errors.effective_date }}</p>
                             </div>
                             <div>

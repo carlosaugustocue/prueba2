@@ -2,6 +2,7 @@
 import { ref, watch, computed } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import axios from 'axios';
 import {
     ChevronLeft, User, Users, Search, Loader2, X, Check,
@@ -326,8 +327,7 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                             <p v-if="form.errors.document_number" class="mt-1 text-sm text-red-600">{{ form.errors.document_number }}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de expedición del documento</label>
-                            <input v-model="form.document_issue_date" type="date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            <DatePicker v-model="form.document_issue_date" label="Fecha de expedición del documento" />
                             <p v-if="form.errors.document_issue_date" class="mt-1 text-sm text-red-600">{{ form.errors.document_issue_date }}</p>
                         </div>
                         <div>
@@ -349,8 +349,7 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                             <input v-model="form.second_last_name" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de nacimiento</label>
-                            <input v-model="form.birth_date" type="date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            <DatePicker v-model="form.birth_date" label="Fecha de nacimiento" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Sexo</label>
