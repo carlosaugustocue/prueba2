@@ -428,10 +428,13 @@ const savePhoneCommunication = () => {
                                 </div>
                             </dl>
 
-                            <div class="mt-4 pt-4 border-t border-gray-200">
+                            <div class="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-3">
                                 <Link :href="`/affiliates/${affiliate.id}`" class="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium">
                                     Ver perfil del afiliado
                                     <ArrowRight class="h-4 w-4" />
+                                </Link>
+                                <Link :href="`/affiliates/${affiliate.id}/historia-clinica`" class="inline-flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700 font-medium">
+                                    Historia clínica del afiliado
                                 </Link>
                             </div>
                         </div>
