@@ -23,6 +23,7 @@ class ModuleServiceProvider extends ServiceProvider
         'AdminCommunications',
         'AdminWhatsApp',
         'Integrations',
+        'HistoriaClinica',
     ];
 
     /**

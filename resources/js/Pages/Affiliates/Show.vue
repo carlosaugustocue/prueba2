@@ -376,83 +376,40 @@ const isAffiliateActive = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Historial de Citas -->
+                    <!-- Historial de Citas (abre listado en otra vista) -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white flex items-center justify-between">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                             <h3 class="flex items-center gap-2 font-semibold text-gray-900">
                                 <Calendar class="h-5 w-5 text-brand-600" />
                                 Historial de Citas
+                                <span v-if="(affiliate.appointments?.length ?? 0) > 0" class="ml-2 px-2 py-0.5 bg-brand-100 text-brand-700 text-xs rounded-full">{{ affiliate.appointments.length }}</span>
                             </h3>
-                            <Link :href="`/appointments?affiliate_id=${affiliate.id}`" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
-                                Ver todas →
-                            </Link>
+                            <p class="text-sm text-gray-500 mt-0.5">Citas médicas del afiliado</p>
                         </div>
-                        <div class="divide-y divide-gray-100">
-                            <Link 
-                                v-for="apt in affiliate.appointments" 
-                                :key="apt.id" 
-                                :href="`/appointments/${apt.id}`" 
-                                class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
-                            >
-                                <div class="flex items-center gap-3">
-                                    <span class="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-1 rounded">#{{ apt.id }}</span>
-                                    <div>
-                                        <p class="font-medium text-gray-900">{{ apt.type_label }}</p>
-                                        <p class="text-sm text-gray-500">{{ apt.formatted_datetime || 'Sin fecha' }}</p>
-                                    </div>
-                                </div>
-                                <span :class="[apt.status_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">
-                                    {{ apt.status_label }}
-                                </span>
+                        <div class="p-6">
+                            <Link :href="`/appointments?affiliate_id=${affiliate.id}`" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+                                Ver historial de citas del afiliado
                             </Link>
-                            
-                            <div v-if="!affiliate.appointments?.length" class="px-6 py-12 text-center">
-                                <Calendar class="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                                <p class="text-gray-500">No hay citas registradas</p>
-                            </div>
                         </div>
                     </div>
 
-                    <!-- RF-AUT-17: Autorizaciones del afiliado -->
+                    <!-- Autorizaciones (abre listado en otra vista) -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-white flex items-center justify-between">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-white">
                             <h3 class="flex items-center gap-2 font-semibold text-gray-900">
                                 <FileCheck class="h-5 w-5 text-emerald-600" />
                                 Autorizaciones
                                 <span v-if="authorizations.length" class="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full">{{ authorizations.length }}</span>
                             </h3>
-                            <Link :href="`/authorizations?affiliate_id=${affiliate.id}`" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
-                                Ver en listado →
-                            </Link>
+                            <p class="text-sm text-gray-500 mt-0.5">Autorizaciones médicas del afiliado</p>
                         </div>
-                        <div class="divide-y divide-gray-100">
-                            <Link
-                                v-for="auth in authorizations"
-                                :key="auth.id"
-                                :href="`/authorizations/${auth.id}`"
-                                class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors group"
-                            >
-                                <div class="flex items-center gap-3">
-                                    <span class="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-1 rounded">#{{ auth.id }}</span>
-                                    <div>
-                                        <p class="font-medium text-gray-900 group-hover:text-brand-700">{{ auth.service_type || 'Autorización' }}</p>
-                                        <p class="text-sm text-gray-500">
-                                            {{ auth.authorization_number ? `N.º ${auth.authorization_number}` : 'Sin número' }}
-                                            <span v-if="auth.valid_until_formatted"> · Vigente hasta {{ auth.valid_until_formatted }}</span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <span :class="[auth.status_badge_class, 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">
-                                    {{ auth.status_label }}
-                                </span>
+                        <div class="p-6 flex flex-wrap gap-3">
+                            <Link :href="`/authorizations?affiliate_id=${affiliate.id}`" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+                                Ver autorizaciones del afiliado
                             </Link>
-                            <div v-if="!authorizations.length" class="px-6 py-12 text-center">
-                                <FileCheck class="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                                <p class="text-gray-500">No hay autorizaciones registradas</p>
-                                <Link :href="`/authorizations/create?affiliate_id=${affiliate.id}`" class="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
-                                    Crear autorización
-                                </Link>
-                            </div>
+                            <Link :href="`/authorizations/create?affiliate_id=${affiliate.id}`" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                                Crear autorización
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -498,6 +455,22 @@ const isAffiliateActive = computed(() => {
                                 <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Departamento</p>
                                 <p class="font-medium text-gray-900">{{ affiliate.department }}</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Historia clínica (solo roles atencion/admin; backend restringe acceso) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-white">
+                            <h3 class="flex items-center gap-2 font-semibold text-gray-900">
+                                <FileText class="h-5 w-5 text-teal-600" />
+                                Historia clínica
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-0.5">Encuentros y documentos clínicos del afiliado</p>
+                        </div>
+                        <div class="p-6">
+                            <Link :href="`/affiliates/${affiliate.id}/historia-clinica`" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+                                Ver historia clínica del afiliado
+                            </Link>
                         </div>
                     </div>
 

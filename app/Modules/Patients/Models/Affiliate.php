@@ -182,4 +182,9 @@ class Affiliate extends Model
     {
         return $this->hasMany(\App\Modules\Authorizations\Models\Authorization::class);
     }
+
+    public function historiaClinica(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Modules\HistoriaClinica\Models\HistoriaClinica::class, 'affiliate_id');
+    }
 }
