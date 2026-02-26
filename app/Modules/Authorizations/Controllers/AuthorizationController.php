@@ -24,7 +24,11 @@ class AuthorizationController extends Controller
     public function index(Request $request): Response
     {
         $query = Authorization::query()
-            ->with(['affiliate:id,uuid,first_name,second_name,last_name,second_last_name,document_number', 'eps:id,name,code'])
+            ->with([
+                'affiliate:id,uuid,first_name,second_name,last_name,second_last_name,document_number',
+                'eps:id,name,code',
+                'appointmentRequest:id,status,appointment_id',
+            ])
             ->orderByDesc('created_at');
 
         if ($request->filled('status')) {
