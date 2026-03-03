@@ -7,21 +7,20 @@ use App\Modules\SocialSecurity\DTOs\ContributionBreakdown;
 /**
  * Cálculo puro de aportes. No accede a BD; recibe parámetros ya resueltos.
  * Todo se deriva de $params (desde ContributionParametersResolver); sin magic numbers.
+ * Reglas por tipo de cotizante: ContributorTypeRules.
  */
 class ContributionCalculator
 {
-    /** Códigos tipo cotizante que pagan split empleador/empleado (dependientes). */
-    private const DEPENDENT_CODES = ['01', '02'];
-
     /**
      * Calcula el desglose de aportes para un período.
      *
      * @param  float  $ibc  Ingreso Base de Cotización
      * @param  int  $arlRiskClass  Clase de riesgo ARL (1-5; 0 si no aplica)
      * @param  string  $contributorCode  Código tipo cotizante PILA (01, 03, 59, etc.)
-     * @param  bool  $hasParafiscales  Si el empleador paga parafiscales (SENA, ICBF)
+     * @param  bool  $hasParafiscales  Si el empleador paga parafiscales (SENA, ICBF) — solo aplica tipo 01
      * @param  array<string, array<string, float>>  $params  Parámetros vigentes de getParametersForDate()
      * @param  float  $smlmv  Salario mínimo vigente para el período
+     * @param  float  $proportionalFactor  Factor 0-1 para tipo 51 (días/30 o semanas/4); 1.0 = mes completo
      */
     public function calculate(
         float $ibc,
@@ -31,47 +30,67 @@ class ContributionCalculator
         array $params,
         float $smlmv,
         string $periodDate,
+        float $proportionalFactor = 1.0,
     ): ContributionBreakdown {
-        $isDependent = in_array($contributorCode, self::DEPENDENT_CODES, true);
-
-        $healthTotal = $this->amountFromPercent($ibc, $this->param($params, 'HEALTH', $isDependent ? 'TOTAL' : 'INDEPENDENT'));
-        $healthEmployer = $isDependent ? $this->amountFromPercent($ibc, $this->param($params, 'HEALTH', 'EMPLOYER')) : 0.0;
-        $healthEmployee = $isDependent ? $this->amountFromPercent($ibc, $this->param($params, 'HEALTH', 'EMPLOYEE')) : $healthTotal;
-
-        $pensionTotal = $this->amountFromPercent($ibc, $this->param($params, 'PENSION', $isDependent ? 'TOTAL' : 'INDEPENDENT'));
-        $pensionEmployer = $isDependent ? $this->amountFromPercent($ibc, $this->param($params, 'PENSION', 'EMPLOYER')) : 0.0;
-        $pensionEmployee = $isDependent ? $this->amountFromPercent($ibc, $this->param($params, 'PENSION', 'EMPLOYEE')) : $pensionTotal;
-
-        $arlAmount = 0.0;
-        if ($arlRiskClass >= 1 && $arlRiskClass <= 5) {
-            $arlRate = $this->param($params, 'ARL', 'RISK_' . $arlRiskClass);
-            $arlAmount = $this->amountFromPercent($ibc, $arlRate);
+        $rules = ContributorTypeRules::forCode($contributorCode);
+        $isDependent = $rules['is_dependent'];
+        $effectiveIbc = $ibc;
+        if ($rules['is_proportional'] && $proportionalFactor > 0 && $proportionalFactor < 1) {
+            $effectiveIbc = $ibc * $proportionalFactor;
         }
 
-        $ccfAmount = $isDependent ? $this->amountFromPercent($ibc, $this->param($params, 'CCF', 'TOTAL')) : 0.0;
+        $healthTotal = 0.0;
+        $healthEmployer = 0.0;
+        $healthEmployee = 0.0;
+        if ($rules['health_applies']) {
+            $healthTotal = $this->amountFromPercent($effectiveIbc, $this->param($params, 'HEALTH', $isDependent ? 'TOTAL' : 'INDEPENDENT'));
+            $healthEmployer = $isDependent ? $this->amountFromPercent($effectiveIbc, $this->param($params, 'HEALTH', 'EMPLOYER')) : 0.0;
+            $healthEmployee = $isDependent ? $this->amountFromPercent($effectiveIbc, $this->param($params, 'HEALTH', 'EMPLOYEE')) : $healthTotal;
+        }
+
+        $pensionTotal = 0.0;
+        $pensionEmployer = 0.0;
+        $pensionEmployee = 0.0;
+        if ($rules['pension_applies']) {
+            $pensionTotal = $this->amountFromPercent($effectiveIbc, $this->param($params, 'PENSION', $isDependent ? 'TOTAL' : 'INDEPENDENT'));
+            $pensionEmployer = $isDependent ? $this->amountFromPercent($effectiveIbc, $this->param($params, 'PENSION', 'EMPLOYER')) : 0.0;
+            $pensionEmployee = $isDependent ? $this->amountFromPercent($effectiveIbc, $this->param($params, 'PENSION', 'EMPLOYEE')) : $pensionTotal;
+        }
+
+        $arlAmount = 0.0;
+        if ($rules['arl_applies'] && $arlRiskClass >= 1 && $arlRiskClass <= 5) {
+            $arlRate = $this->param($params, 'ARL', 'RISK_' . $arlRiskClass);
+            $arlAmount = $this->amountFromPercent($effectiveIbc, $arlRate);
+        }
+
+        $ccfAmount = 0.0;
+        if ($rules['ccf_applies']) {
+            $ccfAmount = $this->amountFromPercent($effectiveIbc, $this->param($params, 'CCF', 'TOTAL'));
+        }
 
         $senaAmount = 0.0;
         $icbfAmount = 0.0;
-        if ($isDependent && $hasParafiscales) {
-            $senaAmount = $this->amountFromPercent($ibc, $this->param($params, 'SENA', 'TOTAL'));
-            $icbfAmount = $this->amountFromPercent($ibc, $this->param($params, 'ICBF', 'TOTAL'));
+        if ($rules['parafiscales_allowed'] && $hasParafiscales) {
+            $senaAmount = $this->amountFromPercent($effectiveIbc, $this->param($params, 'SENA', 'TOTAL'));
+            $icbfAmount = $this->amountFromPercent($effectiveIbc, $this->param($params, 'ICBF', 'TOTAL'));
         }
         $parafiscalAmount = $senaAmount + $icbfAmount;
 
-        $fspAmount = $this->calculateFsp($ibc, $smlmv, $params);
+        $fspAmount = $rules['pension_applies'] ? $this->calculateFsp($effectiveIbc, $smlmv, $params) : 0.0;
 
         $totalAmount = $healthTotal + $pensionTotal + $arlAmount + $ccfAmount + $parafiscalAmount + $fspAmount;
 
         $parametersUsed = [
-            'health_rate' => $this->param($params, 'HEALTH', $isDependent ? 'TOTAL' : 'INDEPENDENT'),
-            'pension_rate' => $this->param($params, 'PENSION', $isDependent ? 'TOTAL' : 'INDEPENDENT'),
-            'arl_rate' => $arlRiskClass >= 1 && $arlRiskClass <= 5 ? $this->param($params, 'ARL', 'RISK_' . $arlRiskClass) : 0,
-            'ccf_rate' => $isDependent ? $this->param($params, 'CCF', 'TOTAL') : 0,
+            'health_rate' => $rules['health_applies'] ? $this->param($params, 'HEALTH', $isDependent ? 'TOTAL' : 'INDEPENDENT') : 0,
+            'pension_rate' => $rules['pension_applies'] ? $this->param($params, 'PENSION', $isDependent ? 'TOTAL' : 'INDEPENDENT') : 0,
+            'arl_rate' => $arlAmount > 0 ? $this->param($params, 'ARL', 'RISK_' . $arlRiskClass) : 0,
+            'ccf_rate' => $rules['ccf_applies'] ? $this->param($params, 'CCF', 'TOTAL') : 0,
             'smlmv' => $smlmv,
+            'proportional_factor' => $proportionalFactor,
         ];
 
         return new ContributionBreakdown(
-            ibc: $ibc,
+            ibc: $effectiveIbc,
             contributorCode: $contributorCode,
             arlRiskClass: $arlRiskClass,
             healthTotal: $healthTotal,

@@ -18,6 +18,7 @@ class StorePayrollRequest extends FormRequest
             'affiliate_id' => ['required', 'exists:affiliates,id'],
             'year' => ['required', 'integer', 'min:2020', 'max:2100'],
             'month' => ['required', 'integer', 'min:1', 'max:12'],
+            'days_worked' => ['nullable', 'integer', 'min:1', 'max:30'],
         ];
     }
 }

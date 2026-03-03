@@ -24,6 +24,7 @@ class Payroll extends Model
         'parafiscal_amount',
         'fsp_amount',
         'total_amount',
+        'days_worked',
         'sent_at',
         'paid_at',
         'notes',

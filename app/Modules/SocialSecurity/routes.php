@@ -5,7 +5,7 @@ use App\Modules\SocialSecurity\Controllers\PayrollController;
 use App\Modules\SocialSecurity\Controllers\PayerController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_social'])->group(function () {
+Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_social,cartera'])->group(function () {
     Route::get('dashboard-ss', DashboardController::class)->name('dashboard-ss');
     Route::resource('payers', PayerController::class);
     Route::post('payrolls/preview', [PayrollController::class, 'preview'])->name('payrolls.preview');

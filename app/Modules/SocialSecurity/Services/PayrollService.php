@@ -26,8 +26,9 @@ class PayrollService
 
     /**
      * Obtiene o crea la planilla del afiliado para el período. Si no existe, la crea con PENDING.
+     * Para tipo cotizante 51 (independiente flexible) puede indicarse días trabajados en el mes.
      */
-    public function getOrCreatePayroll(Affiliate $affiliate, int $year, int $month): Payroll
+    public function getOrCreatePayroll(Affiliate $affiliate, int $year, int $month, ?int $daysWorked = null): Payroll
     {
         $payroll = Payroll::where('affiliate_id', $affiliate->id)
             ->where('year', $year)
@@ -35,6 +36,10 @@ class PayrollService
             ->first();
 
         if ($payroll !== null) {
+            if ($daysWorked !== null) {
+                $payroll->update(['days_worked' => $daysWorked]);
+            }
+
             return $payroll;
         }
 
@@ -56,13 +61,15 @@ class PayrollService
             'month' => $month,
             'due_date' => $dueDate,
             'status' => PayrollStatus::PENDING->value,
+            'days_worked' => $daysWorked,
         ]);
     }
 
     /**
      * Pre-calcula el desglose de aportes sin guardar (para simulación en UI).
+     * Para tipo 51 puede indicarse days_worked (1-30) para aportes proporcionales.
      */
-    public function preview(SocialSecurityProfile $profile, int $year, int $month): ContributionBreakdown
+    public function preview(SocialSecurityProfile $profile, int $year, int $month, ?int $daysWorked = null): ContributionBreakdown
     {
         $profile->loadMissing('contributorType');
         $periodDate = sprintf('%04d-%02d-01', $year, $month);
@@ -74,6 +81,11 @@ class PayrollService
         $contributorCode = $profile->contributorType?->code ?? '03';
         $hasParafiscales = (bool) $profile->has_parafiscales;
 
+        $proportionalFactor = 1.0;
+        if ($contributorCode === '51' && $daysWorked !== null && $daysWorked > 0) {
+            $proportionalFactor = min(1.0, max(0.0, $daysWorked / 30));
+        }
+
         return $this->calculator->calculate(
             ibc: $ibc,
             arlRiskClass: $arlRiskClass,
@@ -82,6 +94,7 @@ class PayrollService
             params: $params,
             smlmv: $smlmv,
             periodDate: $periodDate,
+            proportionalFactor: $proportionalFactor,
         );
     }
 
@@ -115,6 +128,7 @@ class PayrollService
         $arlRiskClass = $this->normalizeArlRiskClass($profile->arp_risk_class);
         $contributorCode = $profile->contributorType?->code ?? '03';
         $hasParafiscales = (bool) $profile->has_parafiscales;
+        $proportionalFactor = $this->proportionalFactorForSettle($contributorCode, $payroll);
 
         $breakdown = $this->calculator->calculate(
             ibc: $ibc,
@@ -124,6 +138,7 @@ class PayrollService
             params: $params,
             smlmv: $smlmv,
             periodDate: $periodDate,
+            proportionalFactor: $proportionalFactor,
         );
 
         $meta = $breakdown->toArray();
@@ -180,6 +195,16 @@ class PayrollService
         $profile->loadMissing('contributorType');
         if ($profile->contributorType === null) {
             $errors[] = 'Tipo de cotizante no asignado.';
+        } elseif (! ContributorTypeRules::isSupported($profile->contributorType->code ?? '')) {
+            $errors[] = 'Tipo de cotizante ' . ($profile->contributorType->code ?? '') . ' no soportado para liquidación.';
+        } else {
+            $code = $profile->contributorType->code ?? '';
+            if ($code === '51') {
+                $smlmv = $this->paramsResolver->getSmlmv($periodDate);
+                if ($smlmv !== null && $profile->ibc !== null && (float) $profile->ibc >= $smlmv) {
+                    $errors[] = 'Para tipo 51 (independiente flexible) el IBC debe ser menor a 1 SMLMV según Circular 093/2025.';
+                }
+            }
         }
 
         return $errors;
@@ -224,6 +249,24 @@ class PayrollService
         return Payroll::where('due_date', '<', $today)
             ->whereNotIn('status', [PayrollStatus::PAID->value, PayrollStatus::SENT_TO_CLIENT->value])
             ->update(['status' => PayrollStatus::OVERDUE->value]);
+    }
+
+    /**
+     * Factor proporcional para tipo 51 (independiente flexible): días trabajados / 30.
+     * Si no es tipo 51 o days_worked es null, devuelve 1.0 (mes completo).
+     */
+    private function proportionalFactorForSettle(string $contributorCode, Payroll $payroll): float
+    {
+        if ($contributorCode !== '51') {
+            return 1.0;
+        }
+        $days = $payroll->days_worked;
+        if ($days === null || $days <= 0) {
+            return 1.0;
+        }
+        $factor = $days / 30;
+
+        return min(1.0, max(0.0, (float) $factor));
     }
 
     private function normalizeArlRiskClass(mixed $value): int

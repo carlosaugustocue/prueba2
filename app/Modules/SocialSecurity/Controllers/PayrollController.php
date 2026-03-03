@@ -3,6 +3,7 @@
 namespace App\Modules\SocialSecurity\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Patients\Enums\PatientType;
 use App\Modules\Patients\Models\Affiliate;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use App\Modules\SocialSecurity\Models\Payroll;
@@ -82,7 +83,8 @@ class PayrollController extends Controller
         $currentMonth = (int) now()->format('n');
 
         $affiliates = Affiliate::whereHas('socialSecurityProfile')
-            ->with('socialSecurityProfile.payer:id,name,document_number')
+            ->where('patient_type', PatientType::COTIZANTE)
+            ->with(['socialSecurityProfile.payer:id,name,document_number', 'socialSecurityProfile.contributorType:id,code,name'])
             ->orderBy('first_name')
             ->limit(500)
             ->get()
@@ -97,6 +99,7 @@ class PayrollController extends Controller
                 'document_number' => $a->document_number,
                 'payer_id' => $a->socialSecurityProfile?->payer_id,
                 'payer_name' => $a->socialSecurityProfile?->payer?->name,
+                'contributor_type_code' => $a->socialSecurityProfile?->contributorType?->code,
             ]);
 
         return Inertia::render('Payrolls/Create', [
@@ -114,7 +117,8 @@ class PayrollController extends Controller
         $year = $request->integer('year');
         $month = $request->integer('month');
 
-        $payroll = $this->payrollService->getOrCreatePayroll($affiliate, $year, $month);
+        $daysWorked = $request->filled('days_worked') ? $request->integer('days_worked') : null;
+        $payroll = $this->payrollService->getOrCreatePayroll($affiliate, $year, $month, $daysWorked);
 
         return redirect()->route('payrolls.show', $payroll)
             ->with('success', 'Planilla creada. Puede liquidarla desde el detalle.');
@@ -144,6 +148,7 @@ class PayrollController extends Controller
             'affiliate_id' => ['required', 'exists:affiliates,id'],
             'year' => ['required', 'integer', 'min:2020', 'max:2100'],
             'month' => ['required', 'integer', 'min:1', 'max:12'],
+            'days_worked' => ['nullable', 'integer', 'min:1', 'max:30'],
         ]);
 
         $profile = SocialSecurityProfile::with('contributorType')
@@ -159,7 +164,8 @@ class PayrollController extends Controller
             throw ValidationException::withMessages(['affiliate_id' => implode(' ', $errors)]);
         }
 
-        $breakdown = $this->payrollService->preview($profile, $request->integer('year'), $request->integer('month'));
+        $daysWorked = $request->filled('days_worked') ? $request->integer('days_worked') : null;
+        $breakdown = $this->payrollService->preview($profile, $request->integer('year'), $request->integer('month'), $daysWorked);
 
         if ($request->wantsJson()) {
             return response()->json($breakdown->toArray());
