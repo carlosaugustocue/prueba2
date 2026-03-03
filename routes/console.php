@@ -3,10 +3,14 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Carbon;
 use App\Modules\Appointments\Models\Reminder;
 use App\Modules\Appointments\Jobs\SendReminderJob;
 use App\Modules\SocialSecurity\Services\PayrollBatchService;
 use App\Modules\SocialSecurity\Services\PayrollService;
+use App\Modules\SocialSecurity\Services\DueDateCalculator;
+use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Patients\Models\AffiliateTask;
 
 Artisan::command('serve:network-info', function () {
     $ips = [];
@@ -123,3 +127,78 @@ Artisan::command('payroll:settle-monthly {--year= : Año (default: actual)} {--m
 })->purpose('Liquida todas las planillas PENDING del año/mes indicado');
 
 Schedule::command('payroll:mark-overdue')->daily();
+
+// Alertas PILA: 3 días antes del vencimiento (Seguridad Social)
+Schedule::command('ss:generate-pila-alerts')->dailyAt('06:00');
+
+// Seguridad Social: generar tareas de alerta por vencimiento PILA (3 días antes)
+Artisan::command('ss:generate-pila-alerts', function (DueDateCalculator $calculator) {
+    $this->info('Generando alertas de vencimiento PILA (3 días antes)...');
+
+    $today = Carbon::today();
+    $created = 0;
+
+    $affiliates = Affiliate::query()
+        ->with('socialSecurityProfile')
+        ->where('status', 'ACTIVO')
+        ->whereHas('socialSecurityProfile', fn ($q) => $q->whereNotNull('payment_day'))
+        ->get();
+
+    foreach ($affiliates as $affiliate) {
+        $profile = $affiliate->socialSecurityProfile;
+        if (! $profile) {
+            continue;
+        }
+
+        $paymentDay = $profile->payment_day;
+        if ($paymentDay === null && $affiliate->document_number) {
+            $paymentDay = $calculator->paymentDayFromDocument($affiliate->document_number);
+        }
+        if ($paymentDay === null) {
+            continue;
+        }
+
+        $now = Carbon::today();
+        // Período base: mes actual; si el vencimiento ya pasó, usamos el siguiente mes
+        $periodYear = $now->year;
+        $periodMonth = $now->month;
+        $nextDue = $calculator->dueDateForPeriodByPaymentDay($periodYear, $periodMonth, (int) $paymentDay);
+        if ($nextDue->isPast()) {
+            $next = $now->copy()->addMonth();
+            $periodYear = $next->year;
+            $periodMonth = $next->month;
+            $nextDue = $calculator->dueDateForPeriodByPaymentDay($periodYear, $periodMonth, (int) $paymentDay);
+        }
+
+        $diff = $now->diffInDays($nextDue, false);
+        if ($diff < 0 || $diff > 3) {
+            continue;
+        }
+
+        $periodLabel = sprintf('%02d/%d', $periodMonth, $periodYear);
+        $dueLabel = $nextDue->format('d/m/Y');
+
+        $alreadyExists = AffiliateTask::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('area', AffiliateTask::AREA_SEGURIDAD_SOCIAL)
+            ->where('is_completed', false)
+            ->whereDate('created_at', '>=', $today->copy()->subDays(10))
+            ->where('description', 'like', "%PILA período {$periodLabel}%")
+            ->exists();
+
+        if ($alreadyExists) {
+            continue;
+        }
+
+        AffiliateTask::create([
+            'affiliate_id' => $affiliate->id,
+            'area' => AffiliateTask::AREA_SEGURIDAD_SOCIAL,
+            'description' => "Vencimiento PILA período {$periodLabel} el {$dueLabel}. Revisar y garantizar pago a tiempo.",
+            'is_completed' => false,
+        ]);
+
+        $created++;
+    }
+
+    $this->info("Alertas generadas: {$created}");
+})->purpose('Generar tareas de alerta para vencimientos PILA (3 días antes) para Seguridad Social');
