@@ -556,8 +556,8 @@ const submit = () => form.post('/affiliates');
                             <label class="block text-sm font-medium text-gray-700 mb-2">Periodicidad de pago</label>
                             <select v-model="form.payment_periodicity" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                 <option value="">—</option>
-                                <option value="CURRENT">Al día (current)</option>
-                                <option value="OVERDUE">En mora (overdue)</option>
+                                <option value="CURRENT">Al día</option>
+                                <option value="OVERDUE">Vencido / En mora</option>
                             </select>
                         </div>
                         <template v-if="showParafiscalesCheckbox">

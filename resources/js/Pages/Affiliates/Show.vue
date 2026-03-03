@@ -16,6 +16,7 @@ const props = defineProps({
     pila_next_due_date: String,
     pila_next_due_label: String,
     pila_next_due_is_soon: Boolean,
+    payments_up_to_date: { type: Boolean, default: null },
     noveltyTypes: { type: Array, default: () => [] },
     operatorCredentialProviderLabels: { type: Object, default: () => ({}) },
 });
@@ -357,6 +358,24 @@ const isAffiliateActive = computed(() => {
                                     <div class="flex flex-col py-2">
                                         <span class="text-xs text-gray-500">Periodicidad</span>
                                         <span class="font-medium text-gray-900 mt-0.5">{{ affiliate.payment_periodicity === 'CURRENT' ? 'Al día' : affiliate.payment_periodicity === 'OVERDUE' ? 'En mora' : affiliate.payment_periodicity || '—' }}</span>
+                                    </div>
+                                    <div class="flex flex-col py-2">
+                                        <span class="text-xs text-gray-500">Pagos al día</span>
+                                        <span class="mt-0.5 font-medium text-gray-900">
+                                            <template v-if="payments_up_to_date === null">
+                                                —
+                                            </template>
+                                            <template v-else-if="payments_up_to_date">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                                    Sí
+                                                </span>
+                                            </template>
+                                            <template v-else>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">
+                                                    No
+                                                </span>
+                                            </template>
+                                        </span>
                                     </div>
                                     <div class="flex flex-col py-2">
                                         <span class="text-xs text-gray-500">Parafiscales</span>

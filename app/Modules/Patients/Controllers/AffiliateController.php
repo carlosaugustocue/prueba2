@@ -14,6 +14,8 @@ use App\Modules\SocialSecurity\Models\AccountingRegistry;
 use App\Modules\SocialSecurity\Models\PaymentOperator;
 use App\Modules\SocialSecurity\Models\Payer;
 use App\Modules\SocialSecurity\Models\NoveltyType;
+use App\Modules\SocialSecurity\Models\Payroll;
+use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use App\Modules\SocialSecurity\Controllers\OperatorCredentialController;
 use App\Modules\SocialSecurity\Services\DueDateCalculator;
 use App\Modules\Patients\Services\AffiliateService;
@@ -133,6 +135,7 @@ class AffiliateController extends Controller
         $pilaNextDueDate = null;
         $pilaNextDueLabel = null;
         $pilaNextDueIsSoon = false;
+        $paymentsUpToDate = null;
         $calculator = app(DueDateCalculator::class);
         $profile = $affiliate->socialSecurityProfile;
         $paymentDay = $profile?->payment_day;
@@ -152,11 +155,18 @@ class AffiliateController extends Controller
             $pilaNextDueIsSoon = $diff >= 0 && $diff <= 3;
         }
 
+        // Pagos al día: no tiene planillas en mora (OVERDUE)
+        $hasOverduePayrolls = Payroll::where('affiliate_id', $affiliate->id)
+            ->where('status', PayrollStatus::OVERDUE->value)
+            ->exists();
+        $paymentsUpToDate = ! $hasOverduePayrolls;
+
         return Inertia::render('Affiliates/Show', [
             'affiliate' => new AffiliateResource($affiliate),
             'pila_next_due_date' => $pilaNextDueDate,
             'pila_next_due_label' => $pilaNextDueLabel,
             'pila_next_due_is_soon' => $pilaNextDueIsSoon,
+            'payments_up_to_date' => $paymentsUpToDate,
             'noveltyTypes' => NoveltyType::active()->orderBy('name')->get(['id', 'name', 'code']),
             'operatorCredentialProviderLabels' => OperatorCredentialController::PROVIDER_LABELS,
         ]);
