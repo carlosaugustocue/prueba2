@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ChevronLeft, Calculator, User, FileText } from 'lucide-vue-next';
@@ -21,6 +21,8 @@ const year = ref(props.defaultYear || new Date().getFullYear());
 const month = ref(props.defaultMonth || new Date().getMonth() + 1);
 const payerFilter = ref('');
 const loading = ref(false);
+/** Días trabajados en el mes (solo tipo 51 - independiente flexible). 1-30; vacío = mes completo. */
+const daysWorked = ref('');
 
 const filteredAffiliates = computed(() => {
     let list = props.affiliates || [];
@@ -35,17 +37,24 @@ const selectedAffiliate = computed(() => {
     return (props.affiliates || []).find((a) => String(a.id) === String(affiliateId.value));
 });
 
+/** True si el afiliado seleccionado es tipo 51 (independiente flexible) y debe mostrar días trabajados. */
+const isType51 = computed(() => selectedAffiliate.value?.contributor_type_code === '51');
+
+watch(affiliateId, () => { if (!isType51.value) daysWorked.value = ''; });
+
 const runPreview = () => {
     if (!affiliateId.value || !year.value || !month.value) {
         alert('Seleccione afiliado, año y mes.');
         return;
     }
     loading.value = true;
-    router.post('/payrolls/preview', {
+    const payload = {
         affiliate_id: affiliateId.value,
         year: year.value,
         month: month.value,
-    }, {
+    };
+    if (isType51.value && daysWorked.value) payload.days_worked = Math.min(30, Math.max(1, Number(daysWorked.value)));
+    router.post('/payrolls/preview', payload, {
         preserveScroll: true,
         onFinish: () => { loading.value = false; },
     });
@@ -57,11 +66,13 @@ const createPayroll = () => {
         return;
     }
     loading.value = true;
-    router.post('/payrolls', {
+    const payload = {
         affiliate_id: affiliateId.value,
         year: year.value,
         month: month.value,
-    }, {
+    };
+    if (isType51.value && daysWorked.value) payload.days_worked = Math.min(30, Math.max(1, Number(daysWorked.value)));
+    router.post('/payrolls', payload, {
         preserveScroll: true,
         onFinish: () => { loading.value = false; },
     });
@@ -111,6 +122,18 @@ const formatMoney = (n) => {
                             </option>
                         </select>
                         <p v-if="!filteredAffiliates.length" class="mt-1 text-xs text-amber-600">No hay afiliados con perfil SS{{ payerFilter ? ' para este pagador' : '' }}.</p>
+                    </div>
+                    <div v-if="isType51" class="rounded-lg bg-amber-50 border border-amber-200 p-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Días trabajados en el mes (tipo 51)</label>
+                        <input
+                            v-model="daysWorked"
+                            type="number"
+                            min="1"
+                            max="30"
+                            placeholder="Ej: 15"
+                            class="block w-full max-w-xs rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                        />
+                        <p class="mt-1 text-xs text-gray-600">Indique 1 a 30 para aportes proporcionales. Si deja vacío se asume mes completo.</p>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>

@@ -115,7 +115,7 @@ const formatMinToHours = (min) => {
                     <h2 class="font-semibold text-gray-900">Resumen por operador</h2>
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto min-w-0">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-white">
                             <tr>

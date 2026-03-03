@@ -151,7 +151,8 @@ const list = computed(() => props.authorizations?.data || []);
 
             <!-- Tabla -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
+                <div class="overflow-x-auto min-w-0">
+                    <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
@@ -210,6 +211,7 @@ const list = computed(() => props.authorizations?.data || []);
                         </tr>
                     </tbody>
                 </table>
+                </div>
                 <div v-if="authorizations?.links" class="border-t border-gray-200 px-4 py-3">
                     <Pagination :links="authorizations.links" />
                 </div>

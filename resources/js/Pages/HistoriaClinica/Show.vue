@@ -117,15 +117,17 @@ const tipoDocumentoLabel = (value) => props.tiposDocumento?.find(t => t.value ==
                                 v-for="e in encuentros"
                                 :key="e.id"
                                 :href="`/affiliates/${affiliateId}/historia-clinica/encuentros/${e.id}`"
-                                class="flex items-start justify-between gap-3 px-6 py-4 hover:bg-gray-50 transition-colors group"
+                                class="flex items-center justify-between gap-4 px-6 py-4 hover:bg-gray-50 transition-colors group"
                             >
-                                <div>
-                                    <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700">{{ tipoAtencionLabel(e.tipo_atencion) }}</span>
-                                    <span class="text-sm text-gray-500 ml-2">{{ e.fecha_atencion_formatted }}</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700">{{ tipoAtencionLabel(e.tipo_atencion) }}</span>
+                                        <span class="text-sm text-gray-500">{{ e.fecha_atencion_formatted }}</span>
+                                    </div>
                                     <p class="mt-2 font-medium text-gray-900 group-hover:text-brand-700">{{ e.motivo_consulta }}</p>
                                     <p v-if="e.enfermedad_actual" class="mt-1 text-sm text-gray-600">{{ e.enfermedad_actual }}</p>
                                 </div>
-                                <span class="text-sm text-brand-600 font-medium">Ver detalle</span>
+                                <span class="flex-shrink-0 text-sm text-brand-600 font-medium whitespace-nowrap">Ver detalle</span>
                             </Link>
                             <div v-if="!encuentros.length" class="px-6 py-12 text-center">
                                 <Stethoscope class="h-12 w-12 mx-auto text-gray-300 mb-3" />

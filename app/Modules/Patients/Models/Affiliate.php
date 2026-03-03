@@ -187,4 +187,9 @@ class Affiliate extends Model
     {
         return $this->hasOne(\App\Modules\HistoriaClinica\Models\HistoriaClinica::class, 'affiliate_id');
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Patients\Models\AffiliatePayment::class);
+    }
 }
