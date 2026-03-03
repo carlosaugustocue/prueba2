@@ -11,9 +11,9 @@ class ClientTypeSeeder extends Seeder
     {
         $rows = [
             ['name' => 'SERVICONLI', 'code' => 'SERVICONLI'],
-            ['name' => 'INDEPENDENT', 'code' => 'INDEPENDENT'],
-            ['name' => 'DEPENDENT', 'code' => 'DEPENDENT'],
-            ['name' => 'FOREIGN_RESIDENT', 'code' => 'FOREIGN_RESIDENT'],
+            ['name' => 'INDEPENDIENTE', 'code' => 'INDEPENDENT'],
+            ['name' => 'DEPENDIENTE', 'code' => 'DEPENDENT'],
+            ['name' => 'COLOMBIANO RESIDENTE EN EL EXTERIOR', 'code' => 'FOREIGN_RESIDENT'],
         ];
 
         foreach ($rows as $row) {

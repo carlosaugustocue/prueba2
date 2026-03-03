@@ -49,6 +49,7 @@ class CreateAffiliateRequest extends FormRequest
             'payment_operator_id' => ['nullable', 'exists:payment_operators,id'],
             'accounting_registry_id' => ['nullable', 'exists:accounting_registries,id'],
             'payer_id' => ['nullable', 'exists:payers,id'],
+            'contributor_type_id' => ['nullable', 'exists:contributor_types,id'],
             'ibc' => ['nullable', 'numeric', 'min:'.$ibcMin, 'max:'.$ibcMax],
             'payment_day' => ['nullable', 'integer', 'min:'.$paymentBounds['min'], 'max:'.$paymentBounds['max']],
             'payment_periodicity' => ['nullable', 'string', 'in:CURRENT,OVERDUE'],

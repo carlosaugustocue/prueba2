@@ -89,6 +89,16 @@ const form = useForm({
     notes: affiliateData.value.notes || '',
 });
 
+// Tipo de cotizante: código seleccionado para condicionar parafiscales y mensajes
+const selectedContributorCode = computed(() => {
+    const id = form.contributor_type_id;
+    if (!id || !props.contributorTypes?.length) return null;
+    const t = props.contributorTypes.find((x) => String(x.id) === String(id));
+    return t?.code ?? null;
+});
+const showParafiscalesCheckbox = computed(() => selectedContributorCode.value === '01');
+const showParafiscalesExemptMessage = computed(() => selectedContributorCode.value === '02');
+
 // Búsqueda de cotizantes
 const holderSearch = ref('');
 const holderResults = ref([]);
@@ -334,7 +344,7 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                 </div>
 
                 <!-- Información Personal -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <FileText class="h-5 w-5 text-brand-600" />
@@ -395,7 +405,7 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                 </div>
 
                 <!-- Contacto y EPS -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <Phone class="h-5 w-5 text-brand-600" />
@@ -461,7 +471,7 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                 </div>
 
                 <!-- Seguridad social (AFP / ARP) - solo para cotizantes -->
-                <div v-if="form.patient_type === 'cotizante'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div v-if="form.patient_type === 'cotizante'" class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <Building2 class="h-5 w-5 text-brand-600" />
@@ -557,9 +567,15 @@ const submit = () => form.put(`/affiliates/${affiliateData.value.id}`);
                                 <option value="OVERDUE">En mora (overdue)</option>
                             </select>
                         </div>
-                        <div class="flex items-center">
-                            <input id="has_parafiscales_edit" v-model="form.has_parafiscales" type="checkbox" class="rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
-                            <label for="has_parafiscales_edit" class="ml-2 text-sm text-gray-700">Tiene parafiscales</label>
+                        <template v-if="showParafiscalesCheckbox">
+                            <div class="flex items-center">
+                                <input id="has_parafiscales_edit" v-model="form.has_parafiscales" type="checkbox" class="rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+                                <label for="has_parafiscales_edit" class="ml-2 text-sm text-gray-700">La empresa paga parafiscales (SENA, ICBF)</label>
+                            </div>
+                        </template>
+                        <div v-else-if="showParafiscalesExemptMessage" class="flex items-center text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                            <Info class="h-4 w-4 shrink-0 mr-2 text-amber-600" />
+                            <span>Servicio doméstico: parafiscales exentos (no aplican SENA ni ICBF).</span>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Observaciones (perfil SS)</label>

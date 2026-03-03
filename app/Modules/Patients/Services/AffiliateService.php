@@ -109,6 +109,9 @@ class AffiliateService
             ));
         }
 
+        // Crear tareas internas para áreas que deben actuar sobre el afiliado nuevo (cartera, seguridad social, etc.).
+        app(\App\Modules\Patients\Services\AffiliateTaskService::class)->createForNewAffiliate($affiliate);
+
         return $affiliate;
     }
 
