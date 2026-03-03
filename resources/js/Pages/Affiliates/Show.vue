@@ -15,6 +15,7 @@ const props = defineProps({
     affiliate: Object,
     pila_next_due_date: String,
     pila_next_due_label: String,
+    pila_next_due_is_soon: Boolean,
     noveltyTypes: { type: Array, default: () => [] },
     operatorCredentialProviderLabels: { type: Object, default: () => ({}) },
 });
@@ -67,6 +68,7 @@ const novelties = computed(() => affiliate.value.novelties || []);
 const authorizations = computed(() => affiliate.value.authorizations || []);
 const operatorCredentials = computed(() => affiliate.value.operator_credentials || []);
 const supportDocuments = computed(() => affiliate.value.support_documents || []);
+const payments = computed(() => affiliate.value.payments || []);
 
 const providerLabels = computed(() => props.operatorCredentialProviderLabels || {});
 
@@ -368,7 +370,18 @@ const isAffiliateActive = computed(() => {
                                             <CalendarClock class="h-3.5 w-3.5" />
                                             Próximo vencimiento PILA
                                         </span>
-                                        <span class="font-semibold text-gray-900 mt-0.5">{{ pila_next_due_label }}</span>
+                                        <span
+                                            class="mt-0.5 inline-flex items-center gap-2 text-sm font-semibold"
+                                            :class="pila_next_due_is_soon ? 'text-red-700' : 'text-gray-900'"
+                                        >
+                                            {{ pila_next_due_label }}
+                                            <span
+                                                v-if="pila_next_due_is_soon"
+                                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200"
+                                            >
+                                                Próximo a vencer
+                                            </span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -607,6 +620,30 @@ const isAffiliateActive = computed(() => {
                             <div v-if="!operatorCredentials.length" class="px-6 py-8 text-center text-sm text-gray-500">
                                 No hay credenciales. Usuario y clave se guardan cifrados.
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Pagos y recibos: enlace a página dedicada -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-white flex items-center justify-between">
+                            <h3 class="flex items-center gap-2 font-semibold text-gray-900">
+                                <FileText class="h-5 w-5 text-emerald-600" />
+                                Pagos y recibos
+                                <span v-if="payments.length" class="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full">{{ payments.length }}</span>
+                            </h3>
+                            <Link
+                                :href="`/affiliates/${affiliate.id}/payments`"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-center text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+                            >
+                                <ArrowRight class="h-4 w-4" />
+                                Registrar pago
+                            </Link>
+                        </div>
+                        <div class="px-6 py-3">
+                            <p class="text-sm text-gray-500">
+                                {{ payments.length ? `${payments.length} pago(s) registrado(s).` : 'Sin pagos registrados.' }}
+                                Ir a la página de registro de pagos para ver el detalle y agregar nuevos.
+                            </p>
                         </div>
                     </div>
 

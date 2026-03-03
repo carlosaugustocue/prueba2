@@ -170,6 +170,22 @@ class AffiliateResource extends JsonResource
                     'created_at' => $d->created_at?->format('Y-m-d H:i'),
                 ])
             ),
+            'payments' => $this->whenLoaded('payments', fn () =>
+                $this->payments->sortByDesc('payment_date')->values()->map(fn ($p) => [
+                    'id' => $p->id,
+                    'payment_date' => $p->payment_date?->format('Y-m-d'),
+                    'payment_date_formatted' => $p->payment_date?->format('d/m/Y'),
+                    'amount' => (float) $p->amount,
+                    'external_number' => $p->external_number,
+                    'description' => $p->description,
+                    'accounting_registry' => $p->accountingRegistry ? [
+                        'id' => $p->accountingRegistry->id,
+                        'name' => $p->accountingRegistry->name,
+                        'code' => $p->accountingRegistry->code,
+                    ] : null,
+                ])
+            ),
+            'current_user_role' => optional(auth()->user()?->role)->name,
         ];
     }
 }

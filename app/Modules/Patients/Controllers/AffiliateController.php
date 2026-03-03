@@ -29,6 +29,7 @@ use App\Modules\Patients\Enums\RelationshipType;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -126,10 +127,12 @@ class AffiliateController extends Controller
             'novelties.noveltyType',
             'operatorCredentials',
             'supportDocuments',
+            'payments.accountingRegistry',
         ]);
 
         $pilaNextDueDate = null;
         $pilaNextDueLabel = null;
+        $pilaNextDueIsSoon = false;
         $calculator = app(DueDateCalculator::class);
         $profile = $affiliate->socialSecurityProfile;
         $paymentDay = $profile?->payment_day;
@@ -137,7 +140,7 @@ class AffiliateController extends Controller
             $paymentDay = $calculator->paymentDayFromDocument($affiliate->document_number);
         }
         if ($paymentDay !== null) {
-            $now = now();
+            $now = Carbon::today();
             $nextDue = $calculator->dueDateForPeriodByPaymentDay($now->year, $now->month, (int) $paymentDay);
             if ($nextDue->isPast()) {
                 $nextMonth = $now->copy()->addMonth();
@@ -145,12 +148,15 @@ class AffiliateController extends Controller
             }
             $pilaNextDueDate = $nextDue->format('Y-m-d');
             $pilaNextDueLabel = $nextDue->format('d/m/Y');
+            $diff = $now->diffInDays($nextDue, false);
+            $pilaNextDueIsSoon = $diff >= 0 && $diff <= 3;
         }
 
         return Inertia::render('Affiliates/Show', [
             'affiliate' => new AffiliateResource($affiliate),
             'pila_next_due_date' => $pilaNextDueDate,
             'pila_next_due_label' => $pilaNextDueLabel,
+            'pila_next_due_is_soon' => $pilaNextDueIsSoon,
             'noveltyTypes' => NoveltyType::active()->orderBy('name')->get(['id', 'name', 'code']),
             'operatorCredentialProviderLabels' => OperatorCredentialController::PROVIDER_LABELS,
         ]);
