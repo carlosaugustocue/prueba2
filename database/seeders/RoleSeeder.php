@@ -40,6 +40,12 @@ class RoleSeeder extends Seeder
                 'description' => 'Solo módulo de afiliados y seguridad social (sin citas)',
                 'permissions' => ['affiliates.*'],
             ],
+            [
+                'name' => 'cartera',
+                'display_name' => 'Cartera',
+                'description' => 'Gestión de cartera y control de planillas (afiliados, pagadores y planillas, sin módulo de citas)',
+                'permissions' => ['affiliates.*', 'payers.*', 'payrolls.*', 'affiliate_tasks.*'],
+            ],
         ];
 
         foreach ($roles as $role) {

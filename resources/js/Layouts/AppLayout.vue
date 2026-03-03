@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings, Building2, FileCheck, FileText, ChevronDown, ChevronRight, Shield, Briefcase, Sliders } from 'lucide-vue-next';
+import axios from 'axios';
+import { LayoutDashboard, CalendarDays, Users, LogOut, Menu, CheckCircle, XCircle, ClipboardList, BarChart3, MessageSquareText, Send, X, UserCog, Settings, Building2, FileCheck, FileText, ChevronDown, ChevronRight, Shield, Briefcase, Sliders, AlertTriangle } from 'lucide-vue-next';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -102,6 +103,49 @@ const isActive = (href) => currentPath.value.startsWith(href) || (href !== '/das
 
 /** Estilo del título de sección: un solo color para todos (evitar confusión). */
 const sectionHeaderClass = () => 'border-gray-200/80 bg-gray-100 text-gray-700 hover:bg-gray-200/90 border-gray-300';
+
+// --- Tareas internas por afiliado (cartera, seguridad social) ---
+const affiliateTasks = ref([]);
+const affiliateTasksLoading = ref(false);
+const affiliateTasksError = ref('');
+const showAffiliateTasksPanel = ref(false);
+
+const shouldShowAffiliateTasksBanner = computed(() => affiliateTasks.value.length > 0);
+
+const loadAffiliateTasks = async () => {
+    affiliateTasksLoading.value = true;
+    affiliateTasksError.value = '';
+    try {
+        const response = await axios.get('/api/affiliate-tasks/my-pending');
+        affiliateTasks.value = Array.isArray(response.data) ? response.data : [];
+    } catch (e) {
+        console.error(e);
+        affiliateTasksError.value = 'No se pudieron cargar las tareas pendientes.';
+    } finally {
+        affiliateTasksLoading.value = false;
+    }
+};
+
+const pendingTasksCount = computed(() => affiliateTasks.value.length);
+
+const completeAffiliateTask = async (taskId) => {
+    try {
+        await axios.post(`/api/affiliate-tasks/${taskId}/complete`);
+        affiliateTasks.value = affiliateTasks.value.filter((t) => t.id !== taskId);
+        if (affiliateTasks.value.length === 0) {
+            showAffiliateTasksPanel.value = false;
+        }
+    } catch (e) {
+        console.error(e);
+        affiliateTasksError.value = 'No se pudo marcar la tarea como completada.';
+    }
+};
+
+onMounted(() => {
+    if (user.value) {
+        loadAffiliateTasks();
+    }
+});
 </script>
 
 <template>
@@ -285,6 +329,71 @@ const sectionHeaderClass = () => 'border-gray-200/80 bg-gray-100 text-gray-700 h
                 >
                     Serviconli
                 </Link>
+            </div>
+
+            <!-- Banner de tareas pendientes por afiliado (cartera / seguridad social) -->
+            <div v-if="shouldShowAffiliateTasksBanner" class="px-4 sm:px-6 lg:px-8 mt-2">
+                <div class="rounded-lg bg-red-50 border border-red-300 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <AlertTriangle class="h-6 w-6 text-red-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                            <p class="text-base font-bold text-red-900">
+                                Hay {{ pendingTasksCount }} afiliado{{ pendingTasksCount === 1 ? '' : 's' }} con tareas pendientes.
+                            </p>
+                            <p class="text-xs text-red-800">
+                                Recuerde atender las tareas de cartera y seguridad social para cada afiliado nuevo.
+                            </p>
+                            <p v-if="affiliateTasksError" class="mt-1 text-xs text-red-700">
+                                {{ affiliateTasksError }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow"
+                            @click="showAffiliateTasksPanel = !showAffiliateTasksPanel"
+                        >
+                            <ClipboardList class="h-4 w-4" />
+                            {{ showAffiliateTasksPanel ? 'Ocultar pendientes' : 'Ver pendientes' }}
+                        </button>
+                        <button
+                            v-if="affiliateTasksLoading"
+                            type="button"
+                            class="text-xs text-red-800"
+                            disabled
+                        >
+                            Cargando...
+                        </button>
+                    </div>
+                </div>
+                <div v-if="showAffiliateTasksPanel" class="mt-3 rounded-lg bg-white border border-amber-100 p-3 shadow-sm">
+                    <ul class="divide-y divide-gray-100">
+                        <li v-for="task in affiliateTasks" :key="task.id" class="py-2 flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">
+                                    {{ task.affiliate_name || 'Afiliado #' + task.affiliate_id }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    {{ task.affiliate_document ? `Doc: ${task.affiliate_document} · ` : '' }}Área: {{ task.area === 'cartera' ? 'Cartera' : (task.area === 'seguridad_social' ? 'Seguridad Social' : task.area) }}
+                                </p>
+                                <p class="mt-0.5 text-xs text-gray-700">
+                                    {{ task.description }}
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 transition-colors"
+                                    @click="completeAffiliateTask(task.id)"
+                                >
+                                    <CheckCircle class="h-4 w-4" />
+                                    Hecho
+                                </button>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
             <!-- Flash messages -->
