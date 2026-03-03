@@ -50,6 +50,11 @@ const requiresDetails = computed(() => {
 const submit = () => {
     form.put(`/appointments/${appointmentData.value.id}`);
 };
+
+const sanitizePhone = (value) => {
+    if (!value) return '';
+    return String(value).replace(/[^0-9+\-()\s]/g, '').slice(0, 30);
+};
 </script>
 
 <template>
@@ -194,7 +199,17 @@ const submit = () => {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono del centro</label>
-                            <input v-model="form.location_phone" type="text" placeholder="Ej: 601 1234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                            <input
+                                v-model="form.location_phone"
+                                type="tel"
+                                inputmode="tel"
+                                autocomplete="tel"
+                                maxlength="30"
+                                pattern="^\+?[0-9][0-9\-\s()]{6,29}$"
+                                placeholder="Ej: 601 1234567"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                @input="form.location_phone = sanitizePhone(form.location_phone)"
+                            />
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Número de autorización</label>

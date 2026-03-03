@@ -128,6 +128,11 @@ const nextMonth = () => {
     currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() + 1, 1);
 };
 
+const sanitizePhone = (value) => {
+    if (!value) return '';
+    return String(value).replace(/[^0-9+\-()\s]/g, '').slice(0, 30);
+};
+
 const selectDate = (day) => {
     if (day.isPast || !day.isCurrentMonth || day.isAfterValidUntil) return;
     const d = day.date;
@@ -746,9 +751,14 @@ v-for="affiliate in affiliateResults"
                                 </label>
                                 <input 
                                     v-model="form.location_phone" 
-                                    type="text" 
+                                    type="tel"
+                                    inputmode="tel"
+                                    autocomplete="tel"
+                                    maxlength="30"
+                                    pattern="^\+?[0-9][0-9\-\s()]{6,29}$"
                                     placeholder="Ej: 601 1234567"
                                     class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                    @input="form.location_phone = sanitizePhone(form.location_phone)"
                                 />
                             </div>
                             <div>
