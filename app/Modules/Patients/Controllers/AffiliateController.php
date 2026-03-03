@@ -43,12 +43,12 @@ class AffiliateController extends Controller
     {
         $affiliates = $this->affiliateService->search(
             $request->only(['search', 'eps_id', 'patient_type']),
-            $request->integer('per_page', 15)
+            $request->integer('per_page', 25)
         );
 
         return Inertia::render('Affiliates/Index', [
             'affiliates' => AffiliateResource::collection($affiliates),
-            'filters' => $request->only(['search', 'eps_id', 'patient_type']),
+            'filters' => $request->only(['search', 'eps_id', 'patient_type', 'per_page']),
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'documentTypes' => DocumentType::toArray(),
             'patientTypes' => PatientType::toArray(),

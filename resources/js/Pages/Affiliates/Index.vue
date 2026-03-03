@@ -12,15 +12,23 @@ const props = defineProps({
 });
 
 const search = ref(props.filters?.search || '');
+const perPage = ref(props.filters?.per_page ? Number(props.filters.per_page) : 25);
 
 const applyFilters = () => {
-    router.get('/affiliates', { search: search.value || undefined }, { preserveState: true, replace: true });
+    router.get('/affiliates', {
+        search: search.value || undefined,
+        per_page: perPage.value !== 25 ? perPage.value : undefined,
+    }, { preserveState: true, replace: true });
 };
 
 let searchTimeout;
 watch(search, () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(applyFilters, 500);
+});
+
+watch(perPage, () => {
+    applyFilters();
 });
 </script>
 
@@ -106,11 +114,21 @@ watch(search, () => {
                 </div>
             </div>
 
-            <div v-if="affiliates?.links?.length" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <p v-if="affiliates?.meta" class="text-sm text-gray-500">
-                    Mostrando {{ affiliates.meta.from ?? 0 }} a {{ affiliates.meta.to ?? 0 }} de {{ affiliates.meta.total ?? 0 }} resultados
-                </p>
-                <Pagination :links="affiliates?.links" />
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <p v-if="affiliates?.meta" class="text-sm text-gray-500">
+                        Mostrando <span class="font-medium text-gray-700">{{ affiliates.meta.from ?? 0 }}</span>
+                        a <span class="font-medium text-gray-700">{{ affiliates.meta.to ?? 0 }}</span>
+                        de <span class="font-medium text-gray-700">{{ affiliates.meta.total ?? 0 }}</span> afiliados
+                    </p>
+                    <select v-model="perPage" class="text-sm rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1">
+                        <option :value="10">10 por página</option>
+                        <option :value="25">25 por página</option>
+                        <option :value="50">50 por página</option>
+                        <option :value="100">100 por página</option>
+                    </select>
+                </div>
+                <Pagination v-if="affiliates?.links?.length > 3" :links="affiliates?.links" />
             </div>
         </div>
     </AppLayout>
