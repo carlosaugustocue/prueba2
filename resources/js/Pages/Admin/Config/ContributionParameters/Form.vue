@@ -1,6 +1,7 @@
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import { ChevronLeft, Loader2, Check } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -108,25 +109,26 @@ const form = useForm({
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="valid_from" class="block text-sm font-medium text-gray-700">Vigencia desde *</label>
-                        <input
-                            id="valid_from"
+                        <DatePicker
                             v-model="form.valid_from"
-                            type="date"
+                            label="Vigencia desde"
                             required
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                         />
                         <p v-if="form.errors.valid_from" class="mt-1 text-sm text-red-600">{{ form.errors.valid_from }}</p>
                     </div>
                     <div>
-                        <label for="valid_to" class="block text-sm font-medium text-gray-700">Vigencia hasta</label>
-                        <input
-                            id="valid_to"
+                        <DatePicker
                             v-model="form.valid_to"
-                            type="date"
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                            placeholder="Dejar vacío = vigente indefinidamente"
+                            label="Vigencia hasta"
                         />
+                        <button
+                            v-if="form.valid_to"
+                            type="button"
+                            class="mt-2 text-xs text-gray-600 hover:text-gray-800 underline underline-offset-2"
+                            @click="form.valid_to = ''"
+                        >
+                            Limpiar fecha
+                        </button>
                         <p v-if="form.errors.valid_to" class="mt-1 text-sm text-red-600">{{ form.errors.valid_to }}</p>
                     </div>
                 </div>

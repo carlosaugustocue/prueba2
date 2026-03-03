@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DatePicker from '@/Components/DatePicker.vue';
 import { ChevronLeft, FileText, CheckCircle, Loader2 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -66,11 +67,9 @@ const formatCurrency = (value) =>
                 <div class="px-6 py-5">
                     <form @submit.prevent="submitPayment" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de pago</label>
-                            <input
+                            <DatePicker
                                 v-model="paymentForm.payment_date"
-                                type="date"
-                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm"
+                                label="Fecha de pago"
                             />
                             <p v-if="paymentForm.errors.payment_date" class="mt-1 text-sm text-red-600">
                                 {{ paymentForm.errors.payment_date }}

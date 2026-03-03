@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -18,8 +18,13 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 const containerRef = ref(null);
+const popoverRef = ref(null);
 const popoverOpen = ref(false);
 const currentMonth = ref(new Date());
+const popoverStyles = ref({
+    top: '0px',
+    left: '0px',
+});
 
 const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -93,6 +98,7 @@ function openCalendar() {
         currentMonth.value = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     }
     popoverOpen.value = true;
+    nextTick(() => updatePopoverPosition());
 }
 
 function closeCalendar() {
@@ -141,11 +147,65 @@ function isSelected(day) {
 function onDocumentClick(e) {
     if (!popoverOpen.value) return;
     if (containerRef.value && containerRef.value.contains(e.target)) return;
+    if (popoverRef.value && popoverRef.value.contains(e.target)) return;
     closeCalendar();
 }
 
-onMounted(() => document.addEventListener('click', onDocumentClick));
-onUnmounted(() => document.removeEventListener('click', onDocumentClick));
+function updatePopoverPosition() {
+    if (!containerRef.value) return;
+
+    const rect = containerRef.value.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const popoverWidth = 280;
+    const verticalGap = 8;
+    const estimatedPopoverHeight = 320;
+
+    let left = rect.left;
+    if (left + popoverWidth > viewportWidth - 8) {
+        left = viewportWidth - popoverWidth - 8;
+    }
+    if (left < 8) left = 8;
+
+    const spaceBelow = viewportHeight - rect.bottom;
+    const showAbove = spaceBelow < estimatedPopoverHeight && rect.top > estimatedPopoverHeight;
+    const maxTop = Math.max(8, viewportHeight - estimatedPopoverHeight - 8);
+    const top = showAbove
+        ? Math.max(8, rect.top - estimatedPopoverHeight - verticalGap)
+        : Math.max(8, Math.min(maxTop, rect.bottom + verticalGap));
+
+    popoverStyles.value = {
+        top: `${top}px`,
+        left: `${left}px`,
+    };
+}
+
+function onViewportChange() {
+    if (!popoverOpen.value) return;
+    updatePopoverPosition();
+}
+
+function onKeydown(e) {
+    if (!popoverOpen.value) return;
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        closeCalendar();
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', onDocumentClick);
+    document.addEventListener('keydown', onKeydown);
+    window.addEventListener('resize', onViewportChange);
+    window.addEventListener('scroll', onViewportChange, true);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', onDocumentClick);
+    document.removeEventListener('keydown', onKeydown);
+    window.removeEventListener('resize', onViewportChange);
+    window.removeEventListener('scroll', onViewportChange, true);
+});
 
 watch(() => props.modelValue, (v) => {
     const ymd = toYmd(v || '');
@@ -153,6 +213,11 @@ watch(() => props.modelValue, (v) => {
         const d = new Date(ymd);
         if (!Number.isNaN(d.getTime())) currentMonth.value = new Date(d.getFullYear(), d.getMonth(), 1);
     }
+});
+
+watch(popoverOpen, (isOpen) => {
+    if (!isOpen) return;
+    nextTick(() => updatePopoverPosition());
 });
 </script>
 
@@ -170,7 +235,8 @@ watch(() => props.modelValue, (v) => {
                 placeholder="Seleccione la fecha"
                 class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 bg-white pr-10 cursor-pointer"
                 @focus="openCalendar"
-                @click="openCalendar"
+                @click.stop="openCalendar"
+                @mousedown.stop
             />
             <button
                 type="button"
@@ -183,19 +249,24 @@ watch(() => props.modelValue, (v) => {
         </div>
 
         <!-- Calendario desplegable - estilo Serviconli -->
-        <Transition
-            enter-active-class="transition ease-out duration-150"
-            enter-from-class="opacity-0 -translate-y-1"
-            enter-to-class="opacity-100 translate-y-0"
-            leave-active-class="transition ease-in duration-100"
-            leave-from-class="opacity-100 translate-y-0"
-            leave-to-class="opacity-0 -translate-y-1"
-        >
-            <div
-                v-show="popoverOpen"
-                class="absolute z-50 mt-2 w-[280px] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 left-0"
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-150"
+                enter-from-class="opacity-0 -translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition ease-in duration-100"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 -translate-y-1"
             >
-                <div class="p-3 bg-gradient-to-b from-brand-50 to-white rounded-t-xl border-b border-brand-100">
+                <div
+                    v-show="popoverOpen"
+                    ref="popoverRef"
+                    :style="popoverStyles"
+                    class="fixed z-[1100] w-[280px] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5"
+                    @click.stop
+                    @mousedown.stop
+                >
+                    <div class="p-3 bg-gradient-to-b from-brand-50 to-white rounded-t-xl border-b border-brand-100">
                     <!-- Selectores de mes y año para saltar rápido a cualquier fecha -->
                     <div class="flex flex-wrap items-center gap-2 mb-2">
                         <select
@@ -263,9 +334,10 @@ watch(() => props.modelValue, (v) => {
                             {{ day.date.getDate() }}
                         </button>
                     </div>
+                    </div>
                 </div>
-            </div>
-        </Transition>
+            </Transition>
+        </Teleport>
 
         <p v-if="hint" class="mt-1 text-xs text-gray-500">{{ hint }}</p>
     </div>
