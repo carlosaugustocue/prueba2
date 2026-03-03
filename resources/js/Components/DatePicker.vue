@@ -9,6 +9,10 @@ const props = defineProps({
     min: { type: String, default: null },
     max: { type: String, default: null },
     hint: { type: String, default: '' },
+    /** Año mínimo en el selector (p. ej. 1900 para fechas de nacimiento). */
+    minYear: { type: Number, default: 1950 },
+    /** Año máximo en el selector. */
+    maxYear: { type: Number, default: null },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -19,6 +23,16 @@ const currentMonth = ref(new Date());
 
 const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+const yearEnd = computed(() => props.maxYear ?? new Date().getFullYear() + 1);
+const yearOptions = computed(() => {
+    const list = [];
+    for (let y = yearEnd.value; y >= props.minYear; y--) list.push(y);
+    return list;
+});
+const monthOptions = computed(() =>
+    monthNames.map((name, i) => ({ value: i, label: name }))
+);
 
 function toYmd(value) {
     if (!value || typeof value !== 'string') return '';
@@ -83,6 +97,21 @@ function openCalendar() {
 
 function closeCalendar() {
     popoverOpen.value = false;
+}
+
+const currentYear = computed(() => currentMonth.value.getFullYear());
+const currentMonthIndex = computed(() => currentMonth.value.getMonth());
+
+function setYear(year) {
+    const y = Number(year);
+    if (Number.isNaN(y)) return;
+    currentMonth.value = new Date(y, currentMonth.value.getMonth(), 1);
+}
+
+function setMonth(monthIndex) {
+    const m = Number(monthIndex);
+    if (Number.isNaN(m) || m < 0 || m > 11) return;
+    currentMonth.value = new Date(currentMonth.value.getFullYear(), m, 1);
 }
 
 function prevMonth() {
@@ -167,24 +196,42 @@ watch(() => props.modelValue, (v) => {
                 class="absolute z-50 mt-2 w-[280px] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 left-0"
             >
                 <div class="p-3 bg-gradient-to-b from-brand-50 to-white rounded-t-xl border-b border-brand-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <button
-                            type="button"
-                            class="p-1.5 rounded-lg text-gray-600 hover:bg-brand-100 hover:text-brand-700 transition-colors"
-                            @click.stop="prevMonth"
+                    <!-- Selectores de mes y año para saltar rápido a cualquier fecha -->
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <select
+                            :value="currentMonthIndex"
+                            class="flex-1 min-w-0 rounded-lg border-gray-300 text-sm font-medium text-gray-900 bg-white shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                            @change="setMonth(($event.target).value)"
                         >
-                            <ChevronLeft class="h-4 w-4" />
-                        </button>
-                        <span class="text-sm font-semibold text-gray-900">
-                            {{ monthNames[currentMonth.getMonth()] }} {{ currentMonth.getFullYear() }}
-                        </span>
-                        <button
-                            type="button"
-                            class="p-1.5 rounded-lg text-gray-600 hover:bg-brand-100 hover:text-brand-700 transition-colors"
-                            @click.stop="nextMonth"
+                            <option v-for="opt in monthOptions" :key="opt.value" :value="opt.value">
+                                {{ opt.label }}
+                            </option>
+                        </select>
+                        <select
+                            :value="currentYear"
+                            class="flex-1 min-w-0 rounded-lg border-gray-300 text-sm font-medium text-gray-900 bg-white shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                            @change="setYear(($event.target).value)"
                         >
-                            <ChevronRight class="h-4 w-4" />
-                        </button>
+                            <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
+                        </select>
+                        <div class="flex items-center gap-0.5">
+                            <button
+                                type="button"
+                                class="p-1.5 rounded-lg text-gray-600 hover:bg-brand-100 hover:text-brand-700 transition-colors"
+                                @click.stop="prevMonth"
+                                title="Mes anterior"
+                            >
+                                <ChevronLeft class="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                class="p-1.5 rounded-lg text-gray-600 hover:bg-brand-100 hover:text-brand-700 transition-colors"
+                                @click.stop="nextMonth"
+                                title="Mes siguiente"
+                            >
+                                <ChevronRight class="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-7 gap-0.5 mb-1">
                         <div
