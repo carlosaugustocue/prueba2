@@ -11,6 +11,19 @@ use App\Modules\SocialSecurity\Services\PayrollService;
 use App\Modules\SocialSecurity\Services\DueDateCalculator;
 use App\Modules\Patients\Models\Affiliate;
 use App\Modules\Patients\Models\AffiliateTask;
+use App\Modules\Patients\Enums\DocumentType;
+use App\Modules\Patients\Enums\PatientType;
+use App\Modules\Patients\Models\Eps;
+use App\Modules\SocialSecurity\Models\Afp;
+use App\Modules\SocialSecurity\Models\Arp;
+use App\Modules\SocialSecurity\Models\Ccf;
+use App\Modules\SocialSecurity\Models\ClientType;
+use App\Modules\SocialSecurity\Models\ContributorType;
+use App\Modules\SocialSecurity\Models\PaymentOperator;
+use App\Modules\SocialSecurity\Models\AccountingRegistry;
+use App\Modules\SocialSecurity\Models\Payer;
+use App\Modules\SocialSecurity\Models\Payroll;
+use App\Modules\SocialSecurity\Models\SocialSecurityProfile;
 
 Artisan::command('serve:network-info', function () {
     $ips = [];
@@ -202,3 +215,474 @@ Artisan::command('ss:generate-pila-alerts', function (DueDateCalculator $calcula
 
     $this->info("Alertas generadas: {$created}");
 })->purpose('Generar tareas de alerta para vencimientos PILA (3 días antes) para Seguridad Social');
+
+// Importar afiliados y perfil de seguridad social desde DataSegura (hoja DATA ACTUALIZADA 2025 exportada a CSV)
+Artisan::command('ss:import-affiliates-from-datasegura {path?}', function (?string $path = null) {
+    $relativePath = $path ?: 'docs/DataSegura SERVICONLI 2025 - DATA ACTUALIZADA 2025.csv';
+    $fullPath = base_path($relativePath);
+
+    if (! is_file($fullPath)) {
+        $this->error("No se encontró el archivo CSV en: {$fullPath}");
+        return 1;
+    }
+
+    $this->info("Importando afiliados desde: {$fullPath}");
+
+    $handle = fopen($fullPath, 'r');
+    if ($handle === false) {
+        $this->error('No se pudo abrir el archivo para lectura.');
+        return 1;
+    }
+
+    // Leer cabecera y construir índice por nombre de columna (trim)
+    $header = fgetcsv($handle, 0, ',');
+    if (! $header) {
+        fclose($handle);
+        $this->error('El archivo CSV está vacío o no tiene cabecera.');
+        return 1;
+    }
+    $header = array_map(static fn ($h) => trim((string) $h), $header);
+    $indexes = [];
+    foreach ($header as $i => $name) {
+        if ($name !== '') {
+            $indexes[$name] = $i;
+        }
+    }
+
+    // Helper para obtener índice por nombre de columna
+    $idx = static function (string $name) use ($indexes): ?int {
+        return $indexes[$name] ?? null;
+    };
+
+    $colStatus = 0; // primera columna (sin nombre en cabecera)
+    $colClientType = $idx('TIPO DE CLIENTE');
+    $colContributorType = $idx('Tipo de Cotizante');
+    $colDocType = $idx('TIPO DE DOCUMENTO AFILIADO');
+    $colDocNumber = $idx('# DOCUMENTO AFILIADO');
+    $colFullName = $idx('Nombre del Afiliado');
+    $colGender = $idx('Sexo');
+    $colBirthDate = $idx('Fecha de nacimiento');
+    $colAddr = $idx('AFILIADO_DIRECCION');
+    $colCity = $idx('AFILIADO_CIUDAD');
+    $colDept = $idx('AFILIADO_DEPARTAMENTO');
+    $colPhone = $idx('AFILIADO_TELEFONO');
+    $colEmail = $idx('AFILIADO_CORREO ELECTRONICO');
+
+    $colPayerName = $idx('PAGADOR');
+    $colPayerDocType = $idx('TIPO DE DOCUMENTO');
+    $colPayerDocNumber = $idx('# DOCUMENTO');
+    $colPayerAddr = $idx('CLIENTE_DIRECCION');
+    $colPayerCity = $idx('CLIENTE_CIUDAD');
+    $colPayerDept = $idx('CLIENTE_DEPARTAMENTO');
+    $colPayerPhone = $idx('CLIENTE_TELEFONO');
+    $colPayerEmail = $idx('CORREO ELECTRONICO');
+
+    $colPaymentDay = $idx('DIA HABIL');
+    $colOperator = $idx('OPERADOR');
+    $colSalary = $idx('SALARIO');
+    $colArlName = $idx('NombreARL');
+    $colArlRisk = $idx('Clase de Riesgo ARL');
+    $colCcfName = $idx('NombreCCF');
+    $colEpsName = $idx('Nombre EPS');
+    $colAfpName = $idx('Nombre AFP');
+    $colParafiscales = $idx('PARAFISCALES');
+    $colSsObservations = $idx('OBSERVACIONES AFILIACIÓN');
+    $colPaymentPeriodicity = $idx('PERIOCIDAD DE PAGO');
+    $colAccountingRegistry = $idx('REG/CONTABLE');
+
+    $colNovelty = $idx('NOVEDAD');
+    $colNoveltyDate = $idx('FECHA NOVEDAD');
+
+    if ($colClientType === null || $colDocType === null || $colDocNumber === null || $colFullName === null) {
+        fclose($handle);
+        $this->error('La cabecera del CSV no coincide con la esperada (faltan columnas clave).');
+        return 1;
+    }
+
+    // Cache de catálogos para no pegar la BD en cada fila
+    $clientTypesByName = ClientType::all()->keyBy(fn ($ct) => strtoupper(trim($ct->name)));
+    $contributorTypesByCode = ContributorType::all()->keyBy(fn ($ct) => trim($ct->code));
+    $epsByCode = Eps::all()->keyBy(fn ($e) => strtoupper(trim($e->code)));
+    $afpsByCode = Afp::all()->keyBy(fn ($m) => strtoupper(trim($m->code)));
+    $arpsByCode = Arp::all()->keyBy(fn ($m) => strtoupper(trim($m->code)));
+    $ccfsByCode = Ccf::all()->keyBy(fn ($m) => strtoupper(trim($m->code)));
+    $paymentOperatorsByName = PaymentOperator::all()->keyBy(fn ($op) => strtoupper(trim($op->name)));
+    $accountingByCode = AccountingRegistry::all()->keyBy(fn ($ar) => strtoupper(trim($ar->code)));
+
+    // Helpers
+    $mapDocumentType = static function (?string $raw): ?DocumentType {
+        $val = strtoupper(trim((string) $raw));
+        return match ($val) {
+            'CC' => DocumentType::CC,
+            'TI' => DocumentType::TI,
+            'CE' => DocumentType::CE,
+            'PPT' => DocumentType::PPT,
+            'PTT' => DocumentType::PTT,
+            default => null,
+        };
+    };
+
+    $splitName = static function (string $fullName): array {
+        $parts = preg_split('/\s+/', trim($fullName), -1, PREG_SPLIT_NO_EMPTY);
+        $count = count($parts);
+        if ($count === 0) {
+            return [null, null, null, null];
+        }
+        if ($count === 1) {
+            return [$parts[0], null, null, null];
+        }
+        if ($count === 2) {
+            return [$parts[0], null, $parts[1], null];
+        }
+        if ($count === 3) {
+            return [$parts[0], null, $parts[1], $parts[2]];
+        }
+        // 4 o más: primer y segundo como nombres; penúltimo y último como apellidos
+        return [
+            $parts[0],
+            $parts[1],
+            $parts[$count - 2],
+            $parts[$count - 1],
+        ];
+    };
+
+    $extractCodeFromValue = static function (?string $value): ?string {
+        $v = trim((string) $value);
+        if ($v === '' || stripos($v, 'NO APLICA') !== false || strtoupper($v) === 'N/A') {
+            return null;
+        }
+        // Ejemplos: "EPS005 -EPS SANITAS", "25-14 -COLPENSIONES", "CCF43 -COMFENALCO QUINDIO"
+        if (preg_match('/^([A-Z0-9\-]+)\s*[-\s]/u', $v, $m)) {
+            return strtoupper(trim($m[1]));
+        }
+        return strtoupper($v);
+    };
+
+    $normalizePaymentOperator = static function (?string $value): ?string {
+        $v = strtoupper(trim((string) $value));
+        if ($v === '' || str_starts_with($v, 'NA ') || $v === 'NA' || $v === 'N/A') {
+            return null;
+        }
+        return match (true) {
+            str_contains($v, 'ENLACE') => 'ENLACE OPERATIVO',
+            $v === 'SIMPLE' => 'SIMPLE',
+            str_contains($v, 'ASOPAGOS') => 'ASOPAGOS',
+            str_contains($v, 'APORTES') => 'APORTES EN LINEA',
+            $v === 'SOI' => 'SOI',
+            str_contains($v, 'MI PLANILLA') => 'MI PLANILLA',
+            default => $v,
+        };
+    };
+
+    $mapAccountingRegistryCode = static function (?string $value): ?string {
+        $v = strtoupper(trim((string) $value));
+        return match ($v) {
+            'RECIBO DE CAJA' => 'RECIBO_CAJA',
+            'FACTURA ELECTRÓNICA', 'FACTURA ELECTRONICA' => 'FACTURA_ELECTRONICA',
+            default => null,
+        };
+    };
+
+    $parseMoney = static function (?string $value): ?float {
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+        if ($digits === '' || $digits === null) {
+            return null;
+        }
+        return (float) $digits;
+    };
+
+    $normalizeDocumentNumber = static function (?string $value): ?string {
+        $v = trim((string) $value);
+        if ($v === '') {
+            return null;
+        }
+        // Tomar solo la primera "palabra" antes de espacios o comas (evitar textos largos tipo "CIF7622 PLAN PREMIUM ABRIL1 ...")
+        if (preg_match('/^([^\s,]+)/u', $v, $m)) {
+            $v = $m[1];
+        }
+        // Truncar a 20 caracteres para ajustarse al schema (document_number varchar(20))
+        if (strlen($v) > 20) {
+            $v = substr($v, 0, 20);
+        }
+        return $v;
+    };
+
+    $rowNumber = 1; // cabecera
+    $createdAffiliates = 0;
+    $updatedAffiliates = 0;
+    $createdProfiles = 0;
+    $updatedProfiles = 0;
+    $createdPayers = 0;
+    $updatedPayers = 0;
+    $skipped = [];
+
+    while (($row = fgetcsv($handle, 0, ',')) !== false) {
+        $rowNumber++;
+        $rawDocNumber = $normalizeDocumentNumber($row[$colDocNumber] ?? null);
+        if (! $rawDocNumber) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'Sin número de documento de afiliado'];
+            continue;
+        }
+
+        $status = strtoupper(trim((string) ($row[$colStatus] ?? 'ACTIVO')));
+        $docTypeEnum = $mapDocumentType($row[$colDocType] ?? null);
+        if (! $docTypeEnum) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'Tipo de documento no soportado', 'value' => $row[$colDocType] ?? null];
+            continue;
+        }
+        $docNumber = $rawDocNumber;
+        $fullName = trim((string) ($row[$colFullName] ?? ''));
+        [$firstName, $secondName, $lastName, $secondLastName] = $splitName($fullName);
+
+        $genderRaw = strtoupper(trim((string) ($row[$colGender] ?? '')));
+        $gender = in_array($genderRaw, ['M', 'F'], true) ? $genderRaw : null;
+
+        $birthDate = null;
+        if (! empty($row[$colBirthDate])) {
+            $val = trim((string) $row[$colBirthDate]);
+            try {
+                $birthDate = Carbon::createFromFormat('d/m/Y', $val);
+            } catch (\Throwable $e) {
+                $birthDate = null;
+            }
+        }
+
+        $address    = substr(trim((string) ($row[$colAddr]  ?? '')), 0, 255);
+        $city       = substr(trim((string) ($row[$colCity]  ?? '')), 0, 100);
+        $department = substr(trim((string) ($row[$colDept]  ?? '')), 0, 100);
+        // Limpiar teléfono: quitar todo lo que no sea dígitos, +, - o espacios (truncar a 20 chars)
+        $rawPhone   = preg_replace('/[^\d\+\-\s].*/', '', trim((string) ($row[$colPhone] ?? '')));
+        $phone      = substr(trim($rawPhone), 0, 20);
+        $email      = substr(trim((string) ($row[$colEmail] ?? '')), 0, 100);
+
+        // Buscar o crear afiliado (document_number es UNIQUE; ignoramos tipo para no duplicar)
+        $affiliate = Affiliate::where('document_number', $docNumber)->first();
+
+        $affiliateData = [
+            'document_type' => $docTypeEnum,
+            'document_number' => $docNumber,
+            'first_name' => $firstName,
+            'second_name' => $secondName,
+            'last_name' => $lastName,
+            'second_last_name' => $secondLastName,
+            'gender' => $gender,
+            'birth_date' => $birthDate,
+            'address' => $address,
+            'city' => $city,
+            'department' => $department,
+            'phone' => $phone,
+            'whatsapp' => $phone,
+            'email' => $email,
+            'status' => $status,
+            'patient_type' => PatientType::COTIZANTE,
+        ];
+
+        if ($affiliate) {
+            $affiliate->fill($affiliateData);
+            $affiliate->save();
+            $updatedAffiliates++;
+        } else {
+            $affiliate = Affiliate::create($affiliateData);
+            $createdAffiliates++;
+        }
+
+        // Pagador
+        $payerId = null;
+        if ($colPayerDocNumber !== null && ! empty($row[$colPayerDocNumber])) {
+            $payerDocTypeEnum = $mapDocumentType($row[$colPayerDocType] ?? null) ?? DocumentType::NIT;
+            $payerDocNumber = $normalizeDocumentNumber($row[$colPayerDocNumber] ?? null);
+            if (! $payerDocNumber) {
+                // Si no podemos normalizar el documento del pagador, seguimos sin crear/actualizar payer
+                $skipped[] = ['row' => $rowNumber, 'reason' => 'Documento de pagador no válido', 'value' => $row[$colPayerDocNumber] ?? null];
+                goto after_payer;
+            }
+            $payerName = trim((string) ($row[$colPayerName] ?? ''));
+            $payerAddress   = substr(trim((string) ($row[$colPayerAddr]  ?? '')), 0, 255);
+            $rawPayerPhone  = preg_replace('/[^\d\+\-\s].*/', '', trim((string) ($row[$colPayerPhone] ?? '')));
+            $payerPhone     = substr(trim($rawPayerPhone), 0, 20);
+            $payerEmail     = substr(trim((string) ($row[$colPayerEmail] ?? '')), 0, 100);
+
+            // document_number es UNIQUE en payers; buscamos solo por número para evitar duplicados
+            $payer = Payer::where('document_number', $payerDocNumber)->first();
+
+            $payerData = [
+                'name' => $payerName ?: $payerDocNumber,
+                'document_type' => $payerDocTypeEnum,
+                'document_number' => $payerDocNumber,
+                'address' => $payerAddress,
+                'phone' => $payerPhone,
+                'email' => $payerEmail,
+                'is_active' => true,
+            ];
+
+            if ($payer) {
+                $payer->fill($payerData);
+                $payer->save();
+                $updatedPayers++;
+            } else {
+                $payer = Payer::create($payerData);
+                $createdPayers++;
+            }
+
+            $payerId = $payer->id;
+        }
+
+        after_payer:
+
+        // Perfil de seguridad social
+        $clientTypeRaw = strtoupper(trim((string) ($row[$colClientType] ?? '')));
+        $clientType = $clientTypesByName[$clientTypeRaw] ?? null;
+
+        $contributorCode = null;
+        if ($colContributorType !== null && ! empty($row[$colContributorType])) {
+            if (preg_match('/^(\d{1,2})/', (string) $row[$colContributorType], $m)) {
+                $contributorCode = $m[1];
+            }
+        }
+        $contributorType = $contributorCode ? ($contributorTypesByCode[$contributorCode] ?? null) : null;
+
+        $ibc = $colSalary !== null ? $parseMoney($row[$colSalary] ?? null) : null;
+
+        $epsId = null;
+        if ($colEpsName !== null && ! empty($row[$colEpsName])) {
+            $epsCode = $extractCodeFromValue($row[$colEpsName]);
+            if ($epsCode && isset($epsByCode[$epsCode])) {
+                $epsId = $epsByCode[$epsCode]->id;
+            }
+        }
+
+        $afpId = null;
+        if ($colAfpName !== null && ! empty($row[$colAfpName])) {
+            $afpCode = $extractCodeFromValue($row[$colAfpName]);
+            if ($afpCode && isset($afpsByCode[$afpCode])) {
+                $afpId = $afpsByCode[$afpCode]->id;
+            }
+        }
+
+        $arpId = null;
+        if ($colArlName !== null && ! empty($row[$colArlName])) {
+            $arpCode = $extractCodeFromValue($row[$colArlName]);
+            if ($arpCode && isset($arpsByCode[$arpCode])) {
+                $arpId = $arpsByCode[$arpCode]->id;
+            }
+        }
+
+        $arpRisk = null;
+        if ($colArlRisk !== null && ! empty($row[$colArlRisk])) {
+            if (preg_match('/^(\d)/', (string) $row[$colArlRisk], $m)) {
+                $arpRisk = $m[1];
+            }
+        }
+
+        $ccfId = null;
+        if ($colCcfName !== null && ! empty($row[$colCcfName])) {
+            $ccfCode = $extractCodeFromValue($row[$colCcfName]);
+            if ($ccfCode && isset($ccfsByCode[$ccfCode])) {
+                $ccfId = $ccfsByCode[$ccfCode]->id;
+            }
+        }
+
+        $paymentOperatorId = null;
+        if ($colOperator !== null && ! empty($row[$colOperator])) {
+            $opName = $normalizePaymentOperator($row[$colOperator]);
+            if ($opName && isset($paymentOperatorsByName[$opName])) {
+                $paymentOperatorId = $paymentOperatorsByName[$opName]->id;
+            }
+        }
+
+        $paymentDay = null;
+        if ($colPaymentDay !== null && $row[$colPaymentDay] !== null && $row[$colPaymentDay] !== '') {
+            $paymentDay = (int) round((float) $row[$colPaymentDay]);
+            if ($paymentDay < 2 || $paymentDay > 16) {
+                $paymentDay = null;
+            }
+        }
+
+        // Por defecto asumimos que NO tiene parafiscales (coincide con default de la BD).
+        $hasParafiscales = false;
+        if ($colParafiscales !== null && $row[$colParafiscales] !== null && $row[$colParafiscales] !== '') {
+            $val = strtoupper(trim((string) $row[$colParafiscales]));
+            $hasParafiscales = $val === 'SI';
+        }
+
+        $paymentPeriodicity = null;
+        if ($colPaymentPeriodicity !== null && $row[$colPaymentPeriodicity] !== null && $row[$colPaymentPeriodicity] !== '') {
+            $val = strtoupper(trim((string) $row[$colPaymentPeriodicity]));
+            $paymentPeriodicity = match ($val) {
+                'VENCIDO' => 'OVERDUE',
+                'ACTUAL' => 'CURRENT',
+                default => null,
+            };
+        }
+
+        $accountingRegistryId = null;
+        if ($colAccountingRegistry !== null && ! empty($row[$colAccountingRegistry])) {
+            $code = $mapAccountingRegistryCode($row[$colAccountingRegistry]);
+            if ($code && isset($accountingByCode[$code])) {
+                $accountingRegistryId = $accountingByCode[$code]->id;
+            }
+        }
+
+        $observations = trim((string) ($row[$colSsObservations] ?? ''));
+        if ($colNovelty !== null && ! empty($row[$colNovelty])) {
+            $nov = trim((string) $row[$colNovelty]);
+            $novDate = $colNoveltyDate !== null ? trim((string) ($row[$colNoveltyDate] ?? '')) : '';
+            $extra = "NOVEDAD: {$nov}" . ($novDate ? " ({$novDate})" : '');
+            $observations = $observations ? ($observations . ' | ' . $extra) : $extra;
+        }
+
+        $profile = $affiliate->socialSecurityProfile;
+        $profileData = [
+            'client_type_id' => $clientType?->id,
+            'contributor_type_id' => $contributorType?->id,
+            'ibc' => $ibc,
+            'eps_id' => $epsId,
+            'afp_id' => $afpId,
+            'arp_id' => $arpId,
+            'arp_risk_class' => $arpRisk,
+            'ccf_id' => $ccfId,
+            'payer_id' => $payerId,
+            'payment_operator_id' => $paymentOperatorId,
+            'payment_day' => $paymentDay,
+            'payment_periodicity' => $paymentPeriodicity,
+            'has_parafiscales' => $hasParafiscales,
+            'accounting_registry_id' => $accountingRegistryId,
+            'observations' => $observations !== '' ? $observations : null,
+        ];
+
+        if ($profile) {
+            $profile->fill($profileData);
+            $profile->save();
+            $updatedProfiles++;
+        } else {
+            $profile = new SocialSecurityProfile(array_merge(
+                ['affiliate_id' => $affiliate->id],
+                $profileData
+            ));
+            $profile->save();
+            $createdProfiles++;
+        }
+    }
+
+    fclose($handle);
+
+    $this->info('Importación completada.');
+    $this->line("Afiliados creados: {$createdAffiliates}, actualizados: {$updatedAffiliates}");
+    $this->line("Perfiles SS creados: {$createdProfiles}, actualizados: {$updatedProfiles}");
+    $this->line("Pagadores creados: {$createdPayers}, actualizados: {$updatedPayers}");
+    if (count($skipped) > 0) {
+        $this->warn('Filas omitidas: ' . count($skipped));
+        foreach (array_slice($skipped, 0, 10) as $item) {
+            $msg = '  Fila ' . $item['row'] . ' — ' . $item['reason'];
+            if (isset($item['value'])) {
+                $msg .= ' [' . $item['value'] . ']';
+            }
+            $this->line($msg);
+        }
+        if (count($skipped) > 10) {
+            $this->line('  ... y ' . (count($skipped) - 10) . ' más.');
+        }
+    }
+
+    return 0;
+})->purpose('Importa afiliados y perfil de seguridad social desde el CSV exportado de DataSegura (DATA ACTUALIZADA 2025)');

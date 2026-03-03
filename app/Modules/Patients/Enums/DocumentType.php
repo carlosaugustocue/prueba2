@@ -10,6 +10,8 @@ enum DocumentType: string
     case PA = 'pa';
     case RC = 'rc';
     case NIT = 'nit';
+    case PPT = 'ppt';
+    case PTT = 'ptt';
 
     public function label(): string
     {
@@ -20,6 +22,8 @@ enum DocumentType: string
             self::PA => 'Pasaporte',
             self::RC => 'Registro Civil',
             self::NIT => 'NIT',
+            self::PPT => 'Permiso por Protección Temporal',
+            self::PTT => 'Permiso Temporal de Permanencia',
         };
     }
 
