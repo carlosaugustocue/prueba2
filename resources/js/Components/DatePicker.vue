@@ -144,13 +144,6 @@ function isSelected(day) {
     return ymd === dayYmd;
 }
 
-function onDocumentClick(e) {
-    if (!popoverOpen.value) return;
-    if (containerRef.value && containerRef.value.contains(e.target)) return;
-    if (popoverRef.value && popoverRef.value.contains(e.target)) return;
-    closeCalendar();
-}
-
 function updatePopoverPosition() {
     if (!containerRef.value) return;
 
@@ -194,14 +187,12 @@ function onKeydown(e) {
 }
 
 onMounted(() => {
-    document.addEventListener('click', onDocumentClick);
     document.addEventListener('keydown', onKeydown);
     window.addEventListener('resize', onViewportChange);
     window.addEventListener('scroll', onViewportChange, true);
 });
 
 onUnmounted(() => {
-    document.removeEventListener('click', onDocumentClick);
     document.removeEventListener('keydown', onKeydown);
     window.removeEventListener('resize', onViewportChange);
     window.removeEventListener('scroll', onViewportChange, true);
@@ -250,6 +241,12 @@ watch(popoverOpen, (isOpen) => {
 
         <!-- Calendario desplegable - estilo Serviconli -->
         <Teleport to="body">
+            <div
+                v-show="popoverOpen"
+                class="fixed inset-0 z-[1090]"
+                aria-hidden="true"
+                @mousedown="closeCalendar"
+            />
             <Transition
                 enter-active-class="transition ease-out duration-150"
                 enter-from-class="opacity-0 -translate-y-1"
