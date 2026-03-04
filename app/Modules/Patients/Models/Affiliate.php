@@ -192,4 +192,9 @@ class Affiliate extends Model
     {
         return $this->hasMany(\App\Modules\Patients\Models\AffiliatePayment::class);
     }
+
+    public function independentContracts(): HasMany
+    {
+        return $this->hasMany(\App\Modules\SocialSecurity\Models\IndependentContract::class);
+    }
 }

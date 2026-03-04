@@ -38,4 +38,9 @@ class Payer extends Model
     {
         return $this->hasMany(SocialSecurityProfile::class, 'payer_id');
     }
+
+    public function independentContracts(): HasMany
+    {
+        return $this->hasMany(IndependentContract::class, 'payer_id');
+    }
 }

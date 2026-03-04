@@ -3,6 +3,7 @@
 use App\Modules\Patients\Controllers\AffiliateController;
 use App\Modules\Patients\Controllers\AffiliatePaymentController;
 use App\Modules\Patients\Controllers\AffiliateTaskController;
+use App\Modules\SocialSecurity\Controllers\IndependentContractController;
 use App\Modules\SocialSecurity\Controllers\NoveltyController;
 use App\Modules\SocialSecurity\Controllers\OperatorCredentialController;
 use App\Modules\SocialSecurity\Controllers\SupportDocumentController;
@@ -30,6 +31,12 @@ Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_socia
     // Pagos registrados por afiliado (cartera / seguridad social)
     Route::get('affiliates/{affiliate}/payments', [AffiliatePaymentController::class, 'index'])->name('affiliates.payments.index');
     Route::post('affiliates/{affiliate}/payments', [AffiliatePaymentController::class, 'store'])->name('affiliates.payments.store');
+
+    // Contratos de independientes por afiliado (múltiples contratos y consolidación IBC)
+    Route::get('affiliates/{affiliate}/contracts', [IndependentContractController::class, 'index'])->name('affiliates.contracts.index');
+    Route::post('affiliates/{affiliate}/contracts', [IndependentContractController::class, 'store'])->name('affiliates.contracts.store');
+    Route::put('affiliates/{affiliate}/contracts/{contract}', [IndependentContractController::class, 'update'])->name('affiliates.contracts.update');
+    Route::delete('affiliates/{affiliate}/contracts/{contract}', [IndependentContractController::class, 'destroy'])->name('affiliates.contracts.destroy');
 
     Route::prefix('api/affiliates')->group(function () {
         Route::get('search', [AffiliateController::class, 'search'])->name('affiliates.search');
