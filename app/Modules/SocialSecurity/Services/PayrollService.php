@@ -22,6 +22,7 @@ class PayrollService
         private ContributionCalculator $calculator,
         private ContributionParametersResolver $paramsResolver,
         private DueDateCalculator $dueDateCalculator,
+        private IndependentContractIbcService $independentContractIbcService,
     ) {}
 
     /**
@@ -71,14 +72,20 @@ class PayrollService
      */
     public function preview(SocialSecurityProfile $profile, int $year, int $month, ?int $daysWorked = null): ContributionBreakdown
     {
-        $profile->loadMissing('contributorType');
+        $profile->loadMissing(['contributorType', 'affiliate']);
         $periodDate = sprintf('%04d-%02d-01', $year, $month);
         $params = $this->paramsResolver->getParametersForDate($periodDate);
         $smlmv = $this->paramsResolver->getSmlmv($periodDate) ?? 0.0;
 
-        $ibc = (float) ($profile->ibc ?? 0);
-        $arlRiskClass = $this->normalizeArlRiskClass($profile->arp_risk_class);
         $contributorCode = $profile->contributorType?->code ?? '03';
+        $ibcResolution = $this->resolveIbcForPeriod(
+            $profile,
+            $year,
+            $month,
+            $contributorCode
+        );
+        $arlRiskClass = $this->resolveArlRiskClass($profile, $ibcResolution);
+        $ibc = $ibcResolution['ibc'];
         $hasParafiscales = (bool) $profile->has_parafiscales;
 
         $proportionalFactor = 1.0;
@@ -86,7 +93,7 @@ class PayrollService
             $proportionalFactor = min(1.0, max(0.0, $daysWorked / 30));
         }
 
-        return $this->calculator->calculate(
+        $breakdown = $this->calculator->calculate(
             ibc: $ibc,
             arlRiskClass: $arlRiskClass,
             contributorCode: $contributorCode,
@@ -96,6 +103,8 @@ class PayrollService
             periodDate: $periodDate,
             proportionalFactor: $proportionalFactor,
         );
+
+        return $this->enrichBreakdownWithIbcSource($breakdown, $ibcResolution);
     }
 
     /**
@@ -124,9 +133,15 @@ class PayrollService
         $params = $this->paramsResolver->getParametersForDate($periodDate);
         $smlmv = $this->paramsResolver->getSmlmv($periodDate) ?? 0.0;
 
-        $ibc = (float) $profile->ibc;
-        $arlRiskClass = $this->normalizeArlRiskClass($profile->arp_risk_class);
         $contributorCode = $profile->contributorType?->code ?? '03';
+        $ibcResolution = $this->resolveIbcForPeriod(
+            $profile,
+            $payroll->year,
+            $payroll->month,
+            $contributorCode
+        );
+        $arlRiskClass = $this->resolveArlRiskClass($profile, $ibcResolution);
+        $ibc = $ibcResolution['ibc'];
         $hasParafiscales = (bool) $profile->has_parafiscales;
         $proportionalFactor = $this->proportionalFactorForSettle($contributorCode, $payroll);
 
@@ -140,6 +155,7 @@ class PayrollService
             periodDate: $periodDate,
             proportionalFactor: $proportionalFactor,
         );
+        $breakdown = $this->enrichBreakdownWithIbcSource($breakdown, $ibcResolution);
 
         $meta = $breakdown->toArray();
         $meta['calculated_at'] = now()->toIso8601String();
@@ -183,16 +199,28 @@ class PayrollService
         $ibcMin = $this->paramsResolver->getIbcMin($periodDate);
         $ibcMax = $this->paramsResolver->getIbcMax($periodDate);
 
-        if ($profile->ibc === null || $profile->ibc === '') {
-            $errors[] = 'IBC no definido.';
+        $profile->loadMissing(['contributorType', 'affiliate']);
+        $contributorCode = $profile->contributorType?->code ?? '';
+
+        $ibcSource = null;
+        if ($profile->ibc !== null && $profile->ibc !== '') {
+            $ibcSource = (float) $profile->ibc;
+        } else {
+            $ibcResolution = $this->resolveIbcForPeriod($profile, $year, $month, $contributorCode);
+            if (($ibcResolution['source'] ?? 'profile') === 'contracts') {
+                $ibcSource = (float) $ibcResolution['ibc'];
+            }
+        }
+
+        if ($ibcSource === null) {
+            $errors[] = 'IBC no definido. Configure IBC en perfil o registre contratos independientes activos para el período.';
         } elseif ($ibcMin !== null && $ibcMax !== null) {
-            $ibc = (float) $profile->ibc;
+            $ibc = $ibcSource;
             if ($ibc < $ibcMin || $ibc > $ibcMax) {
                 $errors[] = sprintf('IBC fuera de rango vigente (%.0f - %.0f).', $ibcMin, $ibcMax);
             }
         }
 
-        $profile->loadMissing('contributorType');
         if ($profile->contributorType === null) {
             $errors[] = 'Tipo de cotizante no asignado.';
         } elseif (! ContributorTypeRules::isSupported($profile->contributorType->code ?? '')) {
@@ -201,7 +229,7 @@ class PayrollService
             $code = $profile->contributorType->code ?? '';
             if ($code === '51') {
                 $smlmv = $this->paramsResolver->getSmlmv($periodDate);
-                if ($smlmv !== null && $profile->ibc !== null && (float) $profile->ibc >= $smlmv) {
+                if ($smlmv !== null && $ibcSource !== null && (float) $ibcSource >= $smlmv) {
                     $errors[] = 'Para tipo 51 (independiente flexible) el IBC debe ser menor a 1 SMLMV según Circular 093/2025.';
                 }
             }
@@ -277,5 +305,88 @@ class PayrollService
         $n = (int) $value;
 
         return $n >= 1 && $n <= 5 ? $n : 0;
+    }
+
+    private function resolveArlRiskClass(SocialSecurityProfile $profile, array $ibcResolution): int
+    {
+        $riskFromProfile = $this->normalizeArlRiskClass($profile->arp_risk_class);
+        $riskFromContracts = isset($ibcResolution['contracts']['max_risk_class'])
+            ? $this->normalizeArlRiskClass($ibcResolution['contracts']['max_risk_class'])
+            : 0;
+
+        return max($riskFromProfile, $riskFromContracts);
+    }
+
+    /**
+     * Resuelve el IBC para el período:
+     * - Perfil SS (manual), o
+     * - Consolidado de contratos activos (independientes).
+     *
+     * @return array{
+     *   ibc: float,
+     *   source: 'profile'|'contracts',
+     *   contracts: array<string,mixed>|null
+     * }
+     */
+    private function resolveIbcForPeriod(
+        SocialSecurityProfile $profile,
+        int $year,
+        int $month,
+        string $contributorCode
+    ): array {
+        if ($this->canUseIndependentContracts($contributorCode)) {
+            $affiliate = $profile->affiliate;
+            if ($affiliate !== null) {
+                $contractIbc = $this->independentContractIbcService->resolveForPeriod($affiliate, $year, $month);
+                if ($contractIbc !== null) {
+                    return [
+                        'ibc' => (float) $contractIbc['ibc'],
+                        'source' => 'contracts',
+                        'contracts' => $contractIbc,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'ibc' => (float) ($profile->ibc ?? 0),
+            'source' => 'profile',
+            'contracts' => null,
+        ];
+    }
+
+    private function canUseIndependentContracts(string $contributorCode): bool
+    {
+        return in_array($contributorCode, ['03', '51', '59'], true);
+    }
+
+    private function enrichBreakdownWithIbcSource(ContributionBreakdown $breakdown, array $ibcResolution): ContributionBreakdown
+    {
+        $paramsUsed = $breakdown->parametersUsed;
+        $paramsUsed['ibc_source'] = $ibcResolution['source'] ?? 'profile';
+        if (($ibcResolution['source'] ?? null) === 'contracts' && isset($ibcResolution['contracts'])) {
+            $paramsUsed['contracts'] = $ibcResolution['contracts'];
+        }
+
+        return new ContributionBreakdown(
+            ibc: $breakdown->ibc,
+            contributorCode: $breakdown->contributorCode,
+            arlRiskClass: $breakdown->arlRiskClass,
+            healthTotal: $breakdown->healthTotal,
+            healthEmployer: $breakdown->healthEmployer,
+            healthEmployee: $breakdown->healthEmployee,
+            pensionTotal: $breakdown->pensionTotal,
+            pensionEmployer: $breakdown->pensionEmployer,
+            pensionEmployee: $breakdown->pensionEmployee,
+            arlAmount: $breakdown->arlAmount,
+            ccfAmount: $breakdown->ccfAmount,
+            senaAmount: $breakdown->senaAmount,
+            icbfAmount: $breakdown->icbfAmount,
+            parafiscalAmount: $breakdown->parafiscalAmount,
+            fspAmount: $breakdown->fspAmount,
+            totalAmount: $breakdown->totalAmount,
+            parametersUsed: $paramsUsed,
+            periodDate: $breakdown->periodDate,
+        );
     }
 }

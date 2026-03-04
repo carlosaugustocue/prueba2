@@ -193,6 +193,15 @@ const formatMoney = (n) => {
                         <dd class="text-gray-900">{{ formatMoney(previewData.total_amount) }}</dd>
                     </div>
                 </dl>
+                <div
+                    v-if="previewData?.parameters_used?.ibc_source === 'contracts'"
+                    class="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900"
+                >
+                    IBC consolidado desde contratos activos:
+                    {{ previewData?.parameters_used?.contracts?.contracts_count || 0 }} contrato(s),
+                    ingreso mensualizado {{ formatMoney(previewData?.parameters_used?.contracts?.total_monthly_income || 0) }},
+                    porcentaje {{ previewData?.parameters_used?.contracts?.ibc_percent || 40 }}%.
+                </div>
                 <p class="mt-3 text-xs text-gray-500">Período: {{ previewData.period_date }}. Use "Crear planilla" para generar la planilla con estos montos (se liquidará al crearla si el perfil es válido).</p>
             </div>
         </div>

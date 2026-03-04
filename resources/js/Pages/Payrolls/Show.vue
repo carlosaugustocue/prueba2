@@ -106,6 +106,13 @@ const meta = computed(() => payroll.value.calculation_metadata || {});
                             <Calculator class="h-5 w-5 text-brand-600" />
                             Desglose de aportes
                         </h2>
+                        <p
+                            v-if="meta?.parameters_used?.ibc_source === 'contracts'"
+                            class="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900"
+                        >
+                            Esta liquidación usó IBC consolidado de
+                            {{ meta?.parameters_used?.contracts?.contracts_count || 0 }} contrato(s) activos.
+                        </p>
                         <dl class="mt-4 space-y-2">
                             <div class="flex justify-between text-sm">
                                 <dt class="text-gray-500">Salud</dt>

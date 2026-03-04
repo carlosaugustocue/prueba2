@@ -21,6 +21,7 @@ class ContributionParametersResolver
     private const SUBTYPE_PAYMENT_DAY_MIN = 'PAYMENT_DAY_MIN';
     private const SUBTYPE_PAYMENT_DAY_MAX = 'PAYMENT_DAY_MAX';
     private const SUBTYPE_PENSION_PILLAR_THRESHOLD_SMLMV = 'PENSION_PILLAR_THRESHOLD_SMLMV';
+    private const SUBTYPE_INDEPENDENT_IBC_PERCENT = 'INDEPENDENT_IBC_PERCENT';
 
     /**
      * Obtiene el valor de un parámetro vigente para la fecha dada.
@@ -113,6 +114,15 @@ class ContributionParametersResolver
     public function getPensionPillarThresholdSmlmv(CarbonInterface|string $date): ?float
     {
         return $this->getValue(self::TYPE_SYSTEM, self::SUBTYPE_PENSION_PILLAR_THRESHOLD_SMLMV, $date);
+    }
+
+    /**
+     * Porcentaje de ingreso mensualizado para calcular IBC de independientes con contratos.
+     * Referencia base en Colombia: 40% (si no hay parametrización vigente).
+     */
+    public function getIndependentIbcPercent(CarbonInterface|string $date): ?float
+    {
+        return $this->getValue(self::TYPE_SYSTEM, self::SUBTYPE_INDEPENDENT_IBC_PERCENT, $date);
     }
 
     /**

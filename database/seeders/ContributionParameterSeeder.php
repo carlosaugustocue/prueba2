@@ -94,6 +94,7 @@ class ContributionParameterSeeder extends Seeder
             ['type' => 'SYSTEM', 'subtype' => 'PAYMENT_DAY_MIN', 'value' => 2, 'value_type' => self::VALUE_TYPE_AMOUNT, 'valid_from' => self::VALID_FROM_2026, 'description' => 'Día hábil mínimo de vencimiento PILA', 'legal_reference' => $refPila],
             ['type' => 'SYSTEM', 'subtype' => 'PAYMENT_DAY_MAX', 'value' => 16, 'value_type' => self::VALUE_TYPE_AMOUNT, 'valid_from' => self::VALID_FROM_2026, 'description' => 'Día hábil máximo de vencimiento PILA', 'legal_reference' => $refPila],
             ['type' => 'SYSTEM', 'subtype' => 'PENSION_PILLAR_THRESHOLD_SMLMV', 'value' => 2.3, 'value_type' => self::VALUE_TYPE_MULTIPLIER, 'valid_from' => self::VALID_FROM_2026, 'description' => 'Umbral pilar contributivo (Colpensiones/ACCAI) en SMLMV', 'legal_reference' => $refLey2381],
+            ['type' => 'SYSTEM', 'subtype' => 'INDEPENDENT_IBC_PERCENT', 'value' => 40, 'value_type' => self::VALUE_TYPE_PERCENTAGE, 'valid_from' => self::VALID_FROM_2026, 'description' => 'Porcentaje del ingreso mensualizado para IBC de independientes con contratos múltiples', 'legal_reference' => 'Decreto 1273/2018 y concordantes'],
         ];
     }
 }
