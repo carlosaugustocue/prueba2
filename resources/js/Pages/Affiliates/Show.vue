@@ -642,6 +642,31 @@ const isAffiliateActive = computed(() => {
                         </div>
                     </div>
 
+                    <!-- Contratos independientes: enlace a página dedicada -->
+                    <div
+                        v-if="affiliate.patient_type === 'cotizante'"
+                        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+                    >
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white flex items-center justify-between">
+                            <h3 class="flex items-center gap-2 font-semibold text-gray-900">
+                                <FileText class="h-5 w-5 text-blue-600" />
+                                Contratos independientes
+                            </h3>
+                            <Link
+                                :href="`/affiliates/${affiliate.id}/contracts`"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-center text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                            >
+                                <ArrowRight class="h-4 w-4" />
+                                Gestionar contratos
+                            </Link>
+                        </div>
+                        <div class="px-6 py-3">
+                            <p class="text-sm text-gray-500">
+                                Registre varios contratos por mes para consolidar ingresos e IBC de cotizantes independientes.
+                            </p>
+                        </div>
+                    </div>
+
                     <!-- Pagos y recibos: enlace a página dedicada -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-white flex items-center justify-between">

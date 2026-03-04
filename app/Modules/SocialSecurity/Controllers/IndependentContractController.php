@@ -5,26 +5,21 @@ namespace App\Modules\SocialSecurity\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Patients\Models\Affiliate;
 use App\Modules\SocialSecurity\Models\IndependentContract;
+use App\Modules\SocialSecurity\Models\Payer;
 use App\Modules\SocialSecurity\Requests\StoreIndependentContractRequest;
 use App\Modules\SocialSecurity\Requests\UpdateIndependentContractRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class IndependentContractController extends Controller
 {
-    public function index(Request $request, Affiliate $affiliate): JsonResponse|RedirectResponse
+    public function index(Affiliate $affiliate): Response|RedirectResponse
     {
         $affiliate->loadMissing('socialSecurityProfile.contributorType');
         $code = $affiliate->socialSecurityProfile?->contributorType?->code;
         if (! in_array($code, ['03', '51', '59'], true)) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Los contratos múltiples aplican a cotizantes independientes (tipos 03, 51 o 59).',
-                ], 422);
-            }
-
             return redirect()->route('affiliates.show', $affiliate)
                 ->with('error', 'Los contratos múltiples aplican a cotizantes independientes (tipos 03, 51 o 59).');
         }
@@ -49,7 +44,12 @@ class IndependentContractController extends Controller
                 'notes' => $c->notes,
             ]);
 
-        return response()->json([
+        $payers = Payer::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'document_number']);
+
+        return Inertia::render('Affiliates/Contracts', [
             'affiliate' => [
                 'id' => $affiliate->id,
                 'full_name' => $affiliate->full_name,
@@ -58,6 +58,12 @@ class IndependentContractController extends Controller
                 'contributor_type_name' => $affiliate->socialSecurityProfile?->contributorType?->name,
             ],
             'contracts' => $contracts->values(),
+            'payers' => $payers,
+            'ibcSuggestion' => null,
+            'currentPeriod' => [
+                'year' => (int) now()->format('Y'),
+                'month' => (int) now()->format('n'),
+            ],
         ]);
     }
 
