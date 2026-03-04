@@ -8,6 +8,7 @@ use App\Modules\SocialSecurity\Models\IndependentContract;
 use App\Modules\SocialSecurity\Models\Payer;
 use App\Modules\SocialSecurity\Requests\StoreIndependentContractRequest;
 use App\Modules\SocialSecurity\Requests\UpdateIndependentContractRequest;
+use App\Modules\SocialSecurity\Services\IndependentContractIbcService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -15,6 +16,8 @@ use Inertia\Response;
 
 class IndependentContractController extends Controller
 {
+    public function __construct(private IndependentContractIbcService $ibcService) {}
+
     public function index(Affiliate $affiliate): Response|RedirectResponse
     {
         $affiliate->loadMissing('socialSecurityProfile.contributorType');
@@ -49,6 +52,10 @@ class IndependentContractController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'document_number']);
 
+        $currentYear = (int) now()->format('Y');
+        $currentMonth = (int) now()->format('n');
+        $ibcSuggestion = $this->ibcService->resolveForPeriod($affiliate, $currentYear, $currentMonth);
+
         return Inertia::render('Affiliates/Contracts', [
             'affiliate' => [
                 'id' => $affiliate->id,
@@ -59,10 +66,10 @@ class IndependentContractController extends Controller
             ],
             'contracts' => $contracts->values(),
             'payers' => $payers,
-            'ibcSuggestion' => null,
+            'ibcSuggestion' => $ibcSuggestion,
             'currentPeriod' => [
-                'year' => (int) now()->format('Y'),
-                'month' => (int) now()->format('n'),
+                'year' => $currentYear,
+                'month' => $currentMonth,
             ],
         ]);
     }

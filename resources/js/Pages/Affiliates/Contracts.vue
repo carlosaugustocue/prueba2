@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DatePicker from '@/Components/DatePicker.vue';
 import { ChevronLeft, FileText, Plus, Pencil, Trash2, Building2 } from 'lucide-vue-next';
@@ -12,6 +12,9 @@ const props = defineProps({
     ibcSuggestion: { type: Object, default: null },
     currentPeriod: { type: Object, default: () => ({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 }) },
 });
+
+const page = usePage();
+const flash = computed(() => page.props.flash || {});
 
 const editingId = ref(null);
 
@@ -108,6 +111,13 @@ function deleteContract(contract) {
                 <strong>{{ ibcSuggestion.contracts_count }}</strong> contrato(s) activo(s),
                 ingreso mensualizado <strong>{{ formatCurrency(ibcSuggestion.total_monthly_income) }}</strong> e IBC sugerido
                 (<strong>{{ ibcSuggestion.ibc_percent }}%</strong>): <strong>{{ formatCurrency(ibcSuggestion.ibc) }}</strong>.
+            </div>
+
+            <div v-if="flash.success" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                {{ flash.success }}
+            </div>
+            <div v-if="flash.error" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {{ flash.error }}
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">

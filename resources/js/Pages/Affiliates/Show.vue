@@ -63,6 +63,10 @@ const affiliate = computed(() => props.affiliate?.data || props.affiliate || {})
 const affiliateAge = computed(() => getAgeFromBirthDate(affiliate.value?.birth_date));
 const isHolder = computed(() => affiliate.value.is_holder);
 const isBeneficiary = computed(() => affiliate.value.is_beneficiary);
+const canManageIndependentContracts = computed(() => {
+    const code = (affiliate.value?.contributor_type_code || '').toString();
+    return isHolder.value && ['03', '51', '59'].includes(code);
+});
 const beneficiaries = computed(() => affiliate.value.beneficiaries || []);
 const holder = computed(() => affiliate.value.holder);
 const novelties = computed(() => affiliate.value.novelties || []);
@@ -644,7 +648,7 @@ const isAffiliateActive = computed(() => {
 
                     <!-- Contratos independientes: enlace a página dedicada -->
                     <div
-                        v-if="affiliate.patient_type === 'cotizante'"
+                        v-if="canManageIndependentContracts"
                         class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
                     >
                         <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white flex items-center justify-between">

@@ -9,6 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class IndependentContract extends Model
 {
+    public const CONTRACT_TYPES = [
+        'SERVICE_PROVISION',
+        'CIVIL_WORK',
+        'CONSULTING',
+        'OTHER',
+    ];
+
     protected $fillable = [
         'affiliate_id',
         'payer_id',

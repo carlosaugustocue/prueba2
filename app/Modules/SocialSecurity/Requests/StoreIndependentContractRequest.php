@@ -3,6 +3,8 @@
 namespace App\Modules\SocialSecurity\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use App\Modules\SocialSecurity\Models\IndependentContract;
 
 class StoreIndependentContractRequest extends FormRequest
 {
@@ -16,7 +18,7 @@ class StoreIndependentContractRequest extends FormRequest
         return [
             'payer_id' => ['nullable', 'exists:payers,id'],
             'contract_reference' => ['nullable', 'string', 'max:100'],
-            'contract_type' => ['required', 'string', 'max:40'],
+            'contract_type' => ['required', 'string', 'max:40', Rule::in(IndependentContract::CONTRACT_TYPES)],
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'monthly_income' => ['required', 'numeric', 'min:0'],
