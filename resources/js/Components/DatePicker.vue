@@ -39,10 +39,41 @@ const monthOptions = computed(() =>
     monthNames.map((name, i) => ({ value: i, label: name }))
 );
 
+function parseYmdParts(value) {
+    if (!value || typeof value !== 'string') return '';
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return '';
+    const y = Number(match[1]);
+    const m = Number(match[2]);
+    const day = Number(match[3]);
+    const probe = new Date(y, m - 1, day);
+    if (
+        Number.isNaN(probe.getTime()) ||
+        probe.getFullYear() !== y ||
+        probe.getMonth() !== (m - 1) ||
+        probe.getDate() !== day
+    ) {
+        return '';
+    }
+    return {
+        y,
+        m,
+        day,
+    };
+}
+
 function toYmd(value) {
     if (!value || typeof value !== 'string') return '';
     const trimmed = value.trim();
     if (!trimmed) return '';
+
+    const ymdParts = parseYmdParts(trimmed);
+    if (ymdParts) {
+        return `${ymdParts.y}-${String(ymdParts.m).padStart(2, '0')}-${String(ymdParts.day).padStart(2, '0')}`;
+    }
+
     const d = new Date(trimmed);
     if (Number.isNaN(d.getTime())) return '';
     const y = d.getFullYear();
@@ -53,12 +84,15 @@ function toYmd(value) {
 
 function formatDisplay(ymd) {
     if (!ymd) return '';
-    const d = new Date(ymd);
-    if (Number.isNaN(d.getTime())) return '';
-    const day = String(d.getDate()).padStart(2, '0');
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const y = d.getFullYear();
-    return `${day}/${m}/${y}`;
+    const parts = parseYmdParts(ymd);
+    if (!parts) return '';
+    return `${String(parts.day).padStart(2, '0')}/${String(parts.m).padStart(2, '0')}/${parts.y}`;
+}
+
+function ymdToLocalDate(value) {
+    const parts = parseYmdParts(toYmd(value));
+    if (!parts) return null;
+    return new Date(parts.y, parts.m - 1, parts.day);
 }
 
 const displayText = computed(() => formatDisplay(props.modelValue ? toYmd(props.modelValue) : ''));
@@ -71,8 +105,8 @@ const calendarDays = computed(() => {
     const days = [];
     const today = new Date();
     const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const minDate = props.min ? new Date(props.min) : null;
-    const maxDate = props.max ? new Date(props.max) : null;
+    const minDate = props.min ? ymdToLocalDate(props.min) : null;
+    const maxDate = props.max ? ymdToLocalDate(props.max) : null;
 
     const startDay = firstDay.getDay();
     for (let i = startDay - 1; i >= 0; i--) {
@@ -92,7 +126,7 @@ const calendarDays = computed(() => {
 
 function openCalendar() {
     if (props.modelValue && toYmd(props.modelValue)) {
-        const d = new Date(toYmd(props.modelValue));
+        const d = ymdToLocalDate(props.modelValue);
         if (!Number.isNaN(d.getTime())) currentMonth.value = new Date(d.getFullYear(), d.getMonth(), 1);
     } else {
         currentMonth.value = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -201,7 +235,7 @@ onUnmounted(() => {
 watch(() => props.modelValue, (v) => {
     const ymd = toYmd(v || '');
     if (ymd && popoverOpen.value) {
-        const d = new Date(ymd);
+        const d = ymdToLocalDate(ymd);
         if (!Number.isNaN(d.getTime())) currentMonth.value = new Date(d.getFullYear(), d.getMonth(), 1);
     }
 });
