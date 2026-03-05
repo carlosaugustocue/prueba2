@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DatePicker from '@/Components/DatePicker.vue';
+import SearchSelect from '@/Components/SearchSelect.vue';
 import { ChevronLeft, FileText, Plus, Pencil, Trash2, Building2 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -38,6 +39,14 @@ const contractTypeOptions = [
     { value: 'CONSULTING', label: 'Consultoría' },
     { value: 'OTHER', label: 'Otro' },
 ];
+
+const payerOptions = computed(() =>
+    (props.payers || []).map((p) => ({
+        id: p.id,
+        label: p.name,
+        description: p.document_number ? `Documento: ${p.document_number}` : '',
+    }))
+);
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value || 0);
@@ -201,13 +210,12 @@ function deleteContract(contract) {
                     <form class="p-6 space-y-4" @submit.prevent="submit">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Pagador</label>
-                            <select
+                            <SearchSelect
                                 v-model="form.payer_id"
-                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                            >
-                                <option value="">Sin pagador específico</option>
-                                <option v-for="p in payers" :key="p.id" :value="p.id">{{ p.name }}</option>
-                            </select>
+                                :options="payerOptions"
+                                placeholder="Buscar pagador por nombre o documento..."
+                                no-results-text="No hay pagadores que coincidan con la búsqueda."
+                            />
                             <p v-if="form.errors.payer_id" class="mt-1 text-sm text-red-600">{{ form.errors.payer_id }}</p>
                         </div>
                         <div>

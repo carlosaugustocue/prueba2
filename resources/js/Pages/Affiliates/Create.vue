@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DatePicker from '@/Components/DatePicker.vue';
+import SearchSelect from '@/Components/SearchSelect.vue';
 import axios from 'axios';
 import { 
     ChevronLeft, User, Users, Search, Loader2, X, Check, 
@@ -95,6 +96,14 @@ const selectedContributorCode = computed(() => {
 });
 const showParafiscalesCheckbox = computed(() => selectedContributorCode.value === '01');
 const showParafiscalesExemptMessage = computed(() => selectedContributorCode.value === '02');
+
+const payerOptions = computed(() =>
+    (props.payerList || []).map((p) => ({
+        id: p.id,
+        label: `${p.name} (${p.document_type_abbreviation} ${p.document_number})`,
+        description: 'Pagador',
+    }))
+);
 
 const applyHolderDefaults = (holder) => {
     if (!holder) return;
@@ -528,10 +537,12 @@ const submit = () => form.post('/affiliates');
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Pagador</label>
-                            <select v-model="form.payer_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                <option value="">Ninguno</option>
-                                <option v-for="p in (payerList || [])" :key="p.id" :value="p.id">{{ p.name }} ({{ p.document_type_abbreviation }} {{ p.document_number }})</option>
-                            </select>
+                            <SearchSelect
+                                v-model="form.payer_id"
+                                :options="payerOptions"
+                                placeholder="Buscar pagador por nombre o documento..."
+                                no-results-text="No hay pagadores que coincidan."
+                            />
                             <p class="mt-1 text-xs text-gray-500">Quién paga los aportes (empresa o persona)</p>
                         </div>
                         <div>
