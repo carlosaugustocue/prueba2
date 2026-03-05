@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import SearchSelect from '@/Components/SearchSelect.vue';
 import { ChevronLeft, Calculator, User, FileText } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -32,10 +33,41 @@ const filteredAffiliates = computed(() => {
     return list;
 });
 
+const payerOptions = computed(() =>
+    (props.payers || []).map((p) => ({
+        id: p.id,
+        label: p.name,
+        description: p.document_number ? `Documento: ${p.document_number}` : '',
+    }))
+);
+
+const affiliateOptions = computed(() =>
+    filteredAffiliates.value.map((a) => ({
+        id: a.id,
+        label: `${a.full_name} — ${a.document_number}`,
+        description: a.payer_name ? `Pagador: ${a.payer_name}` : 'Sin pagador asignado',
+    }))
+);
+
 const selectedAffiliate = computed(() => {
     if (!affiliateId.value) return null;
     return (props.affiliates || []).find((a) => String(a.id) === String(affiliateId.value));
 });
+
+const previewContractPayerIds = computed(() => {
+    const ids = previewData.value?.parameters_used?.contracts?.contract_payer_ids || [];
+    return ids.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0);
+});
+
+const previewHasPayerMismatch = computed(() => {
+    if (previewData.value?.parameters_used?.ibc_source !== 'contracts') return false;
+    const profilePayerId = Number(selectedAffiliate.value?.payer_id || 0);
+    if (!profilePayerId || !previewContractPayerIds.value.length) return false;
+    return !previewContractPayerIds.value.includes(profilePayerId);
+});
+
+const previewHasMultipleContractPayers = computed(() => previewContractPayerIds.value.length > 1);
+const previewContractsWithoutPayer = computed(() => Number(previewData.value?.parameters_used?.contracts?.contracts_without_payer_count || 0));
 
 /** True si el afiliado seleccionado es tipo 51 (independiente flexible) y debe mostrar días trabajados. */
 const isType51 = computed(() => selectedAffiliate.value?.contributor_type_code === '51');
@@ -108,19 +140,21 @@ const formatMoney = (n) => {
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Pagador (filtrar)</label>
-                        <select v-model="payerFilter" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                            <option value="">Todos</option>
-                            <option v-for="p in payers" :key="p.id" :value="p.id">{{ p.name }} — {{ p.document_number }}</option>
-                        </select>
+                        <SearchSelect
+                            v-model="payerFilter"
+                            :options="payerOptions"
+                            placeholder="Buscar pagador por nombre o documento..."
+                            no-results-text="No hay pagadores que coincidan."
+                        />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Afiliado <span class="text-red-500">*</span></label>
-                        <select v-model="affiliateId" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                            <option value="">Seleccione un afiliado</option>
-                            <option v-for="a in filteredAffiliates" :key="a.id" :value="a.id">
-                                {{ a.full_name }} — {{ a.document_number }}{{ a.payer_name ? ` (${a.payer_name})` : '' }}
-                            </option>
-                        </select>
+                        <SearchSelect
+                            v-model="affiliateId"
+                            :options="affiliateOptions"
+                            placeholder="Buscar afiliado por nombre o documento..."
+                            no-results-text="No hay afiliados que coincidan."
+                        />
                         <p v-if="!filteredAffiliates.length" class="mt-1 text-xs text-amber-600">No hay afiliados con perfil SS{{ payerFilter ? ' para este pagador' : '' }}.</p>
                     </div>
                     <div v-if="isType51" class="rounded-lg bg-amber-50 border border-amber-200 p-3">
@@ -201,6 +235,20 @@ const formatMoney = (n) => {
                     {{ previewData?.parameters_used?.contracts?.contracts_count || 0 }} contrato(s),
                     ingreso mensualizado {{ formatMoney(previewData?.parameters_used?.contracts?.total_monthly_income || 0) }},
                     porcentaje {{ previewData?.parameters_used?.contracts?.ibc_percent || 40 }}%.
+                </div>
+                <div
+                    v-if="previewHasPayerMismatch || previewHasMultipleContractPayers || previewContractsWithoutPayer > 0"
+                    class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                >
+                    <p v-if="previewHasPayerMismatch">
+                        El pagador del perfil del afiliado no coincide con los pagadores de contratos usados para este cálculo.
+                    </p>
+                    <p v-if="previewHasMultipleContractPayers" class="mt-1">
+                        Se detectaron múltiples pagadores en contratos activos para este período.
+                    </p>
+                    <p v-if="previewContractsWithoutPayer > 0" class="mt-1">
+                        Hay {{ previewContractsWithoutPayer }} contrato(s) activo(s) sin pagador; complete ese dato para evitar inconsistencias.
+                    </p>
                 </div>
                 <p class="mt-3 text-xs text-gray-500">Período: {{ previewData.period_date }}. Use "Crear planilla" para generar la planilla con estos montos (se liquidará al crearla si el perfil es válido).</p>
             </div>

@@ -43,7 +43,12 @@ class PayrollController extends Controller
             $query->where('status', $request->input('status'));
         }
         if ($request->filled('payer_id')) {
-            $query->whereHas('affiliate.socialSecurityProfile', fn ($q) => $q->where('payer_id', $request->input('payer_id')));
+            $payerId = (int) $request->input('payer_id');
+            $query->where(function ($q) use ($payerId) {
+                $q->whereHas('affiliate.socialSecurityProfile', fn ($profileQuery) => $profileQuery->where('payer_id', $payerId))
+                    ->orWhereJsonContains('calculation_metadata->parameters_used->contracts->contract_payer_ids', $payerId)
+                    ->orWhereJsonContains('calculation_metadata->parameters_used->contracts->contract_payer_ids', (string) $payerId);
+            });
         }
         if ($request->filled('search')) {
             $term = $request->input('search');

@@ -37,7 +37,7 @@ const canMarkSent = computed(() => payroll.value.status === 'SETTLED');
 const canMarkPaid = computed(() => payroll.value.status === 'SENT_TO_CLIENT');
 
 const settle = () => {
-    if (!confirm('¿Liquidar esta planilla con los datos actuales del perfil del afiliado?')) return;
+    if (!confirm('¿Liquidar esta planilla con los datos vigentes (perfil y/o contratos activos)?')) return;
     router.post(`/payrolls/${payroll.value.id}/settle`, {}, { preserveScroll: true });
 };
 
@@ -50,6 +50,18 @@ const markPaid = () => {
 };
 
 const meta = computed(() => payroll.value.calculation_metadata || {});
+const contractPayerIds = computed(() => {
+    const ids = meta.value?.parameters_used?.contracts?.contract_payer_ids || [];
+    return ids.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0);
+});
+const hasMultipleContractPayers = computed(() => contractPayerIds.value.length > 1);
+const hasProfileVsContractsMismatch = computed(() => {
+    if (meta.value?.parameters_used?.ibc_source !== 'contracts') return false;
+    const profilePayerId = Number(payroll.value?.affiliate_profile?.payer_id || 0);
+    if (!profilePayerId || !contractPayerIds.value.length) return false;
+    return !contractPayerIds.value.includes(profilePayerId);
+});
+const contractsWithoutPayerCount = computed(() => Number(meta.value?.parameters_used?.contracts?.contracts_without_payer_count || 0));
 </script>
 
 <template>
@@ -113,6 +125,20 @@ const meta = computed(() => payroll.value.calculation_metadata || {});
                             Esta liquidación usó IBC consolidado de
                             {{ meta?.parameters_used?.contracts?.contracts_count || 0 }} contrato(s) activos.
                         </p>
+                        <div
+                            v-if="hasProfileVsContractsMismatch || hasMultipleContractPayers || contractsWithoutPayerCount > 0"
+                            class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                        >
+                            <p v-if="hasProfileVsContractsMismatch">
+                                El pagador del perfil no coincide con los pagadores de contratos usados en la liquidación.
+                            </p>
+                            <p v-if="hasMultipleContractPayers" class="mt-1">
+                                Esta planilla consolidó contratos de múltiples pagadores.
+                            </p>
+                            <p v-if="contractsWithoutPayerCount > 0" class="mt-1">
+                                Se detectaron {{ contractsWithoutPayerCount }} contrato(s) sin pagador al momento del cálculo.
+                            </p>
+                        </div>
                         <dl class="mt-4 space-y-2">
                             <div class="flex justify-between text-sm">
                                 <dt class="text-gray-500">Salud</dt>

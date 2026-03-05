@@ -22,7 +22,9 @@ class IndependentContractIbcService
      *   total_monthly_income: float,
      *   max_risk_class: int|null,
      *   contracts_count: int,
-     *   contract_ids: array<int>
+     *   contract_ids: array<int>,
+     *   contract_payer_ids: array<int>,
+     *   contracts_without_payer_count: int
      * }|null
      */
     public function resolveForPeriod(Affiliate $affiliate, int $year, int $month): ?array
@@ -30,7 +32,7 @@ class IndependentContractIbcService
         $contracts = IndependentContract::query()
             ->where('affiliate_id', $affiliate->id)
             ->activeForPeriod($year, $month)
-            ->get(['id', 'monthly_income', 'risk_class']);
+            ->get(['id', 'payer_id', 'monthly_income', 'risk_class']);
 
         if ($contracts->isEmpty()) {
             return null;
@@ -43,6 +45,14 @@ class IndependentContractIbcService
         $maxRiskClass = $contracts
             ->filter(fn ($c) => ! empty($c->risk_class))
             ->max(fn ($c) => (int) $c->risk_class);
+        $contractPayerIds = $contracts
+            ->pluck('payer_id')
+            ->filter(fn ($id) => $id !== null && $id !== '')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+        $contractsWithoutPayerCount = $contracts->filter(fn ($c) => empty($c->payer_id))->count();
 
         $periodDate = sprintf('%04d-%02d-01', $year, $month);
         $ibcPercent = $this->resolver->getIndependentIbcPercent($periodDate) ?? 40.0;
@@ -66,6 +76,8 @@ class IndependentContractIbcService
             'max_risk_class' => $maxRiskClass ? (int) $maxRiskClass : null,
             'contracts_count' => $contracts->count(),
             'contract_ids' => $contracts->pluck('id')->map(fn ($id) => (int) $id)->all(),
+            'contract_payer_ids' => $contractPayerIds,
+            'contracts_without_payer_count' => (int) $contractsWithoutPayerCount,
         ];
     }
 }

@@ -14,7 +14,8 @@ use App\Modules\SocialSecurity\Models\Payroll;
 class PayrollBatchService
 {
     public function __construct(
-        private PayrollService $payrollService
+        private PayrollService $payrollService,
+        private IndependentContractIbcService $independentContractIbcService
     ) {}
 
     /**
@@ -81,11 +82,7 @@ class PayrollBatchService
         $query = Payroll::where('year', $year)
             ->where('month', $month)
             ->where('status', PayrollStatus::PENDING->value)
-            ->with(['affiliate.socialSecurityProfile']);
-
-        if ($payerId !== null) {
-            $query->whereHas('affiliate.socialSecurityProfile', fn ($q) => $q->where('payer_id', $payerId));
-        }
+            ->with(['affiliate.socialSecurityProfile.contributorType']);
 
         $payrolls = $query->get();
         $settled = 0;
@@ -93,6 +90,9 @@ class PayrollBatchService
 
         foreach ($payrolls as $payroll) {
             try {
+                if ($payerId !== null && ! $this->matchesPayerFilter($payroll, $payerId)) {
+                    continue;
+                }
                 $this->payrollService->settle($payroll);
                 $settled++;
             } catch (\Throwable $e) {
@@ -104,5 +104,38 @@ class PayrollBatchService
             'settled' => $settled,
             'errors' => $errors,
         ];
+    }
+
+    private function matchesPayerFilter(Payroll $payroll, int $payerId): bool
+    {
+        $profile = $payroll->affiliate?->socialSecurityProfile;
+        if ($profile === null) {
+            return false;
+        }
+
+        if ((int) $profile->payer_id === $payerId) {
+            return true;
+        }
+
+        $contributorCode = $profile->contributorType?->code ?? '';
+        if (! in_array($contributorCode, ['03', '51', '59'], true)) {
+            return false;
+        }
+
+        $affiliate = $payroll->affiliate;
+        if ($affiliate === null) {
+            return false;
+        }
+
+        $contractIbc = $this->independentContractIbcService->resolveForPeriod($affiliate, (int) $payroll->year, (int) $payroll->month);
+        if ($contractIbc === null) {
+            return false;
+        }
+
+        $payerIds = collect($contractIbc['contract_payer_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return in_array($payerId, $payerIds, true);
     }
 }

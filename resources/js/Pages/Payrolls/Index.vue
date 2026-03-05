@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
@@ -17,6 +17,7 @@ const year = ref(props.filters?.year || '');
 const month = ref(props.filters?.month || '');
 const status = ref(props.filters?.status || '');
 const payerId = ref(props.filters?.payer_id || '');
+const payerSearch = ref('');
 const dueDate = ref(props.filters?.due_date || '');
 
 const applyFilters = () => {
@@ -57,6 +58,15 @@ const monthLabel = (m) => {
     const names = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     return names[m] || m;
 };
+
+const filteredPayers = computed(() => {
+    const term = payerSearch.value.trim().toLowerCase();
+    const list = props.payers || [];
+    if (!term) return list;
+    return list.filter((p) =>
+        `${p.name || ''} ${p.document_number || ''}`.toLowerCase().includes(term)
+    );
+});
 </script>
 
 <template>
@@ -91,10 +101,18 @@ const monthLabel = (m) => {
                         <option value="">Estado</option>
                         <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                     </select>
-                    <select v-model="payerId" class="rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 w-48">
-                        <option value="">Pagador</option>
-                        <option v-for="p in payers" :key="p.id" :value="p.id">{{ p.name }}</option>
-                    </select>
+                    <div class="w-56 space-y-1">
+                        <input
+                            v-model="payerSearch"
+                            type="text"
+                            placeholder="Buscar pagador..."
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm"
+                        />
+                        <select v-model="payerId" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                            <option value="">Pagador</option>
+                            <option v-for="p in filteredPayers" :key="p.id" :value="p.id">{{ p.name }}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -120,7 +138,19 @@ const monthLabel = (m) => {
                                 </Link>
                                 <p class="text-sm text-gray-500">{{ py.affiliate?.document_number ?? '' }}</p>
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-600">{{ py.affiliate_profile?.payer?.name ?? '—' }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                <p v-if="py.ibc_source === 'contracts'" class="font-medium text-blue-700">
+                                    Por contratos
+                                    <span v-if="(py.contract_payer_ids || []).length > 1">({{ py.contract_payer_ids.length }} pagadores)</span>
+                                </p>
+                                <p v-else>{{ py.affiliate_profile?.payer?.name ?? '—' }}</p>
+                                <p
+                                    v-if="py.ibc_source === 'contracts' && py.affiliate_profile?.payer?.name"
+                                    class="text-xs text-gray-500 mt-0.5"
+                                >
+                                    Perfil: {{ py.affiliate_profile.payer.name }}
+                                </p>
+                            </td>
                             <td class="px-6 py-4 text-sm text-gray-900">{{ monthLabel(py.month) }} {{ py.year }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600">{{ py.due_date ?? '—' }}</td>
                             <td class="px-6 py-4">

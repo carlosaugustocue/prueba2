@@ -220,6 +220,12 @@ class PayrollService
                 $errors[] = sprintf('IBC fuera de rango vigente (%.0f - %.0f).', $ibcMin, $ibcMax);
             }
         }
+        if ($this->canUseIndependentContracts($contributorCode) && $profile->affiliate !== null) {
+            $contractIbc = $this->independentContractIbcService->resolveForPeriod($profile->affiliate, $year, $month);
+            if ($contractIbc !== null && (int) ($contractIbc['contracts_without_payer_count'] ?? 0) > 0) {
+                $errors[] = 'Hay contratos independientes activos sin pagador asignado. Asigne pagador para evitar inconsistencias en filtros y reportes.';
+            }
+        }
 
         if ($profile->contributorType === null) {
             $errors[] = 'Tipo de cotizante no asignado.';

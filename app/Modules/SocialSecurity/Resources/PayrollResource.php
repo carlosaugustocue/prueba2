@@ -9,6 +9,12 @@ class PayrollResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $contractPayerIds = collect(data_get($this->calculation_metadata, 'parameters_used.contracts.contract_payer_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->values()
+            ->all();
+
         return [
             'id' => $this->id,
             'affiliate_id' => $this->affiliate_id,
@@ -28,6 +34,9 @@ class PayrollResource extends JsonResource
             'paid_at' => $this->paid_at?->toIso8601String(),
             'notes' => $this->notes,
             'calculation_metadata' => $this->when($this->calculation_metadata, $this->calculation_metadata),
+            'ibc_source' => data_get($this->calculation_metadata, 'parameters_used.ibc_source', 'profile'),
+            'contract_payer_ids' => $contractPayerIds,
+            'contracts_without_payer_count' => (int) data_get($this->calculation_metadata, 'parameters_used.contracts.contracts_without_payer_count', 0),
             'affiliate' => $this->whenLoaded('affiliate', function () {
                 $a = $this->affiliate;
                 return [
