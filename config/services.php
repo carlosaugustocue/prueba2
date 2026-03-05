@@ -35,6 +35,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'whatsapp' => [
+        // provider: meta | twilio
+        'provider' => env('WHATSAPP_PROVIDER', 'meta'),
         'api_url' => env('WHATSAPP_API_URL', 'https://graph.facebook.com/v18.0'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
@@ -43,6 +45,12 @@ return [
         'templates' => [
             'confirmation' => env('WHATSAPP_TEMPLATE_CONFIRMATION', 'serviconli_cita_confirmada'),
             'reminder_morning' => env('WHATSAPP_TEMPLATE_REMINDER_MORNING', 'serviconli_recordatorio_cita_manana'),
+        ],
+        // Para Twilio, puedes usar los mismos keys de templates pero con Content SID (HX...)
+        'twilio' => [
+            'account_sid' => env('TWILIO_ACCOUNT_SID'),
+            'auth_token' => env('TWILIO_AUTH_TOKEN'),
+            'from' => env('TWILIO_WHATSAPP_FROM'), // Ej: whatsapp:+14155238886
         ],
     ],
 
