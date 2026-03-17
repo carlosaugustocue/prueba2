@@ -45,6 +45,8 @@ const sections = computed(() => {
         items: [
             { name: 'Dashboard SS', href: '/dashboard-ss', icon: LayoutDashboard },
             { name: 'Afiliados', href: '/affiliates', icon: Users },
+            { name: 'Empleadores PILA', href: '/pila/employers', icon: Building2 },
+            { name: 'Afiliaciones PILA', href: '/pila/affiliations', icon: FileCheck },
             { name: 'Pagadores', href: '/payers', icon: Building2 },
             { name: 'Planillas', href: '/payrolls', icon: FileText },
         ],

@@ -111,6 +111,18 @@ class Affiliate extends Model
         return $this->hasOne(\App\Modules\SocialSecurity\Models\SocialSecurityProfile::class);
     }
 
+    /** Afiliación(es) PILA; la operativa es la que tiene is_current = true. */
+    public function pilaAffiliations(): HasMany
+    {
+        return $this->hasMany(\App\Modules\PilaManagement\Models\PilaAffiliation::class);
+    }
+
+    /** Afiliación PILA vigente (fuente única de verdad para datos operativos SS). */
+    public function pilaAffiliation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Modules\PilaManagement\Models\PilaAffiliation::class)->where('is_current', true);
+    }
+
     public function holder(): BelongsTo
     {
         return $this->belongsTo(Affiliate::class, 'holder_id');
