@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
+use App\Modules\Patients\Enums\AffiliateStatus;
 use App\Modules\Patients\Models\Affiliate;
 
 class CreateAppointmentRequestRequest extends FormRequest
@@ -26,9 +27,8 @@ class CreateAppointmentRequestRequest extends FormRequest
                     if (! $affiliate) {
                         return;
                     }
-                    $status = strtoupper(trim((string) ($affiliate->status ?? '')));
-                    if ($status === 'INACTIVO' || $status === 'SUSPENDIDO') {
-                        $fail('No se pueden crear solicitudes de cita para un afiliado inactivo o suspendido.');
+                    if ($affiliate->status === AffiliateStatus::INACTIVO) {
+                        $fail(__('social_security.validation.affiliate_inactive'));
                         return;
                     }
                     if (! Affiliate::where('id', $value)->whereServiconliManaged()->exists()) {

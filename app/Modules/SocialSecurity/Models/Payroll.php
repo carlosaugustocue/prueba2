@@ -34,6 +34,7 @@ class Payroll extends Model
     protected function casts(): array
     {
         return [
+            'status' => PayrollStatus::class,
             'due_date' => 'date',
             'sent_at' => 'datetime',
             'paid_at' => 'datetime',
@@ -68,8 +69,4 @@ class Payroll extends Model
         return $this->hasMany(PayrollTracking::class);
     }
 
-    public function getStatusEnum(): ?PayrollStatus
-    {
-        return $this->status ? PayrollStatus::tryFrom($this->status) : null;
-    }
 }

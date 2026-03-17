@@ -15,16 +15,7 @@ enum DocumentType: string
 
     public function label(): string
     {
-        return match($this) {
-            self::CC => 'Cédula de Ciudadanía',
-            self::TI => 'Tarjeta de Identidad',
-            self::CE => 'Cédula de Extranjería',
-            self::PA => 'Pasaporte',
-            self::RC => 'Registro Civil',
-            self::NIT => 'NIT',
-            self::PPT => 'Permiso por Protección Temporal',
-            self::PTT => 'Permiso Temporal de Permanencia',
-        };
+        return __('social_security.document_type.' . $this->value);
     }
 
     public function abbreviation(): string
@@ -34,7 +25,7 @@ enum DocumentType: string
 
     public static function toArray(): array
     {
-        return array_map(fn($case) => [
+        return array_map(fn ($case) => [
             'value' => $case->value,
             'label' => $case->label(),
             'abbreviation' => $case->abbreviation(),

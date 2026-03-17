@@ -2,36 +2,20 @@
 
 namespace App\Modules\SocialSecurity\Services;
 
+use App\Modules\SocialSecurity\Models\ContributorType;
+use Illuminate\Support\Facades\Cache;
+
 /**
  * Reglas de liquidación por tipo de cotizante PILA.
+ * Lee las reglas desde la tabla contributor_types (BD); no hay constantes de negocio en código.
  * Ref: docs/NORMATIVA_Y_COMPLEJIDAD_SEGURIDAD_SOCIAL.md sección 3.
  */
 final class ContributorTypeRules
 {
-    /** Códigos que liquidan como dependientes (split empleador/empleado en salud y pensión). */
-    private const DEPENDENT_CODES = ['01', '02'];
-
-    /** Código 02: servicio doméstico — parafiscales siempre exentos. */
-    private const PARAFISCALES_EXEMPT_CODES = ['02'];
-
-    /** Solo salud (no pensión, no ARL, no CCF). */
-    private const HEALTH_ONLY_CODES = ['12', '40'];
-
-    /** Salud + ARL, sin pensión (aprendiz productiva). */
-    private const HEALTH_AND_ARL_ONLY_CODES = ['19'];
-
-    /** Sin aportes obligatorios (madre sustituta o régimen especial). */
-    private const NO_CONTRIBUTION_CODES = ['04'];
-
-    /** Independiente voluntario: no salud obligatoria, pensión voluntaria (no liquidamos obligatorio). */
-    private const VOLUNTARY_ONLY_CODES = ['57'];
-
-    /** Independiente flexible (51): aportes proporcionales por días/semanas. */
-    private const PROPORTIONAL_CODES = ['51'];
+    private const CACHE_KEY = 'contributor_type_rules';
+    private const CACHE_TTL_SECONDS = 3600;
 
     /**
-     * Obtiene las reglas aplicables para un código de tipo cotizante.
-     *
      * @return array{
      *   is_dependent: bool,
      *   parafiscales_allowed: bool,
@@ -46,92 +30,65 @@ final class ContributorTypeRules
     public static function forCode(string $code): array
     {
         $code = trim($code);
-        $isDependent = in_array($code, self::DEPENDENT_CODES, true);
-        $parafiscalesAllowed = $isDependent && ! in_array($code, self::PARAFISCALES_EXEMPT_CODES, true);
+        $all = self::allRules();
 
-        if (in_array($code, self::NO_CONTRIBUTION_CODES, true)) {
-            return [
-                'is_dependent' => false,
-                'parafiscales_allowed' => false,
-                'health_applies' => false,
-                'pension_applies' => false,
-                'arl_applies' => false,
-                'ccf_applies' => false,
-                'is_proportional' => false,
-                'description' => 'Madre sustituta: sin aportes obligatorios.',
-            ];
+        if (isset($all[$code])) {
+            return $all[$code];
         }
 
-        if (in_array($code, self::VOLUNTARY_ONLY_CODES, true)) {
-            return [
-                'is_dependent' => false,
-                'parafiscales_allowed' => false,
-                'health_applies' => false,
-                'pension_applies' => false,
-                'arl_applies' => false,
-                'ccf_applies' => false,
-                'is_proportional' => false,
-                'description' => 'Independiente voluntario: solo aportes voluntarios (no se liquidan aquí).',
-            ];
-        }
-
-        if (in_array($code, self::HEALTH_ONLY_CODES, true)) {
-            return [
-                'is_dependent' => false,
-                'parafiscales_allowed' => false,
-                'health_applies' => true,
-                'pension_applies' => false,
-                'arl_applies' => false,
-                'ccf_applies' => false,
-                'is_proportional' => false,
-                'description' => $code === '12' ? 'Aprendiz SENA lectiva: solo salud.' : 'Beneficiario UPC adicional: solo salud.',
-            ];
-        }
-
-        if (in_array($code, self::HEALTH_AND_ARL_ONLY_CODES, true)) {
-            return [
-                'is_dependent' => false,
-                'parafiscales_allowed' => false,
-                'health_applies' => true,
-                'pension_applies' => false,
-                'arl_applies' => true,
-                'ccf_applies' => false,
-                'is_proportional' => false,
-                'description' => 'Aprendiz SENA productiva: salud y ARL.',
-            ];
-        }
-
-        $isProportional = in_array($code, self::PROPORTIONAL_CODES, true);
-        $ccfApplies = $isDependent;
-        $arlApplies = ! in_array($code, self::HEALTH_ONLY_CODES, true);
-
-        return [
-            'is_dependent' => $isDependent,
-            'parafiscales_allowed' => $parafiscalesAllowed,
-            'health_applies' => true,
-            'pension_applies' => true,
-            'arl_applies' => $arlApplies,
-            'ccf_applies' => $ccfApplies,
-            'is_proportional' => $isProportional,
-            'description' => $isProportional
-                ? 'Independiente flexible: aportes proporcionales por días/semanas.'
-                : ($isDependent ? 'Dependiente: split empleador/empleado.' : 'Independiente o contratista: cotizante/empresa asume 100%.'),
-        ];
+        return self::defaultRules($code);
     }
 
-    /**
-     * Códigos de tipo cotizante para los que el sistema puede liquidar aportes.
-     */
     public static function supportedCodes(): array
     {
-        return ['01', '02', '03', '04', '12', '19', '23', '40', '51', '57', '59'];
+        return array_keys(self::allRules());
+    }
+
+    public static function isSupported(string $code): bool
+    {
+        return isset(self::allRules()[trim($code)]);
     }
 
     /**
-     * Indica si el código está soportado para liquidación.
+     * Fuerza recarga desde BD (útil después de ejecutar seeders o actualizar catálogo).
      */
-    public static function isSupported(string $code): bool
+    public static function clearCache(): void
     {
-        return in_array(trim($code), self::supportedCodes(), true);
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    private static function allRules(): array
+    {
+        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL_SECONDS, function () {
+            return ContributorType::where('is_active', true)
+                ->get()
+                ->mapWithKeys(fn (ContributorType $ct) => [
+                    $ct->code => [
+                        'is_dependent' => (bool) $ct->is_dependent,
+                        'parafiscales_allowed' => (bool) $ct->parafiscales_allowed,
+                        'health_applies' => (bool) $ct->health_applies,
+                        'pension_applies' => (bool) $ct->pension_applies,
+                        'arl_applies' => (bool) $ct->arl_applies,
+                        'ccf_applies' => (bool) $ct->ccf_applies,
+                        'is_proportional' => (bool) $ct->is_proportional,
+                        'description' => $ct->description ?? $ct->name,
+                    ],
+                ])
+                ->all();
+        });
+    }
+
+    private static function defaultRules(string $code): array
+    {
+        return [
+            'is_dependent' => false,
+            'parafiscales_allowed' => false,
+            'health_applies' => true,
+            'pension_applies' => true,
+            'arl_applies' => true,
+            'ccf_applies' => false,
+            'is_proportional' => false,
+            'description' => "Tipo de cotizante {$code}: reglas no configuradas en BD.",
+        ];
     }
 }

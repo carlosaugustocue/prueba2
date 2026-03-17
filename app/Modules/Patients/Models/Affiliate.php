@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Modules\Core\Traits\HasUuid;
 use App\Modules\Core\Traits\Searchable;
+use App\Modules\Patients\Enums\AffiliateStatus;
 use App\Modules\Patients\Enums\DocumentType;
 use App\Modules\Patients\Enums\PatientType;
 use App\Modules\Patients\Enums\RelationshipType;
@@ -84,6 +85,7 @@ class Affiliate extends Model
     protected function casts(): array
     {
         return [
+            'status' => AffiliateStatus::class,
             'document_type' => DocumentType::class,
             'patient_type' => PatientType::class,
             'relationship_type' => RelationshipType::class,

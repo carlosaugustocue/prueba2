@@ -74,11 +74,13 @@ const isType51 = computed(() => selectedAffiliate.value?.contributor_type_code =
 
 watch(affiliateId, () => { if (!isType51.value) daysWorked.value = ''; });
 
+const previewError = ref('');
 const runPreview = () => {
     if (!affiliateId.value || !year.value || !month.value) {
         alert('Seleccione afiliado, año y mes.');
         return;
     }
+    previewError.value = '';
     loading.value = true;
     const payload = {
         affiliate_id: affiliateId.value,
@@ -89,6 +91,11 @@ const runPreview = () => {
     router.post('/payrolls/preview', payload, {
         preserveScroll: true,
         onFinish: () => { loading.value = false; },
+        onError: (errors) => {
+            const msg = errors?.affiliate_id?.[0] || errors?.message || 'No se pudo simular. Revise los datos e intente de nuevo.';
+            previewError.value = msg;
+        },
+        onSuccess: () => { previewError.value = ''; },
     });
 };
 
@@ -194,6 +201,7 @@ const formatMoney = (n) => {
                         Crear planilla
                     </button>
                 </div>
+                <p v-if="previewError" class="mt-3 text-sm text-red-600">{{ previewError }}</p>
             </div>
 
             <div v-if="previewData" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

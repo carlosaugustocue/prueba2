@@ -2,20 +2,17 @@
 
 namespace App\Modules\SocialSecurity\Enums;
 
-enum PayrollStatus: string
+enum PaymentPeriodicity: string
 {
-    case PENDING = 'PENDING';
-    case SETTLED = 'SETTLED';
-    case SENT_TO_CLIENT = 'SENT_TO_CLIENT';
-    case PAID = 'PAID';
+    case CURRENT = 'CURRENT';
     case OVERDUE = 'OVERDUE';
 
     public function label(): string
     {
-        return __('social_security.payroll_status.' . $this->value);
+        return __('social_security.payment_periodicity.' . $this->value);
     }
 
-    public static function toSelectArray(): array
+    public static function toArray(): array
     {
         return array_map(fn ($case) => [
             'value' => $case->value,

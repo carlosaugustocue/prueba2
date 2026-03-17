@@ -498,7 +498,7 @@ Este documento debe tratarse como la **única fuente de verdad** para el orden d
 
 ## 8. Mapeo DataSegura e ImportService
 
-La **única fuente de verdad** para el mapeo del Excel DataSegura (DataSegura_SERVICONLI_2025.xlsx, hoja "DATA ACTUALIZADA 2025") a la base de datos es:
+**Documento operativo a sustituir (módulo Seguridad Social):** `docs/DATA CENTRAL DE CITAS ACTUPELAEZALIZADO 202505 (1).xlsx`. Este archivo pertenece al módulo de Seguridad Social; la Central de Citas es un módulo aparte. La **única fuente de verdad** para el mapeo de ese Excel (o su hoja "DATA ACTUALIZADA 2025" / equivalente) a la base de datos es:
 
 - **[docs/mapeo_datasegura_a_base_de_datos.md](mapeo_datasegura_a_base_de_datos.md)**
 

@@ -13,6 +13,8 @@ class Payer extends Model
         'document_type',
         'document_number',
         'address',
+        'city',
+        'department',
         'phone',
         'email',
         'contact_person',

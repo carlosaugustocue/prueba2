@@ -14,15 +14,12 @@ enum PatientType: string
 
     public function label(): string
     {
-        return match($this) {
-            self::COTIZANTE => 'Cotizante',
-            self::BENEFICIARIO => 'Beneficiario',
-        };
+        return __('social_security.patient_type.' . $this->value);
     }
 
     public static function toArray(): array
     {
-        return array_map(fn($case) => [
+        return array_map(fn ($case) => [
             'value' => $case->value,
             'label' => $case->label(),
         ], self::cases());

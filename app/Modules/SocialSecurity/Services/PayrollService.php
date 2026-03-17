@@ -112,7 +112,7 @@ class PayrollService
      */
     public function settle(Payroll $payroll): ContributionBreakdown
     {
-        if ($payroll->getStatusEnum() === PayrollStatus::PAID) {
+        if ($payroll->status === PayrollStatus::PAID) {
             throw new InvalidArgumentException('No se puede liquidar una planilla ya pagada.');
         }
 

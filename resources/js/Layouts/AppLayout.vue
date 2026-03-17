@@ -102,7 +102,7 @@ const isSectionOpen = (key) => openSections.value.has(key);
 const isActive = (href) => currentPath.value.startsWith(href) || (href !== '/dashboard' && currentPath.value === href);
 
 /** Estilo del título de sección: un solo color para todos (evitar confusión). */
-const sectionHeaderClass = () => 'border-gray-200/80 bg-gray-100 text-gray-700 hover:bg-gray-200/90 border-gray-300';
+const sectionHeaderClass = () => 'border-brand-300 bg-brand-50 text-brand-800 hover:bg-brand-100';
 
 // --- Tareas internas por afiliado (cartera, seguridad social) ---
 const affiliateTasks = ref([]);
@@ -119,8 +119,11 @@ const loadAffiliateTasks = async () => {
         const response = await axios.get('/api/affiliate-tasks/my-pending');
         affiliateTasks.value = Array.isArray(response.data) ? response.data : [];
     } catch (e) {
-        console.error(e);
-        affiliateTasksError.value = 'No se pudieron cargar las tareas pendientes.';
+        // 401: sesión no enviada o expirada en esta petición; no mostrar error para no confundir con la página actual
+        if (e?.response?.status !== 401) {
+            affiliateTasksError.value = 'No se pudieron cargar las tareas pendientes.';
+        }
+        affiliateTasks.value = [];
     } finally {
         affiliateTasksLoading.value = false;
     }

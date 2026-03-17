@@ -20,11 +20,19 @@ class OperatorCredential extends Model
         'encrypted_credentials',
     ];
 
-    public const PROVIDER_TYPES = ['PAYMENT_OPERATOR', 'ARL', 'CCF', 'EPS', 'AFP'];
+    public static function providerTypes(): array
+    {
+        return config('services.social_security.provider_types', []);
+    }
 
     public function affiliate(): BelongsTo
     {
         return $this->belongsTo(\App\Modules\Patients\Models\Affiliate::class);
+    }
+
+    public function getProviderTypeLabelAttribute(): string
+    {
+        return __('social_security.provider_type.' . $this->provider_type);
     }
 
     public function setCredentialsAttribute(array $value): void

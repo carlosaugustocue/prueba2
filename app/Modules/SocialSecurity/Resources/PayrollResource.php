@@ -22,7 +22,7 @@ class PayrollResource extends JsonResource
             'month' => $this->month,
             'due_date' => $this->due_date?->format('Y-m-d'),
             'status' => $this->status,
-            'status_label' => $this->getStatusEnum()?->label(),
+            'status_label' => $this->status?->label(),
             'health_amount' => $this->health_amount !== null ? (float) $this->health_amount : null,
             'pension_amount' => $this->pension_amount !== null ? (float) $this->pension_amount : null,
             'arl_amount' => $this->arl_amount !== null ? (float) $this->arl_amount : null,

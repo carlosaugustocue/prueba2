@@ -2,6 +2,8 @@
 
 namespace App\Modules\SocialSecurity\Models;
 
+use App\Modules\SocialSecurity\Enums\ArpRiskClass;
+use App\Modules\SocialSecurity\Enums\PaymentPeriodicity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -33,6 +35,8 @@ class SocialSecurityProfile extends Model
         return [
             'ibc' => 'decimal:2',
             'has_parafiscales' => 'boolean',
+            'arp_risk_class' => ArpRiskClass::class,
+            'payment_periodicity' => PaymentPeriodicity::class,
         ];
     }
 

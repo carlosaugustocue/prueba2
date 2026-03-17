@@ -3,6 +3,7 @@
 namespace App\Modules\SocialSecurity\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Patients\Enums\AffiliateStatus;
 use App\Modules\Patients\Models\Affiliate;
 use App\Modules\SocialSecurity\Models\Payroll;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
@@ -20,7 +21,7 @@ class DashboardController extends Controller
         $currentYear = (int) $today->format('Y');
         $currentMonth = (int) $today->format('n');
 
-        $affiliatesWithProfile = Affiliate::where('status', 'ACTIVO')
+        $affiliatesWithProfile = Affiliate::where('status', AffiliateStatus::ACTIVO)
             ->whereHas('socialSecurityProfile')
             ->count();
 
