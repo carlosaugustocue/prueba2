@@ -15,13 +15,24 @@ return new class extends Migration
         });
 
         // Backfill para registros ya cerrados
-        DB::statement("
-            UPDATE appointment_requests
-            SET tiempo_total_gestion = TIMESTAMPDIFF(MINUTE, requested_at, completed_at)
-            WHERE requested_at IS NOT NULL
-              AND completed_at IS NOT NULL
-              AND tiempo_total_gestion IS NULL
-        ");
+        $driver = DB::getDriverName();
+        if ($driver === 'sqlite') {
+            DB::statement("
+                UPDATE appointment_requests
+                SET tiempo_total_gestion = CAST(ROUND((julianday(completed_at) - julianday(requested_at)) * 24 * 60) AS INTEGER)
+                WHERE requested_at IS NOT NULL
+                  AND completed_at IS NOT NULL
+                  AND tiempo_total_gestion IS NULL
+            ");
+        } else {
+            DB::statement("
+                UPDATE appointment_requests
+                SET tiempo_total_gestion = TIMESTAMPDIFF(MINUTE, requested_at, completed_at)
+                WHERE requested_at IS NOT NULL
+                  AND completed_at IS NOT NULL
+                  AND tiempo_total_gestion IS NULL
+            ");
+        }
     }
 
     public function down(): void

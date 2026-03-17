@@ -11,15 +11,31 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('affiliates', function (Blueprint $table) {
+        $tableName = Schema::hasTable('affiliates') ? 'affiliates' : (Schema::hasTable('patients') ? 'patients' : null);
+        if (! $tableName) {
+            return;
+        }
+
+        if (Schema::hasColumn($tableName, 'document_issue_date')) {
+            return;
+        }
+
+        Schema::table($tableName, function (Blueprint $table) {
             $table->date('document_issue_date')->nullable()->after('document_number');
         });
     }
 
     public function down(): void
     {
-        Schema::table('affiliates', function (Blueprint $table) {
-            $table->dropColumn('document_issue_date');
-        });
+        $tableName = Schema::hasTable('affiliates') ? 'affiliates' : (Schema::hasTable('patients') ? 'patients' : null);
+        if (! $tableName) {
+            return;
+        }
+
+        if (Schema::hasColumn($tableName, 'document_issue_date')) {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->dropColumn('document_issue_date');
+            });
+        }
     }
 };
