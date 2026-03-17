@@ -26,5 +26,10 @@ return [
             ['min' => 94, 'max' => 99, 'day' => 16],
         ],
     ],
+    'employer' => [
+        // Tipos de documento permitidos para aportante/empleador.
+        // Se mantiene en config para evitar magic strings y permitir ajustes normativos.
+        'allowed_document_types' => ['NIT', 'CC', 'CE'],
+    ],
 ];
 

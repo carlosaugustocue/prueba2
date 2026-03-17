@@ -1,8 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Modules\PilaManagement\Controllers\PilaEmployerController;
 
 Route::middleware(['auth', 'role:atencion,supervisor,agent,admin,seguridad_social,cartera'])->group(function () {
-    // Sprint 1: solo estructura base (sin UI aún).
+    Route::prefix('pila')->group(function () {
+        Route::resource('employers', PilaEmployerController::class);
+    });
 });
 
