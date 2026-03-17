@@ -13,7 +13,10 @@ class PortalCredential extends Model
         'employer_id',
         'affiliate_id',
         'entity_type',
-        'entity_id',
+        'eps_id',
+        'afp_id',
+        'arp_id',
+        'ccf_id',
         'username',
         'password_encrypted',
         'is_active',
@@ -44,9 +47,24 @@ class PortalCredential extends Model
         return $this->belongsTo(\App\Modules\Patients\Models\Affiliate::class, 'affiliate_id');
     }
 
-    public function entity(): BelongsTo
+    public function eps(): BelongsTo
     {
-        return $this->belongsTo(PilaSocialEntity::class, 'entity_id');
+        return $this->belongsTo(\App\Modules\Patients\Models\Eps::class, 'eps_id');
+    }
+
+    public function afp(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\SocialSecurity\Models\Afp::class, 'afp_id');
+    }
+
+    public function arp(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\SocialSecurity\Models\Arp::class, 'arp_id');
+    }
+
+    public function ccf(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\SocialSecurity\Models\Ccf::class, 'ccf_id');
     }
 }
 
