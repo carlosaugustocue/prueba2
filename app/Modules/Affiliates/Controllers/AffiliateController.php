@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\Patients\Controllers;
+namespace App\Modules\Affiliates\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Patients\Models\Affiliate;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\Eps;
 use App\Modules\SocialSecurity\Models\Afp;
 use App\Modules\SocialSecurity\Models\Arp;
 use App\Modules\SocialSecurity\Models\Ccf;
@@ -18,16 +18,16 @@ use App\Modules\SocialSecurity\Models\Payroll;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use App\Modules\SocialSecurity\Controllers\OperatorCredentialController;
 use App\Modules\SocialSecurity\Services\DueDateCalculator;
-use App\Modules\Patients\Services\AffiliateService;
-use App\Modules\Patients\Requests\CreateAffiliateRequest;
-use App\Modules\Patients\Requests\UpdateAffiliateRequest;
-use App\Modules\Patients\Resources\AffiliateResource;
-use App\Modules\Patients\Enums\DocumentType;
+use App\Modules\Affiliates\Services\AffiliateService;
+use App\Modules\Affiliates\Requests\CreateAffiliateRequest;
+use App\Modules\Affiliates\Requests\UpdateAffiliateRequest;
+use App\Modules\Affiliates\Resources\AffiliateResource;
+use App\Modules\Affiliates\Enums\DocumentType;
 use App\Modules\Authorizations\Models\Authorization;
 use App\Modules\Authorizations\Enums\AuthorizationStatus;
 use App\Modules\Authorizations\Resources\AuthorizationResource;
-use App\Modules\Patients\Enums\PatientType;
-use App\Modules\Patients\Enums\RelationshipType;
+use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\RelationshipType;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;

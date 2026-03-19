@@ -5,7 +5,7 @@ namespace App\Modules\AdminCommunications\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Appointments\Models\Reminder;
 use App\Modules\Auth\Models\User;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Eps;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

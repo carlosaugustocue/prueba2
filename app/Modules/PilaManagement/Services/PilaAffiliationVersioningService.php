@@ -2,7 +2,7 @@
 
 namespace App\Modules\PilaManagement\Services;
 
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;

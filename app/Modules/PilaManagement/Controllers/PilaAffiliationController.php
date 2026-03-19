@@ -3,8 +3,8 @@
 namespace App\Modules\PilaManagement\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Patients\Models\Affiliate;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\Eps;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\PilaManagement\Models\PilaCotizanteType;
 use App\Modules\PilaManagement\Models\PilaEmployer;

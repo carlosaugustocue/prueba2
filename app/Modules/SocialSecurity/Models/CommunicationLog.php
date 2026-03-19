@@ -30,7 +30,7 @@ class CommunicationLog extends Model
 
     public function affiliate(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Patients\Models\Affiliate::class);
+        return $this->belongsTo(\App\Modules\Affiliates\Models\Affiliate::class);
     }
 
     public function payroll(): BelongsTo

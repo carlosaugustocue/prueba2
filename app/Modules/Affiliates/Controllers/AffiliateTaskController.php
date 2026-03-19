@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Patients\Controllers;
+namespace App\Modules\Affiliates\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Patients\Models\AffiliateTask;
+use App\Modules\Affiliates\Models\AffiliateTask;
 use Illuminate\Http\JsonResponse;
 
 class AffiliateTaskController extends Controller

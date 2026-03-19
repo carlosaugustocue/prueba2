@@ -2,7 +2,7 @@
 
 namespace App\Modules\SocialSecurity\Models;
 
-use App\Modules\Patients\Enums\DocumentType;
+use App\Modules\Affiliates\Enums\DocumentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Patients\Enums;
+namespace App\Modules\Affiliates\Enums;
 
 /**
  * Tipos de parentesco para beneficiarios según normativa colombiana

@@ -12,7 +12,7 @@ class ModuleServiceProvider extends ServiceProvider
      */
     protected array $modules = [
         'Auth',
-        'Patients',
+        'Affiliates',
         'PilaManagement',
         'SocialSecurity',
         'AppointmentRequests',

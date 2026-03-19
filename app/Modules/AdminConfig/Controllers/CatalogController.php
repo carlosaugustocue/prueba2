@@ -3,7 +3,7 @@
 namespace App\Modules\AdminConfig\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Eps;
 use App\Modules\SocialSecurity\Models\Afp;
 use App\Modules\SocialSecurity\Models\Arp;
 use App\Modules\SocialSecurity\Models\Ccf;

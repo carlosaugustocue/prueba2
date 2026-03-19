@@ -3,7 +3,7 @@
 namespace App\Modules\SocialSecurity\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\Models\IndependentContract;
 use App\Modules\SocialSecurity\Models\Payer;
 use App\Modules\SocialSecurity\Requests\StoreIndependentContractRequest;

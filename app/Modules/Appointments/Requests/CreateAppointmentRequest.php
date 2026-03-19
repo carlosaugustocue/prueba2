@@ -6,8 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
-use App\Modules\Patients\Enums\AffiliateStatus;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Enums\AffiliateStatus;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\AppointmentRequests\Models\AppointmentRequest;
 use App\Modules\Authorizations\Enums\AuthorizationStatus;
 

@@ -4,7 +4,7 @@ namespace App\Modules\HistoriaClinica\Services;
 
 use App\Modules\HistoriaClinica\Enums\HistoriaClinicaEstado;
 use App\Modules\HistoriaClinica\Models\HistoriaClinica;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use Illuminate\Support\Facades\DB;
 
 class HistoriaClinicaService

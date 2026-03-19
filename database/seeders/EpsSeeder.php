@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Eps;
 
 class EpsSeeder extends Seeder
 {

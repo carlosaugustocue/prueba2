@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Patients\Resources;
+namespace App\Modules\Affiliates\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

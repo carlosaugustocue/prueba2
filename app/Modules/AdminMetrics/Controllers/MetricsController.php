@@ -9,7 +9,7 @@ use App\Modules\AppointmentRequests\Enums\RequestStatus;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;
 use App\Modules\Auth\Models\User;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Eps;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

@@ -4,7 +4,7 @@ namespace App\Modules\Appointments\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Modules\Patients\Resources\AffiliateResource;
+use App\Modules\Affiliates\Resources\AffiliateResource;
 use App\Modules\Appointments\Enums\AppointmentStatus;
 use App\Modules\Appointments\Enums\AppointmentType;
 use App\Modules\Appointments\Enums\Priority;

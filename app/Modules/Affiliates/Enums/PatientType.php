@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Patients\Enums;
+namespace App\Modules\Affiliates\Enums;
 
 /**
  * Tipo de afiliado (cotizante o beneficiario).

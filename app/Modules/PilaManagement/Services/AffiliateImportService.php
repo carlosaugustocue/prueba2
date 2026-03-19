@@ -2,11 +2,11 @@
 
 namespace App\Modules\PilaManagement\Services;
 
-use App\Modules\Patients\Models\Affiliate;
-use App\Modules\Patients\Enums\AffiliateStatus;
-use App\Modules\Patients\Enums\DocumentType;
-use App\Modules\Patients\Enums\PatientType;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Enums\AffiliateStatus;
+use App\Modules\Affiliates\Enums\DocumentType;
+use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Models\Eps;
 use App\Modules\PilaManagement\Models\PilaCotizanteType;
 use App\Modules\PilaManagement\Models\PilaEmployer;
 use App\Modules\PilaManagement\Models\PilaAffiliation;

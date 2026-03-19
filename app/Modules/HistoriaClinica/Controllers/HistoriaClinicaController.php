@@ -14,7 +14,7 @@ use App\Modules\HistoriaClinica\Resources\EncuentroClinicoResource;
 use App\Modules\HistoriaClinica\Resources\HistoriaClinicaResource;
 use App\Modules\HistoriaClinica\Services\AuditoriaHcService;
 use App\Modules\HistoriaClinica\Services\HistoriaClinicaService;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;

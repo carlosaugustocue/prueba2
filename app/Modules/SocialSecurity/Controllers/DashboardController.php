@@ -3,8 +3,8 @@
 namespace App\Modules\SocialSecurity\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Patients\Enums\AffiliateStatus;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Enums\AffiliateStatus;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\Models\Payroll;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use Carbon\Carbon;

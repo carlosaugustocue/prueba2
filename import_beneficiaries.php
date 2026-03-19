@@ -36,8 +36,8 @@ $defaultHolderDoc = isset($argv[1]) && trim($argv[1]) !== '' ? trim($argv[1]) : 
 $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-use App\Modules\Patients\Models\Patient;
-use App\Modules\Patients\Enums\RelationshipType;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Enums\RelationshipType;
 
 $path = storage_path('app/beneficiaries.csv');
 if (!is_readable($path)) {
@@ -89,7 +89,7 @@ foreach ($rows as $i => $row) {
         continue;
     }
 
-    $holder = Patient::where('document_number', $holderDoc)
+    $holder = Affiliate::where('document_number', $holderDoc)
         ->where('patient_type', 'cotizante')
         ->first();
 
@@ -112,7 +112,7 @@ foreach ($rows as $i => $row) {
         continue;
     }
 
-    if (Patient::withTrashed()->where('document_number', $docNum)->exists()) {
+    if (Affiliate::withTrashed()->where('document_number', $docNum)->exists()) {
         $errors[] = "Fila $num: documento $docNum ya existe";
         $skipped++;
         continue;
@@ -156,7 +156,7 @@ foreach ($rows as $i => $row) {
     }
 
     try {
-        Patient::create([
+        Affiliate::create([
             'document_type' => $docType,
             'document_number' => $docNum,
             'first_name' => $firstName,

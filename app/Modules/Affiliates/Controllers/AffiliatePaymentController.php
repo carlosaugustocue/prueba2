@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\Patients\Controllers;
+namespace App\Modules\Affiliates\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Patients\Models\Affiliate;
-use App\Modules\Patients\Models\AffiliatePayment;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\AffiliatePayment;
 use App\Modules\SocialSecurity\Models\AccountingRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

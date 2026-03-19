@@ -4,7 +4,7 @@ namespace App\Modules\Authorizations\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Modules\Authorizations\Enums\AuthorizationStatus;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 
 class StoreAuthorizationRequest extends FormRequest
 {

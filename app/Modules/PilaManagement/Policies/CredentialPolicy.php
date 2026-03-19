@@ -3,7 +3,7 @@
 namespace App\Modules\PilaManagement\Policies;
 
 use App\Modules\Auth\Models\User;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\PilaManagement\Enums\CredentialAction;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\PilaManagement\Models\PilaCredential;

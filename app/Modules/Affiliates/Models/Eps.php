@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Patients\Models;
+namespace App\Modules\Affiliates\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;

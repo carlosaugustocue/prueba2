@@ -42,7 +42,7 @@ class SocialSecurityProfile extends Model
 
     public function affiliate(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Patients\Models\Affiliate::class);
+        return $this->belongsTo(\App\Modules\Affiliates\Models\Affiliate::class);
     }
 
     public function payer(): BelongsTo
@@ -52,7 +52,7 @@ class SocialSecurityProfile extends Model
 
     public function eps(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Patients\Models\Eps::class);
+        return $this->belongsTo(\App\Modules\Affiliates\Models\Eps::class);
     }
 
     public function afp(): BelongsTo

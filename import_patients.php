@@ -11,8 +11,8 @@ require __DIR__ . '/vendor/autoload.php';
 $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-use App\Modules\Patients\Models\Patient;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\Eps;
 use Illuminate\Support\Str;
 
 $path = storage_path('app/patients.csv');
@@ -70,7 +70,7 @@ foreach ($rows as $i => $row) {
         continue;
     }
 
-    if (Patient::withTrashed()->where('document_number', $docNum)->exists()) {
+    if (Affiliate::withTrashed()->where('document_number', $docNum)->exists()) {
         $errors[] = "Fila $num: documento $docNum ya existe";
         $skipped++;
         continue;
@@ -104,7 +104,7 @@ foreach ($rows as $i => $row) {
     }
 
     try {
-        Patient::create([
+        Affiliate::create([
             'document_type' => $docType,
             'document_number' => $docNum,
             'first_name' => $firstName,

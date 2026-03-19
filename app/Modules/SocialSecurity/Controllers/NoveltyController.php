@@ -3,7 +3,7 @@
 namespace App\Modules\SocialSecurity\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\Models\Novelty;
 use App\Modules\SocialSecurity\Requests\StoreNoveltyRequest;
 use Illuminate\Http\RedirectResponse;

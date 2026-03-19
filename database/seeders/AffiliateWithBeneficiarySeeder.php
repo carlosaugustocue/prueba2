@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use App\Modules\Patients\Models\Affiliate;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\Eps;
 use App\Modules\SocialSecurity\Models\SocialSecurityProfile;
 use App\Modules\SocialSecurity\Models\Afp;
 use App\Modules\SocialSecurity\Models\Arp;

@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\PilaManagement;
 
-use App\Modules\Patients\Enums\AffiliateStatus;
-use App\Modules\Patients\Enums\DocumentType;
-use App\Modules\Patients\Enums\PatientType;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Enums\AffiliateStatus;
+use App\Modules\Affiliates\Enums\DocumentType;
+use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\PilaManagement\Models\PilaEmployer;
 use App\Modules\PilaManagement\Services\DeadlineService;

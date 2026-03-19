@@ -31,7 +31,7 @@ class AuthorizationResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'created_at_formatted' => $this->created_at?->format('d/m/Y H:i'),
 
-            'affiliate' => $this->whenLoaded('affiliate', fn () => new \App\Modules\Patients\Resources\AffiliateResource($this->affiliate)),
+            'affiliate' => $this->whenLoaded('affiliate', fn () => new \App\Modules\Affiliates\Resources\AffiliateResource($this->affiliate)),
             'eps' => $this->whenLoaded('eps', fn () => ['id' => $this->eps->id, 'name' => $this->eps->name, 'code' => $this->eps->code ?? null]),
             'appointment_request' => $this->whenLoaded('appointmentRequest', function () {
                 if (!$this->appointmentRequest) return null;

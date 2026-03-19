@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\Patients\Services;
+namespace App\Modules\Affiliates\Services;
 
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\Models\SocialSecurityProfile;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -94,7 +94,7 @@ class AffiliateService
                 ]);
             }
 
-            app(\App\Modules\Patients\Services\AffiliateTaskService::class)->createForNewAffiliate($affiliate);
+            app(\App\Modules\Affiliates\Services\AffiliateTaskService::class)->createForNewAffiliate($affiliate);
 
             return $affiliate;
         });

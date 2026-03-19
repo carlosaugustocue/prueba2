@@ -1,8 +1,8 @@
 <?php
 
-use App\Modules\Patients\Controllers\AffiliateController;
-use App\Modules\Patients\Controllers\AffiliatePaymentController;
-use App\Modules\Patients\Controllers\AffiliateTaskController;
+use App\Modules\Affiliates\Controllers\AffiliateController;
+use App\Modules\Affiliates\Controllers\AffiliatePaymentController;
+use App\Modules\Affiliates\Controllers\AffiliateTaskController;
 use App\Modules\SocialSecurity\Controllers\IndependentContractController;
 use App\Modules\SocialSecurity\Controllers\NoveltyController;
 use App\Modules\SocialSecurity\Controllers\OperatorCredentialController;

@@ -4,7 +4,7 @@ namespace Tests\Feature\PilaManagement;
 
 use App\Modules\Auth\Models\Role;
 use App\Modules\Auth\Models\User;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\PilaManagement\Models\PilaCredential;
 use App\Modules\PilaManagement\Models\PilaEmployer;

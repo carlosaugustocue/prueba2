@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Modules\AppointmentRequests\Enums\RequestStatus;
 use App\Modules\AppointmentRequests\Models\AppointmentRequest;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use App\Modules\SocialSecurity\Models\Payroll;
 use Illuminate\Http\Request;

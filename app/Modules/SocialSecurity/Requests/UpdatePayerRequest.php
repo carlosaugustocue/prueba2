@@ -4,7 +4,7 @@ namespace App\Modules\SocialSecurity\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Modules\Patients\Enums\DocumentType;
+use App\Modules\Affiliates\Enums\DocumentType;
 
 class UpdatePayerRequest extends FormRequest
 {

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\PilaManagement;
 
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\PilaManagement\Services\PilaAffiliationVersioningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;

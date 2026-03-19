@@ -44,12 +44,12 @@ class PortalCredential extends Model
 
     public function affiliate(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Patients\Models\Affiliate::class, 'affiliate_id');
+        return $this->belongsTo(\App\Modules\Affiliates\Models\Affiliate::class, 'affiliate_id');
     }
 
     public function eps(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Patients\Models\Eps::class, 'eps_id');
+        return $this->belongsTo(\App\Modules\Affiliates\Models\Eps::class, 'eps_id');
     }
 
     public function afp(): BelongsTo

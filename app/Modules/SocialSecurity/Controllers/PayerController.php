@@ -7,7 +7,7 @@ use App\Modules\SocialSecurity\Models\Payer;
 use App\Modules\SocialSecurity\Requests\StorePayerRequest;
 use App\Modules\SocialSecurity\Requests\UpdatePayerRequest;
 use App\Modules\SocialSecurity\Resources\PayerResource;
-use App\Modules\Patients\Enums\DocumentType;
+use App\Modules\Affiliates\Enums\DocumentType;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;

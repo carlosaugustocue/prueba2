@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Patients;
 
-use App\Modules\Patients\Models\Affiliate;
-use App\Modules\Patients\Models\Eps;
-use App\Modules\Patients\Services\AffiliateService;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\Eps;
+use App\Modules\Affiliates\Services\AffiliateService;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\SocialSecurity\Models\SocialSecurityProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;

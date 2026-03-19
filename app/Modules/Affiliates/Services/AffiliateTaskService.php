@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Patients\Services;
+namespace App\Modules\Affiliates\Services;
 
-use App\Modules\Patients\Models\Affiliate;
-use App\Modules\Patients\Models\AffiliateTask;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\AffiliateTask;
 
 /**
  * Crea tareas internas asociadas a un afiliado (cartera, seguridad social, etc.).

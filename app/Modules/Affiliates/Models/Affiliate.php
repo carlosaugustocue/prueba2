@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Patients\Models;
+namespace App\Modules\Affiliates\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -10,10 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Modules\Core\Traits\HasUuid;
 use App\Modules\Core\Traits\Searchable;
-use App\Modules\Patients\Enums\AffiliateStatus;
-use App\Modules\Patients\Enums\DocumentType;
-use App\Modules\Patients\Enums\PatientType;
-use App\Modules\Patients\Enums\RelationshipType;
+use App\Modules\Affiliates\Enums\AffiliateStatus;
+use App\Modules\Affiliates\Enums\DocumentType;
+use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\RelationshipType;
 
 class Affiliate extends Model
 {
@@ -204,7 +204,7 @@ class Affiliate extends Model
 
     public function payments(): HasMany
     {
-        return $this->hasMany(\App\Modules\Patients\Models\AffiliatePayment::class);
+        return $this->hasMany(\App\Modules\Affiliates\Models\AffiliatePayment::class);
     }
 
     public function independentContracts(): HasMany

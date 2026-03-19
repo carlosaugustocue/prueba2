@@ -11,8 +11,8 @@ use App\Modules\Authorizations\Requests\StoreAuthorizationDocumentRequest;
 use App\Modules\Authorizations\Resources\AuthorizationResource;
 use App\Modules\Authorizations\Enums\AuthorizationStatus;
 use App\Modules\AppointmentRequests\Enums\RequestStatus;
-use App\Modules\Patients\Models\Affiliate;
-use App\Modules\Patients\Models\Eps;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\Eps;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -96,12 +96,12 @@ class AuthorizationController extends Controller
         if ($request->filled('affiliate_id')) {
             $aff = Affiliate::with('socialSecurityProfile.eps')->find($request->integer('affiliate_id'));
             if ($aff) {
-                $preselectedAffiliate = (new \App\Modules\Patients\Resources\AffiliateResource($aff))->toArray(request());
+                $preselectedAffiliate = (new \App\Modules\Affiliates\Resources\AffiliateResource($aff))->toArray(request());
             }
         } elseif ($appointmentRequestId) {
             $req = \App\Modules\AppointmentRequests\Models\AppointmentRequest::with('affiliate.socialSecurityProfile.eps')->find($appointmentRequestId);
             if ($req?->affiliate) {
-                $preselectedAffiliate = (new \App\Modules\Patients\Resources\AffiliateResource($req->affiliate))->toArray(request());
+                $preselectedAffiliate = (new \App\Modules\Affiliates\Resources\AffiliateResource($req->affiliate))->toArray(request());
             }
         }
 

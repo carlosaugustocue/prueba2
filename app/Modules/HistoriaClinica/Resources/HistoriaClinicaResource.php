@@ -20,7 +20,7 @@ class HistoriaClinicaResource extends JsonResource
             'estado_label' => $this->estado_label ?? $this->estado,
             'created_at' => $this->created_at?->toIso8601String(),
 
-            'affiliate' => $this->whenLoaded('affiliate', fn () => new \App\Modules\Patients\Resources\AffiliateResource($this->affiliate)),
+            'affiliate' => $this->whenLoaded('affiliate', fn () => new \App\Modules\Affiliates\Resources\AffiliateResource($this->affiliate)),
             'encuentros' => $this->whenLoaded('encuentros', fn () => EncuentroClinicoResource::collection($this->encuentros)),
             'documentos' => $this->whenLoaded('documentos', fn () => DocumentoClinicoResource::collection($this->documentos)),
         ];

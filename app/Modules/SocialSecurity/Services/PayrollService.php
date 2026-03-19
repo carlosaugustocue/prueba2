@@ -3,7 +3,7 @@
 namespace App\Modules\SocialSecurity\Services;
 
 use App\Modules\Auth\Models\User;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\DTOs\ContributionBreakdown;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use App\Modules\SocialSecurity\Models\Payroll;

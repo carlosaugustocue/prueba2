@@ -2,7 +2,7 @@
 
 namespace App\Modules\SocialSecurity\Services;
 
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\Models\IndependentContract;
 
 class IndependentContractIbcService

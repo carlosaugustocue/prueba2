@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Modules\Patients\Requests;
+namespace App\Modules\Affiliates\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Modules\Patients\Enums\DocumentType;
-use App\Modules\Patients\Enums\PatientType;
-use App\Modules\Patients\Enums\RelationshipType;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Enums\DocumentType;
+use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\RelationshipType;
+use App\Modules\Affiliates\Models\Affiliate;
 
 class CreateAffiliateRequest extends FormRequest
 {

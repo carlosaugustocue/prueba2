@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Patients\Models;
+namespace App\Modules\Affiliates\Models;
 
 use App\Modules\Auth\Models\User;
 use App\Modules\SocialSecurity\Models\AccountingRegistry;

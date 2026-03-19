@@ -4,7 +4,7 @@ namespace App\Modules\HistoriaClinica\Models;
 
 use App\Modules\Core\Traits\HasUuid;
 use App\Modules\HistoriaClinica\Enums\HistoriaClinicaEstado;
-use App\Modules\Patients\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
