@@ -26,7 +26,7 @@ class CreateAppointmentRequest extends FormRequest
                     if (! $affiliate) {
                         return;
                     }
-                    if ($affiliate->status === AffiliateStatus::INACTIVO) {
+                    if (! $affiliate->status->isActive()) {
                         $fail(__('social_security.validation.affiliate_inactive'));
                     }
                 },
