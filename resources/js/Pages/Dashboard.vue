@@ -81,8 +81,8 @@ const inProgressRequests = computed(() => props.inProgressRequests?.data || []);
             <template v-else>
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-                    <p class="mt-1 text-sm text-gray-500">Resumen operativo de la central de citas</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Resumen general</h1>
+                    <p class="mt-1 text-sm text-gray-500">Lo más importante para hoy, en un vistazo</p>
                 </div>
                 <Link href="/appointment-requests/create" class="inline-flex items-center justify-center gap-2 px-4 py-2 font-medium rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors">
                     <ClipboardList class="h-5 w-5" />

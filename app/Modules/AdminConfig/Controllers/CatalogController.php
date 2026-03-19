@@ -3,6 +3,7 @@
 namespace App\Modules\AdminConfig\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Patients\Models\Eps;
 use App\Modules\SocialSecurity\Models\Afp;
 use App\Modules\SocialSecurity\Models\Arp;
 use App\Modules\SocialSecurity\Models\Ccf;
@@ -19,6 +20,12 @@ use Inertia\Response;
 class CatalogController extends Controller
 {
     private const CATALOGS = [
+        'eps' => [
+            'model' => Eps::class,
+            'label' => 'EPS',
+            'label_plural' => 'EPS',
+            'route_prefix' => 'admin.configuracion.eps',
+        ],
         'afps' => [
             'model' => Afp::class,
             'label' => 'AFP',
@@ -72,6 +79,7 @@ class CatalogController extends Controller
     public function index(): Response
     {
         $catalogs = [
+            ['key' => 'eps', 'label' => 'EPS', 'description' => 'Entidades promotoras de salud', 'href' => route('admin.configuracion.eps.index')],
             ['key' => 'afps', 'label' => 'AFPs', 'description' => 'Fondos de pensiones', 'href' => route('admin.configuracion.afps.index')],
             ['key' => 'arps', 'label' => 'ARPs', 'description' => 'Administradoras de riesgo laboral', 'href' => route('admin.configuracion.arps.index')],
             ['key' => 'ccfs', 'label' => 'CCFs', 'description' => 'Cajas de compensación familiar', 'href' => route('admin.configuracion.ccfs.index')],
@@ -80,6 +88,7 @@ class CatalogController extends Controller
             ['key' => 'contributor-types', 'label' => 'Tipos de cotizante', 'description' => 'Catálogo PILA (01–59)', 'href' => route('admin.configuracion.contributor-types.index')],
             ['key' => 'novelty-types', 'label' => 'Tipos de novedad', 'description' => 'Ingreso, Retiro, Traslado EPS', 'href' => route('admin.configuracion.novelty-types.index')],
             ['key' => 'accounting-registries', 'label' => 'Registros contables', 'description' => 'RECIBO_CAJA, FACTURA_ELECTRONICA', 'href' => route('admin.configuracion.accounting-registries.index')],
+            ['key' => 'risk-classes', 'label' => 'Clases de riesgo ARL', 'description' => 'Niveles 0–5 y tarifas % (normativa colombiana)', 'href' => route('admin.configuracion.risk-classes.index')],
             ['key' => 'contribution-parameters', 'label' => 'Parámetros de aportes', 'description' => 'Porcentajes, SMLMV, vigencia normativa', 'href' => route('admin.configuracion.contribution-parameters.index')],
         ];
 

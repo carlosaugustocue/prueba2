@@ -10,6 +10,7 @@ class AffiliateResource extends JsonResource
     public function toArray(Request $request): array
     {
         $profile = $this->resource->relationLoaded('socialSecurityProfile') ? $this->socialSecurityProfile : null;
+        $pilaAff = $this->resource->relationLoaded('pilaAffiliation') ? $this->pilaAffiliation : null;
 
         return [
             'id' => $this->id,
@@ -79,7 +80,26 @@ class AffiliateResource extends JsonResource
                 'name' => $this->socialSecurityProfile->eps->name,
                 'code' => $this->socialSecurityProfile->eps->code,
             ] : null),
-            'eps_id' => $profile?->eps_id,
+            'eps_id' => $pilaAff?->eps_id ?? $profile?->eps_id,
+            'pila_affiliation' => $this->whenLoaded('pilaAffiliation', fn () => $this->pilaAffiliation ? [
+                'id' => $this->pilaAffiliation->id,
+                'employer_id' => $this->pilaAffiliation->employer_id,
+                'employer' => $this->pilaAffiliation->relationLoaded('employer') && $this->pilaAffiliation->employer ? [
+                    'id' => $this->pilaAffiliation->employer->id,
+                    'name' => $this->pilaAffiliation->employer->name,
+                    'document_number' => $this->pilaAffiliation->employer->document_number,
+                ] : null,
+                'eps_id' => $this->pilaAffiliation->eps_id,
+                'eps' => $this->pilaAffiliation->relationLoaded('eps') && $this->pilaAffiliation->eps ? ['id' => $this->pilaAffiliation->eps->id, 'name' => $this->pilaAffiliation->eps->name] : null,
+                'afp_id' => $this->pilaAffiliation->afp_id,
+                'afp' => $this->pilaAffiliation->relationLoaded('afp') && $this->pilaAffiliation->afp ? ['id' => $this->pilaAffiliation->afp->id, 'name' => $this->pilaAffiliation->afp->name] : null,
+                'arp_id' => $this->pilaAffiliation->arp_id,
+                'arp' => $this->pilaAffiliation->relationLoaded('arp') && $this->pilaAffiliation->arp ? ['id' => $this->pilaAffiliation->arp->id, 'name' => $this->pilaAffiliation->arp->name] : null,
+                'ccf_id' => $this->pilaAffiliation->ccf_id,
+                'ccf' => $this->pilaAffiliation->relationLoaded('ccf') && $this->pilaAffiliation->ccf ? ['id' => $this->pilaAffiliation->ccf->id, 'name' => $this->pilaAffiliation->ccf->name] : null,
+                'ibc' => $this->pilaAffiliation->ibc ? (float) $this->pilaAffiliation->ibc : null,
+                'pila_operator' => $this->pilaAffiliation->pila_operator,
+            ] : null),
             'holder' => $this->whenLoaded('holder', fn() => $this->holder ? [
                 'id' => $this->holder->id,
                 'full_name' => $this->holder->full_name,
