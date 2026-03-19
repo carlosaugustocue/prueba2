@@ -3,7 +3,10 @@
 namespace Tests\Unit\SocialSecurity;
 
 use App\Modules\SocialSecurity\Services\ContributionCalculator;
-use PHPUnit\Framework\TestCase;
+use App\Modules\SocialSecurity\Services\ContributorTypeRules;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
 
 /**
  * Verificación de liquidación con SMLMV 2026 ($1.750.905).
@@ -11,7 +14,69 @@ use PHPUnit\Framework\TestCase;
  */
 class ContributionCalculatorTest extends TestCase
 {
+    use RefreshDatabase;
+
     private const SMLMV_2026 = 1_750_905.0;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Datos mínimos de contributor_types para que ContributorTypeRules funcione.
+        DB::table('contributor_types')->updateOrInsert(
+            ['code' => '01'],
+            [
+                'code' => '01',
+                'name' => 'Dependiente',
+                'is_dependent' => true,
+                'parafiscales_allowed' => true,
+                'health_applies' => true,
+                'pension_applies' => true,
+                'arl_applies' => true,
+                'ccf_applies' => true,
+                'is_proportional' => false,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+        DB::table('contributor_types')->updateOrInsert(
+            ['code' => '02'],
+            [
+                'code' => '02',
+                'name' => 'Servicio Doméstico',
+                'is_dependent' => true,
+                'parafiscales_allowed' => false,
+                'health_applies' => true,
+                'pension_applies' => true,
+                'arl_applies' => true,
+                'ccf_applies' => true,
+                'is_proportional' => false,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+        DB::table('contributor_types')->updateOrInsert(
+            ['code' => '03'],
+            [
+                'code' => '03',
+                'name' => 'Independiente',
+                'is_dependent' => false,
+                'parafiscales_allowed' => false,
+                'health_applies' => true,
+                'pension_applies' => true,
+                'arl_applies' => true,
+                'ccf_applies' => false,
+                'is_proportional' => false,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        ContributorTypeRules::clearCache();
+    }
 
     private function params2026(): array
     {

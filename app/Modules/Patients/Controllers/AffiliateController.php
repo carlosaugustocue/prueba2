@@ -62,41 +62,23 @@ class AffiliateController extends Controller
         if ($request->has('holder_id')) {
             $preselectedHolder = Affiliate::where('id', $request->holder_id)
                 ->where('patient_type', 'cotizante')
-                ->with(['socialSecurityProfile.eps', 'socialSecurityProfile.clientType', 'socialSecurityProfile.contributorType', 'socialSecurityProfile.afp', 'socialSecurityProfile.arp', 'socialSecurityProfile.ccf', 'socialSecurityProfile.paymentOperator', 'socialSecurityProfile.accountingRegistry'])
+                ->with(['socialSecurityProfile.eps', 'pilaAffiliation'])
                 ->first(['id', 'first_name', 'second_name', 'last_name', 'second_last_name', 'document_number', 'document_type', 'phone', 'whatsapp', 'address']);
         }
 
-        $payerList = Payer::where('is_active', true)->orderBy('name')->get()->map(fn ($p) => [
-            'id' => $p->id,
-            'name' => $p->name,
-            'document_number' => $p->document_number,
-            'document_type_abbreviation' => $p->document_type?->abbreviation(),
-        ]);
+        $holderEpsId = $preselectedHolder?->pilaAffiliation?->eps_id ?? $preselectedHolder?->socialSecurityProfile?->eps_id;
+        $holderEps = $preselectedHolder?->socialSecurityProfile?->eps ?? ($holderEpsId ? Eps::find($holderEpsId) : null);
 
         return Inertia::render('Affiliates/Create', [
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'clientTypes' => ClientType::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'contributorTypes' => ContributorType::active()->orderBy('code')->get(['id', 'code', 'name']),
-            'afpList' => Afp::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'arpList' => Arp::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'ccfList' => Ccf::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'paymentOperatorList' => PaymentOperator::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'accountingRegistries' => AccountingRegistry::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'payerList' => $payerList,
             'documentTypes' => DocumentType::toArray(),
-            'patientTypes' => PatientType::toArray(),
             'relationshipTypes' => RelationshipType::toArray(),
             'preselectedHolder' => $preselectedHolder ? [
                 'id' => $preselectedHolder->id,
                 'full_name' => $preselectedHolder->full_name,
                 'document_number' => $preselectedHolder->document_number,
                 'document_type_abbreviation' => $preselectedHolder->document_type?->abbreviation(),
-                'eps_id' => $preselectedHolder->socialSecurityProfile?->eps_id,
-                'eps' => $preselectedHolder->socialSecurityProfile?->eps ? [
-                    'id' => $preselectedHolder->socialSecurityProfile->eps->id,
-                    'name' => $preselectedHolder->socialSecurityProfile->eps->name,
-                    'code' => $preselectedHolder->socialSecurityProfile->eps->code,
-                ] : null,
+                'eps_id' => $holderEpsId,
                 'phone' => $preselectedHolder->phone,
                 'whatsapp' => $preselectedHolder->whatsapp,
                 'address' => $preselectedHolder->address,
@@ -174,38 +156,19 @@ class AffiliateController extends Controller
 
     public function edit(Affiliate $affiliate): Response
     {
-        $payerList = Payer::where('is_active', true)->orderBy('name')->get()->map(fn ($p) => [
-            'id' => $p->id,
-            'name' => $p->name,
-            'document_number' => $p->document_number,
-            'document_type_abbreviation' => $p->document_type?->abbreviation(),
-        ]);
-
         return Inertia::render('Affiliates/Edit', [
             'affiliate' => new AffiliateResource($affiliate->load([
                 'socialSecurityProfile.eps',
-                'socialSecurityProfile.clientType',
-                'socialSecurityProfile.contributorType',
-                'socialSecurityProfile.afp',
-                'socialSecurityProfile.arp',
-                'socialSecurityProfile.ccf',
-                'socialSecurityProfile.paymentOperator',
-                'socialSecurityProfile.accountingRegistry',
-                'socialSecurityProfile.payer',
+                'pilaAffiliation.employer',
+                'pilaAffiliation.eps',
+                'pilaAffiliation.afp',
+                'pilaAffiliation.arp',
+                'pilaAffiliation.ccf',
                 'holder',
                 'beneficiaries',
             ])),
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'clientTypes' => ClientType::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'contributorTypes' => ContributorType::active()->orderBy('code')->get(['id', 'code', 'name']),
-            'afpList' => Afp::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'arpList' => Arp::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'ccfList' => Ccf::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'paymentOperatorList' => PaymentOperator::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'accountingRegistries' => AccountingRegistry::active()->orderBy('name')->get(['id', 'name', 'code']),
-            'payerList' => $payerList,
             'documentTypes' => DocumentType::toArray(),
-            'patientTypes' => PatientType::toArray(),
             'relationshipTypes' => RelationshipType::toArray(),
         ]);
     }
@@ -265,7 +228,7 @@ class AffiliateController extends Controller
                     ->orWhere('last_name', 'like', "%{$term}%")
                     ->orWhere('document_number', 'like', "%{$term}%");
             })
-            ->with(['socialSecurityProfile.eps', 'socialSecurityProfile.clientType', 'socialSecurityProfile.contributorType', 'socialSecurityProfile.afp', 'socialSecurityProfile.arp', 'socialSecurityProfile.ccf', 'socialSecurityProfile.paymentOperator', 'socialSecurityProfile.accountingRegistry'])
+            ->with(['socialSecurityProfile.eps', 'pilaAffiliation.eps'])
             ->limit(10)
             ->get([
                 'id', 'first_name', 'second_name', 'last_name', 'second_last_name',
@@ -278,8 +241,11 @@ class AffiliateController extends Controller
                 'full_name' => $holder->full_name,
                 'document_type_abbreviation' => $holder->document_type?->abbreviation(),
                 'document_number' => $holder->document_number,
-                'eps_id' => $holder->socialSecurityProfile?->eps_id,
-                'eps' => $holder->socialSecurityProfile?->eps ? ['id' => $holder->socialSecurityProfile->eps->id, 'name' => $holder->socialSecurityProfile->eps->name] : null,
+                'eps_id' => $holder->pilaAffiliation?->eps_id ?? $holder->socialSecurityProfile?->eps_id,
+                'eps' => ($holder->pilaAffiliation?->eps ?? $holder->socialSecurityProfile?->eps) ? [
+                    'id' => ($holder->pilaAffiliation?->eps ?? $holder->socialSecurityProfile?->eps)->id,
+                    'name' => ($holder->pilaAffiliation?->eps ?? $holder->socialSecurityProfile?->eps)->name,
+                ] : null,
                 'phone' => $holder->phone,
                 'whatsapp' => $holder->whatsapp,
                 'address' => $holder->address,

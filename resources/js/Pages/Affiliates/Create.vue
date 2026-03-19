@@ -6,21 +6,13 @@ import DatePicker from '@/Components/DatePicker.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import axios from 'axios';
 import { 
-    ChevronLeft, User, Users, Search, Loader2, X, Check, 
+    ChevronLeft, ChevronRight, User, Users, Search, Loader2, X, Check, 
     Heart, Phone, MessageSquare, Building2, FileText, Link2, Info
 } from 'lucide-vue-next';
 
 const props = defineProps({
     epsList: Array,
-    clientTypes: Array,
-    contributorTypes: Array,
-    afpList: Array,
-    arpList: Array,
-    ccfList: Array,
-    paymentOperatorList: Array,
-    payerList: Array,
     documentTypes: Array,
-    patientTypes: Array,
     relationshipTypes: Array,
     preselectedHolder: Object,
 });
@@ -40,19 +32,6 @@ const form = useForm({
     address: '',
     neighborhood: '',
     eps_id: '',
-    afp_id: '',
-    arp_id: '',
-    arp_risk_class: '',
-    ccf_id: '',
-    payment_operator_id: '',
-    payer_id: '',
-    client_type_id: '',
-    contributor_type_id: '',
-    ibc: '',
-    payment_day: '',
-    payment_periodicity: '',
-    has_parafiscales: false,
-    observations: '',
     patient_type: props.preselectedHolder ? 'beneficiario' : 'cotizante',
     holder_id: props.preselectedHolder?.id || '',
     relationship_type: '',
@@ -62,56 +41,10 @@ const form = useForm({
     notes: '',
 });
 
-// IBC: mostrar con separación de miles/millones mientras se digita (ej. 1.500.000); enviar número al backend
-const formatIbcDisplay = (n) => {
-    if (n === '' || n === null || n === undefined) return '';
-    const num = Number(n);
-    if (Number.isNaN(num)) return '';
-    return num.toLocaleString('es-CO', { maximumFractionDigits: 0 });
-};
-const parseIbcInput = (s) => {
-    const digits = String(s).replace(/\D/g, '');
-    if (digits === '') return '';
-    return parseInt(digits, 10);
-};
-const ibcDisplay = ref('');
-const onIbcInput = (e) => {
-    const raw = e.target.value;
-    const parsed = parseIbcInput(raw);
-    form.ibc = parsed === '' ? '' : parsed;
-    ibcDisplay.value = formatIbcDisplay(form.ibc);
-};
-watch(() => form.ibc, (v) => {
-    const current = parseIbcInput(ibcDisplay.value);
-    const next = v === '' || v === null ? '' : Number(v);
-    if (current !== next) ibcDisplay.value = formatIbcDisplay(v);
-}, { immediate: true });
-
-// Tipo de cotizante: código seleccionado para condicionar parafiscales y mensajes
-const selectedContributorCode = computed(() => {
-    const id = form.contributor_type_id;
-    if (!id || !props.contributorTypes?.length) return null;
-    const t = props.contributorTypes.find((x) => String(x.id) === String(id));
-    return t?.code ?? null;
-});
-const showParafiscalesCheckbox = computed(() => selectedContributorCode.value === '01');
-const showParafiscalesExemptMessage = computed(() => selectedContributorCode.value === '02');
-
-const payerOptions = computed(() =>
-    (props.payerList || []).map((p) => ({
-        id: p.id,
-        label: `${p.name} (${p.document_type_abbreviation} ${p.document_number})`,
-        description: 'Pagador',
-    }))
-);
-
 const applyHolderDefaults = (holder) => {
     if (!holder) return;
-
-    if (holder.eps_id) {
-        form.eps_id = holder.eps_id;
-    }
-
+    const holderEpsId = holder.eps_id ?? holder.social_security_profile?.eps_id ?? holder.pila_affiliation?.eps_id;
+    if (holderEpsId) form.eps_id = holderEpsId;
     if (!form.phone && holder.phone) form.phone = holder.phone;
     if (!form.phone_2 && holder.phone_2) form.phone_2 = holder.phone_2;
     if (!form.whatsapp && holder.whatsapp) form.whatsapp = holder.whatsapp;
@@ -407,12 +340,12 @@ const submit = () => form.post('/affiliates');
                     </div>
                 </div>
 
-                <!-- Contacto y EPS -->
+                <!-- Contacto (EPS solo para beneficiarios: se toma del cotizante titular) -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <Phone class="h-5 w-5 text-brand-600" />
-                            Contacto y EPS
+                            Contacto
                         </h2>
                     </div>
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -431,27 +364,14 @@ const submit = () => form.post('/affiliates');
                             </label>
                             <input v-model="form.whatsapp" type="tel" placeholder="3001234567" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
                         </div>
-                        <div>
+                        <div v-if="form.patient_type === 'beneficiario'">
                             <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                                 <Building2 class="h-4 w-4 text-gray-400" />
-                                EPS *
+                                EPS (del cotizante titular)
                             </label>
-                            <select
-                                v-model="form.eps_id"
-                                :disabled="form.patient_type === 'beneficiario' && !!selectedHolder"
-                                :class="[
-                                    'block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500',
-                                    (form.patient_type === 'beneficiario' && !!selectedHolder) ? 'bg-gray-100 text-gray-700 cursor-not-allowed' : '',
-                                    form.errors.eps_id ? 'border-red-300' : ''
-                                ]"
-                            >
-                                <option value="">Seleccione...</option>
-                                <option v-for="eps in epsList" :key="eps.id" :value="eps.id">{{ eps.name }}</option>
-                            </select>
+                            <input :value="epsList?.find(e => String(e.id) === String(form.eps_id))?.name ?? '—'" type="text" disabled class="block w-full rounded-lg border-gray-200 bg-gray-50 text-gray-700" />
+                            <p class="mt-1 text-xs text-gray-500">Se toma del cotizante seleccionado.</p>
                             <p v-if="form.errors.eps_id" class="mt-1 text-sm text-red-600">{{ form.errors.eps_id }}</p>
-                            <p v-if="form.patient_type === 'beneficiario' && selectedHolder" class="mt-1 text-xs text-gray-500">
-                                La EPS del beneficiario se toma del cotizante titular.
-                            </p>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
@@ -477,115 +397,22 @@ const submit = () => form.post('/affiliates');
                     </div>
                 </div>
 
-                <!-- Seguridad social (AFP / ARP) - solo para cotizantes -->
+                <!-- Cotizante: afiliación operativa solo en Afiliaciones PILA -->
                 <div v-if="form.patient_type === 'cotizante'" class="bg-white rounded-xl shadow-sm border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-brand-50 to-white">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <Building2 class="h-5 w-5 text-brand-600" />
-                            Seguridad social (cotizante)
+                            Afiliación PILA (cotizante)
                         </h2>
-                        <p class="text-sm text-gray-500 mt-1">Opcional. AFP y ARP aplican al cotizante.</p>
-                    </div>
-                    <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de cliente</label>
-                            <select v-model="form.client_type_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                <option value="">Seleccione el tipo</option>
-                                <option v-for="item in (clientTypes || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
-                            </select>
-                            <p class="mt-1 text-xs text-gray-500">Dependiente, Independiente, Colombiano residente en el exterior o Serviconli.</p>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de cotizante</label>
-                            <select v-model="form.contributor_type_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                <option value="">Seleccione el tipo</option>
-                                <option v-for="item in (contributorTypes || [])" :key="item.id" :value="item.id">{{ item.code }} – {{ item.name }}</option>
-                            </select>
-                            <p class="mt-1 text-xs text-gray-500">Define cómo se liquidan los aportes (salud, pensión, ARL, parafiscales).</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">AFP</label>
-                            <select v-model="form.afp_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                <option value="">Ninguna</option>
-                                <option v-for="item in (afpList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">ARP</label>
-                            <select v-model="form.arp_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                <option value="">Ninguna</option>
-                                <option v-for="item in (arpList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Clase de riesgo ARP</label>
-                            <input v-model="form.arp_risk_class" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ej: 1, 2, 3..." />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">CCF</label>
-                            <select v-model="form.ccf_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                <option value="">Ninguna</option>
-                                <option v-for="item in (ccfList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Operador de pago</label>
-                            <select v-model="form.payment_operator_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                <option value="">Ninguno</option>
-                                <option v-for="item in (paymentOperatorList || [])" :key="item.id" :value="item.id">{{ item.name }}</option>
-                            </select>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Pagador</label>
-                            <SearchSelect
-                                v-model="form.payer_id"
-                                :options="payerOptions"
-                                placeholder="Buscar pagador por nombre o documento..."
-                                no-results-text="No hay pagadores que coincidan."
-                            />
-                            <p class="mt-1 text-xs text-gray-500">Quién paga los aportes (empresa o persona)</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">IBC (Ingreso base cotización)</label>
-                            <input
-                                :value="ibcDisplay"
-                                type="text"
-                                inputmode="numeric"
-                                autocomplete="off"
-                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                                placeholder="Ej: 1.500.000"
-                                @input="onIbcInput"
-                            />
-                            <p v-if="form.errors.ibc" class="mt-1 text-sm text-red-600">{{ form.errors.ibc }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Día de pago (2-16)</label>
-                            <input v-model="form.payment_day" type="number" min="2" max="16" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Según NIT/documento" />
-                            <p class="mt-1 text-xs text-gray-500">Día hábil del mes; se puede calcular automático si se deja vacío</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Periodicidad de pago</label>
-                            <select v-model="form.payment_periodicity" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                <option value="">—</option>
-                                <option value="CURRENT">Al día</option>
-                                <option value="OVERDUE">Vencido / En mora</option>
-                            </select>
-                        </div>
-                        <template v-if="showParafiscalesCheckbox">
-                            <div class="flex items-center">
-                                <input id="has_parafiscales" v-model="form.has_parafiscales" type="checkbox" class="rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
-                                <label for="has_parafiscales" class="ml-2 text-sm text-gray-700">La empresa paga parafiscales (SENA, ICBF)</label>
-                            </div>
-                        </template>
-                        <div v-else-if="showParafiscalesExemptMessage" class="flex items-center text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-                            <Info class="h-4 w-4 shrink-0 mr-2 text-amber-600" />
-                            <span>Servicio doméstico: parafiscales exentos (no aplican SENA ni ICBF).</span>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Observaciones (perfil SS)</label>
-                            <textarea v-model="form.observations" rows="2" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Observaciones del perfil de seguridad social..."></textarea>
-                            <p v-if="form.errors.observations" class="mt-1 text-sm text-red-600">{{ form.errors.observations }}</p>
-                        </div>
+                        <p class="text-sm text-gray-600 mt-2">
+                            La afiliación operativa (EPS, AFP, ARL, CCF, IBC, empleador, día de pago, etc.) es la <strong>única fuente de verdad</strong> y se configura en el módulo <strong>Afiliaciones PILA</strong> después de guardar este afiliado.
+                        </p>
+                        <p class="mt-3">
+                            <Link href="/pila/affiliations/create" class="inline-flex items-center gap-2 text-brand-600 hover:text-brand-700 font-medium">
+                                Ir a Afiliaciones PILA
+                                <ChevronRight class="h-4 w-4" />
+                            </Link>
+                        </p>
                     </div>
                 </div>
 
