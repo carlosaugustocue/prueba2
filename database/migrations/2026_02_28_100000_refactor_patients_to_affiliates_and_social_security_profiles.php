@@ -65,6 +65,7 @@ return new class extends Migration
         });
 
         // 5. Migrar datos SS de affiliates a social_security_profiles (solo quienes tengan al menos un dato)
+        // CURRENT_TIMESTAMP es portable (MySQL/SQLite). Evitar NOW() para compatibilidad en tests.
         DB::statement("
             INSERT INTO social_security_profiles
                 (affiliate_id, client_type, contributor_type, eps_id, afp_name, arp_name, arp_risk_class, created_at, updated_at)
@@ -76,15 +77,20 @@ return new class extends Migration
                 afp_name,
                 arp_name,
                 arp_risk_class,
-                NOW(),
-                NOW()
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
             FROM affiliates
             WHERE eps_id IS NOT NULL OR afp_name IS NOT NULL OR arp_name IS NOT NULL
         ");
 
         // 6. Eliminar columnas de SS de affiliates (la FK conserva el nombre original de la tabla "patients")
         Schema::table('affiliates', function (Blueprint $table) {
-            $table->dropForeign('patients_eps_id_foreign');
+            // SQLite no soporta dropForeign por nombre; usar columnas.
+            if (DB::getDriverName() === 'sqlite') {
+                $table->dropForeign(['eps_id']);
+            } else {
+                $table->dropForeign('patients_eps_id_foreign');
+            }
         });
         Schema::table('affiliates', function (Blueprint $table) {
             $table->dropColumn(['eps_id', 'afp_name', 'arp_name', 'arp_risk_class']);

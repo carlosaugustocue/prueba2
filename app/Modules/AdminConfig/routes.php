@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\AdminConfig\Controllers\ArlRiskClassController;
 use App\Modules\AdminConfig\Controllers\CatalogController;
 use App\Modules\SocialSecurity\Controllers\ContributionParameterController;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,13 @@ Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->group(function () {
         Route::get('configuracion', [CatalogController::class, 'index'])->name('admin.configuracion.index');
+
+        Route::get('configuracion/eps', [CatalogController::class, 'catalogIndex'])->name('admin.configuracion.eps.index')->defaults('type', 'eps');
+        Route::get('configuracion/eps/create', [CatalogController::class, 'catalogCreate'])->name('admin.configuracion.eps.create')->defaults('type', 'eps');
+        Route::post('configuracion/eps', [CatalogController::class, 'catalogStore'])->name('admin.configuracion.eps.store')->defaults('type', 'eps');
+        Route::get('configuracion/eps/{id}/edit', [CatalogController::class, 'catalogEdit'])->name('admin.configuracion.eps.edit')->defaults('type', 'eps');
+        Route::put('configuracion/eps/{id}', [CatalogController::class, 'catalogUpdate'])->name('admin.configuracion.eps.update')->defaults('type', 'eps');
+        Route::delete('configuracion/eps/{id}', [CatalogController::class, 'catalogDestroy'])->name('admin.configuracion.eps.destroy')->defaults('type', 'eps');
 
         Route::get('configuracion/afps', [CatalogController::class, 'catalogIndex'])->name('admin.configuracion.afps.index')->defaults('type', 'afps');
         Route::get('configuracion/afps/create', [CatalogController::class, 'catalogCreate'])->name('admin.configuracion.afps.create')->defaults('type', 'afps');
@@ -64,6 +72,13 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('configuracion/accounting-registries/{id}/edit', [CatalogController::class, 'catalogEdit'])->name('admin.configuracion.accounting-registries.edit')->defaults('type', 'accounting-registries');
         Route::put('configuracion/accounting-registries/{id}', [CatalogController::class, 'catalogUpdate'])->name('admin.configuracion.accounting-registries.update')->defaults('type', 'accounting-registries');
         Route::delete('configuracion/accounting-registries/{id}', [CatalogController::class, 'catalogDestroy'])->name('admin.configuracion.accounting-registries.destroy')->defaults('type', 'accounting-registries');
+
+        Route::get('configuracion/clases-riesgo-arl', [ArlRiskClassController::class, 'index'])->name('admin.configuracion.risk-classes.index');
+        Route::get('configuracion/clases-riesgo-arl/create', [ArlRiskClassController::class, 'create'])->name('admin.configuracion.risk-classes.create');
+        Route::post('configuracion/clases-riesgo-arl', [ArlRiskClassController::class, 'store'])->name('admin.configuracion.risk-classes.store');
+        Route::get('configuracion/clases-riesgo-arl/{riskClass}/edit', [ArlRiskClassController::class, 'edit'])->name('admin.configuracion.risk-classes.edit');
+        Route::put('configuracion/clases-riesgo-arl/{riskClass}', [ArlRiskClassController::class, 'update'])->name('admin.configuracion.risk-classes.update');
+        Route::delete('configuracion/clases-riesgo-arl/{riskClass}', [ArlRiskClassController::class, 'destroy'])->name('admin.configuracion.risk-classes.destroy');
 
         Route::get('configuracion/contribution-parameters', [ContributionParameterController::class, 'index'])->name('admin.configuracion.contribution-parameters.index');
         Route::get('configuracion/contribution-parameters/create', [ContributionParameterController::class, 'create'])->name('admin.configuracion.contribution-parameters.create');

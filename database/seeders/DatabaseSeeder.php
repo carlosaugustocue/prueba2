@@ -10,6 +10,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RoleSeeder::class,
+            PilaCotizanteTypeSeeder::class,
+            PilaRiskClassSeeder::class,
             EpsSeeder::class,
             AfpSeeder::class,
             ArpSeeder::class,

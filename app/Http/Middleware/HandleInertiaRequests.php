@@ -2,6 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\AppointmentRequests\Enums\RequestStatus;
+use App\Modules\AppointmentRequests\Models\AppointmentRequest;
+use App\Modules\Patients\Models\Affiliate;
+use App\Modules\SocialSecurity\Enums\PayrollStatus;
+use App\Modules\SocialSecurity\Models\Payroll;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,6 +46,11 @@ class HandleInertiaRequests extends Middleware
                 'warning' => fn () => $request->session()->get('warning'),
                 'preview' => fn () => $request->session()->get('preview'),
             ],
+            'sidebarBadges' => fn () => $request->user() ? [
+                'affiliates_total' => Affiliate::query()->count(),
+                'appointment_requests_pending' => AppointmentRequest::query()->where('status', RequestStatus::PENDING)->count(),
+                'payrolls_pending' => Payroll::query()->where('status', PayrollStatus::PENDING)->count(),
+            ] : [],
         ];
     }
 }

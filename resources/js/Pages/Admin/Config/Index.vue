@@ -1,13 +1,14 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Settings, Building2, Shield, Wallet, Truck, UserCircle, FileText, ClipboardList, BookOpen, Percent } from 'lucide-vue-next';
+import { Settings, Building2, Shield, ShieldAlert, Wallet, Truck, UserCircle, FileText, ClipboardList, BookOpen, Percent, Heart } from 'lucide-vue-next';
 
 const props = defineProps({
     catalogs: Array,
 });
 
 const icons = {
+    eps: Heart,
     afps: Building2,
     arps: Shield,
     ccfs: Wallet,
@@ -16,6 +17,7 @@ const icons = {
     'contributor-types': FileText,
     'novelty-types': ClipboardList,
     'accounting-registries': BookOpen,
+    'risk-classes': ShieldAlert,
     'contribution-parameters': Percent,
 };
 </script>
