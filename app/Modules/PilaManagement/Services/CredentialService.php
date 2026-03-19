@@ -16,6 +16,31 @@ class CredentialService
     }
 
     /**
+     * Registra auditoría obligatoria para mutaciones/lecturas de credenciales.
+     *
+     * Nota: se registra antes/después del cifrado según el flujo del controlador;
+     * este método solo encapsula la creación del log.
+     */
+    public function audit(
+        CredentialKind $kind,
+        int $credentialId,
+        CredentialAction $action,
+        ?int $userId = null,
+        ?Request $request = null,
+        array $metadata = []
+    ): void {
+        CredentialAuditLog::create([
+            'user_id' => $userId,
+            'credential_kind' => $kind,
+            'credential_id' => $credentialId,
+            'action' => $action,
+            'ip_address' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+            'metadata' => $metadata === [] ? null : $metadata,
+        ]);
+    }
+
+    /**
      * Desencripta y registra auditoría obligatoria antes de devolver el valor.
      */
     public function decryptAndAudit(
@@ -27,15 +52,7 @@ class CredentialService
         ?Request $request = null,
         array $metadata = []
     ): string {
-        CredentialAuditLog::create([
-            'user_id' => $userId,
-            'credential_kind' => $kind,
-            'credential_id' => $credentialId,
-            'action' => $action,
-            'ip_address' => $request?->ip(),
-            'user_agent' => $request?->userAgent(),
-            'metadata' => $metadata === [] ? null : $metadata,
-        ]);
+        $this->audit($kind, $credentialId, $action, $userId, $request, $metadata);
 
         return Crypt::decryptString($encrypted);
     }
