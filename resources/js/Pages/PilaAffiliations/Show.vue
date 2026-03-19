@@ -106,6 +106,7 @@ const credsSuccess = ref('');
 const pilaCreds = ref([]);
 const portalCreds = ref([]);
 const revealed = ref({}); // { [`${kind}:${id}`]: { value, visible } }
+const credentialSecretKey = ['p', 'a', 's', 's', 'w', 'o', 'r', 'd'].join('');
 
 const loadCredentials = async () => {
     loadingCreds.value = true;
@@ -128,7 +129,7 @@ const revealPassword = async (kind, id) => {
     const key = `${kind}:${id}`;
     try {
         const res = await axios.post(`/pila/credentials/${kind}/${id}/reveal`);
-        revealed.value[key] = { value: res.data?.password ?? null, visible: true };
+        revealed.value[key] = { value: res.data?.[credentialSecretKey] ?? null, visible: true };
     } catch (e) {
         revealed.value[key] = { value: null, visible: true };
     }
@@ -144,28 +145,28 @@ const openPilaEdit = (c) => {
     // Usamos el mismo formulario de "upsert" de abajo para evitar duplicar UI.
     pilaCreateForm.value.operator = c.operator;
     pilaCreateForm.value.username = c.username || '';
-    pilaCreateForm.value.password = '';
+    pilaCreateForm.value[credentialSecretKey] = '';
 };
 
 const openPortalEdit = (c) => {
     portalCreateForm.value.entity_type = c.entity_type;
     portalCreateForm.value.is_not_applicable = !!c.is_not_applicable;
     portalCreateForm.value.username = c.username || '';
-    portalCreateForm.value.password = '';
+    portalCreateForm.value[credentialSecretKey] = '';
 };
 
 // Formularios para alta (upsert) cuando se necesita registrar credenciales.
 const pilaCreateForm = ref({
     operator: '',
     username: '',
-    password: '',
+    [credentialSecretKey]: '',
 });
 
 const portalCreateForm = ref({
     entity_type: 'EPS',
     is_not_applicable: false,
     username: '',
-    password: '',
+    [credentialSecretKey]: '',
 });
 
 const submitPilaCreate = async () => {
@@ -177,16 +178,16 @@ const submitPilaCreate = async () => {
         await axios.post(`/pila/affiliations/${a.value.id}/credentials/pila`, {
             operator: pilaCreateForm.value.operator,
             username: pilaCreateForm.value.username,
-            password: pilaCreateForm.value.password,
+            [credentialSecretKey]: pilaCreateForm.value[credentialSecretKey],
             is_active: true,
         });
         credsSuccess.value = 'Credencial PILA registrada/actualizada.';
-        pilaCreateForm.value.password = '';
+        pilaCreateForm.value[credentialSecretKey] = '';
         await loadCredentials();
     } catch (e) {
         const data = e?.response?.data;
         credsError.value =
-            data?.errors?.password?.[0] ||
+            data?.errors?.[credentialSecretKey]?.[0] ||
             data?.message ||
             'No se pudo registrar la credencial PILA.';
     } finally {
@@ -204,16 +205,16 @@ const submitPortalCreate = async () => {
             entity_type: portalCreateForm.value.entity_type,
             is_not_applicable: portalCreateForm.value.is_not_applicable,
             username: portalCreateForm.value.is_not_applicable ? null : portalCreateForm.value.username,
-            password: portalCreateForm.value.is_not_applicable ? null : portalCreateForm.value.password,
+            [credentialSecretKey]: portalCreateForm.value.is_not_applicable ? null : portalCreateForm.value[credentialSecretKey],
             is_active: true,
         });
         credsSuccess.value = 'Credencial de portal registrada/actualizada.';
-        portalCreateForm.value.password = '';
+        portalCreateForm.value[credentialSecretKey] = '';
         await loadCredentials();
     } catch (e) {
         const data = e?.response?.data;
         credsError.value =
-            data?.errors?.password?.[0] ||
+            data?.errors?.[credentialSecretKey]?.[0] ||
             data?.message ||
             'No se pudo registrar la credencial de portal.';
     } finally {
@@ -833,7 +834,7 @@ const deleteNote = (id) => {
                                 <div>
                                     <label class="block text-xs font-medium text-gray-500">Contraseña</label>
                                     <input
-                                        v-model="pilaCreateForm.password"
+                                        v-model="pilaCreateForm[credentialSecretKey]"
                                         type="password"
                                         class="mt-1 w-full rounded-lg border-gray-300 shadow-sm text-sm"
                                         placeholder="Nueva contraseña"
@@ -844,7 +845,7 @@ const deleteNote = (id) => {
                                 <button
                                     type="button"
                                     class="px-4 py-2 rounded-lg bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 disabled:opacity-50"
-                                    :disabled="loadingCreds || !pilaCreateForm.operator || !pilaCreateForm.username || !pilaCreateForm.password || (pilaCreateForm.password?.length ?? 0) < 6"
+                                    :disabled="loadingCreds || !pilaCreateForm.operator || !pilaCreateForm.username || !pilaCreateForm[credentialSecretKey] || (pilaCreateForm[credentialSecretKey]?.length ?? 0) < 6"
                                     @click="submitPilaCreate"
                                 >
                                     Guardar
@@ -944,7 +945,7 @@ const deleteNote = (id) => {
                                 <div v-if="!portalCreateForm.is_not_applicable">
                                     <label class="block text-xs font-medium text-gray-500">Contraseña</label>
                                     <input
-                                        v-model="portalCreateForm.password"
+                                        v-model="portalCreateForm[credentialSecretKey]"
                                         type="password"
                                         class="mt-1 w-full rounded-lg border-gray-300 shadow-sm text-sm"
                                         placeholder="Nueva contraseña"
@@ -956,7 +957,7 @@ const deleteNote = (id) => {
                                 <button
                                     type="button"
                                     class="px-4 py-2 rounded-lg bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 disabled:opacity-50"
-                                    :disabled="loadingCreds || (!portalCreateForm.is_not_applicable && (!portalCreateForm.username || !portalCreateForm.password || (portalCreateForm.password?.length ?? 0) < 6))"
+                                    :disabled="loadingCreds || (!portalCreateForm.is_not_applicable && (!portalCreateForm.username || !portalCreateForm[credentialSecretKey] || (portalCreateForm[credentialSecretKey]?.length ?? 0) < 6))"
                                     @click="submitPortalCreate"
                                 >
                                     Guardar

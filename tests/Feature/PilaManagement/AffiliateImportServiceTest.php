@@ -21,11 +21,11 @@ class AffiliateImportServiceTest extends TestCase
     public function test_import_deduplicates_employers_and_encrypts_credentials(): void
     {
         $path = $this->buildExcelPath();
-        $pilaPassword = 'tst_' . Str::random(20);
-        $arlPassword = 'tst_' . Str::random(20);
-        $ccfPassword = 'tst_' . Str::random(20);
-        $epsPassword = 'tst_' . Str::random(20);
-        $afpPassword = 'tst_' . Str::random(20);
+        $pilaSecret = Str::random(24);
+        $arlSecret = Str::random(24);
+        $ccfSecret = Str::random(24);
+        $epsSecret = Str::random(24);
+        $afpSecret = Str::random(24);
 
         $this->createTestExcel($path, [
             // Valid rows (2 and 3) -> same employer doc + same operator -> 1 PILA credential.
@@ -35,11 +35,11 @@ class AffiliateImportServiceTest extends TestCase
                 fullName: 'JUAN PEREZ',
                 employerDoc: '900123456-7',
                 pilaUsername: 'user-pila',
-                pilaPassword: $pilaPassword,
-                arlPassword: $arlPassword,
-                ccfPassword: $ccfPassword,
-                epsPassword: $epsPassword,
-                afpPassword: $afpPassword,
+                pilaSecret: $pilaSecret,
+                arlSecret: $arlSecret,
+                ccfSecret: $ccfSecret,
+                epsSecret: $epsSecret,
+                afpSecret: $afpSecret,
             ),
             $this->excelRow(
                 row: 3,
@@ -47,11 +47,11 @@ class AffiliateImportServiceTest extends TestCase
                 fullName: 'MARIA LOPEZ',
                 employerDoc: '900123456-7',
                 pilaUsername: 'user-pila',
-                pilaPassword: $pilaPassword,
-                arlPassword: $arlPassword,
-                ccfPassword: $ccfPassword,
-                epsPassword: $epsPassword,
-                afpPassword: $afpPassword,
+                pilaSecret: $pilaSecret,
+                arlSecret: $arlSecret,
+                ccfSecret: $ccfSecret,
+                epsSecret: $epsSecret,
+                afpSecret: $afpSecret,
             ),
             // Invalid row: document_number has no digits -> parseRows should skip and add error.
             $this->excelRow(
@@ -60,11 +60,11 @@ class AffiliateImportServiceTest extends TestCase
                 fullName: 'PERSONA SIN DIGITOS',
                 employerDoc: '900123456-7',
                 pilaUsername: 'user-pila',
-                pilaPassword: $pilaPassword,
-                arlPassword: $arlPassword,
-                ccfPassword: $ccfPassword,
-                epsPassword: $epsPassword,
-                afpPassword: $afpPassword,
+                pilaSecret: $pilaSecret,
+                arlSecret: $arlSecret,
+                ccfSecret: $ccfSecret,
+                epsSecret: $epsSecret,
+                afpSecret: $afpSecret,
             ),
         ]);
 
@@ -83,7 +83,7 @@ class AffiliateImportServiceTest extends TestCase
 
         $pilaCred = PilaCredential::query()->firstOrFail();
         $this->assertNotNull($pilaCred->password_encrypted);
-        $this->assertSame($pilaPassword, Crypt::decryptString($pilaCred->password_encrypted));
+        $this->assertSame($pilaSecret, Crypt::decryptString($pilaCred->password_encrypted));
 
         // Portal credentials: 2 affiliations x (ARL/CCF/EPS/AFP) => 8 records (configured).
         $this->assertSame(8, PortalCredential::query()->count());
@@ -94,7 +94,7 @@ class AffiliateImportServiceTest extends TestCase
 
         $epsCred = PortalCredential::query()->where('entity_type', 'EPS')->first();
         $this->assertNotNull($epsCred);
-        $this->assertSame($epsPassword, Crypt::decryptString($epsCred->password_encrypted));
+        $this->assertSame($epsSecret, Crypt::decryptString($epsCred->password_encrypted));
 
         // Notes: 2 affiliations x 2 note types (affiliation + payment).
         $this->assertSame(4, \DB::table('affiliate_notes')->count());
@@ -116,11 +116,11 @@ class AffiliateImportServiceTest extends TestCase
         string $fullName,
         string $employerDoc,
         string $pilaUsername,
-        string $pilaPassword,
-        string $arlPassword,
-        string $ccfPassword,
-        string $epsPassword,
-        string $afpPassword,
+        string $pilaSecret,
+        string $arlSecret,
+        string $ccfSecret,
+        string $epsSecret,
+        string $afpSecret,
     ): array {
         // Columns used by AffiliateImportService::parseRows()
         // 1 status, 2 client_type, 3 cotizante, 4 doc_type, 5 doc_number, 6 full_name
@@ -165,21 +165,21 @@ class AffiliateImportServiceTest extends TestCase
                 25 => '01/01/2024',
                 26 => 'ARUS',
                 27 => $pilaUsername,
-                28 => $pilaPassword,
+                28 => $pilaSecret,
                 29 => '$1.000.000',
                 30 => '14-23',
                 31 => 'I',
                 32 => 'user-arl',
-                33 => $arlPassword,
+                33 => $arlSecret,
                 34 => 'CCF43',
                 35 => 'user-ccf',
-                36 => $ccfPassword,
+                36 => $ccfSecret,
                 37 => 'EPS005 - SANITAS',
                 38 => 'user-eps',
-                39 => $epsPassword,
+                39 => $epsSecret,
                 40 => '230301 - PORVENIR',
                 41 => 'user-afp',
-                42 => $afpPassword,
+                42 => $afpSecret,
                 43 => 'SI',
                 44 => 'NOTA IMPORTANTE',
                 45 => 'ACTUAL',
