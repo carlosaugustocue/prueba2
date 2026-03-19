@@ -8,7 +8,7 @@ use App\Modules\Appointments\Models\Reminder;
 use App\Modules\Appointments\Jobs\SendReminderJob;
 use App\Modules\SocialSecurity\Services\PayrollBatchService;
 use App\Modules\SocialSecurity\Services\PayrollService;
-use App\Modules\SocialSecurity\Services\DueDateCalculator;
+use App\Modules\PilaManagement\Services\DeadlineService;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Models\AffiliateTask;
 use App\Modules\Affiliates\Enums\DocumentType;
@@ -145,7 +145,7 @@ Schedule::command('payroll:mark-overdue')->daily();
 Schedule::command('ss:generate-pila-alerts')->dailyAt('06:00');
 
 // Seguridad Social: generar tareas de alerta por vencimiento PILA (3 días antes)
-Artisan::command('ss:generate-pila-alerts', function (DueDateCalculator $calculator) {
+Artisan::command('ss:generate-pila-alerts', function (DeadlineService $deadlineService) {
     $this->info('Generando alertas de vencimiento PILA (3 días antes)...');
 
     $today = Carbon::today();
@@ -165,7 +165,7 @@ Artisan::command('ss:generate-pila-alerts', function (DueDateCalculator $calcula
 
         $paymentDay = $profile->payment_day;
         if ($paymentDay === null && $affiliate->document_number) {
-            $paymentDay = $calculator->paymentDayFromDocument($affiliate->document_number);
+            $paymentDay = $deadlineService->paymentBusinessDayFromDocument($affiliate->document_number);
         }
         if ($paymentDay === null) {
             continue;
@@ -175,12 +175,12 @@ Artisan::command('ss:generate-pila-alerts', function (DueDateCalculator $calcula
         // Período base: mes actual; si el vencimiento ya pasó, usamos el siguiente mes
         $periodYear = $now->year;
         $periodMonth = $now->month;
-        $nextDue = $calculator->dueDateForPeriodByPaymentDay($periodYear, $periodMonth, (int) $paymentDay);
+        $nextDue = $deadlineService->dueDateForPeriodByPaymentDay($periodYear, $periodMonth, (int) $paymentDay);
         if ($nextDue->isPast()) {
             $next = $now->copy()->addMonth();
             $periodYear = $next->year;
             $periodMonth = $next->month;
-            $nextDue = $calculator->dueDateForPeriodByPaymentDay($periodYear, $periodMonth, (int) $paymentDay);
+            $nextDue = $deadlineService->dueDateForPeriodByPaymentDay($periodYear, $periodMonth, (int) $paymentDay);
         }
 
         $diff = $now->diffInDays($nextDue, false);

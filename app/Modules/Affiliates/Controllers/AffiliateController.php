@@ -17,7 +17,7 @@ use App\Modules\SocialSecurity\Models\NoveltyType;
 use App\Modules\SocialSecurity\Models\Payroll;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use App\Modules\SocialSecurity\Controllers\OperatorCredentialController;
-use App\Modules\SocialSecurity\Services\DueDateCalculator;
+use App\Modules\PilaManagement\Services\DeadlineService;
 use App\Modules\Affiliates\Services\AffiliateService;
 use App\Modules\Affiliates\Requests\CreateAffiliateRequest;
 use App\Modules\Affiliates\Requests\UpdateAffiliateRequest;
@@ -179,18 +179,18 @@ class AffiliateController extends Controller
         $pilaNextDueLabel = null;
         $pilaNextDueIsSoon = false;
         $paymentsUpToDate = null;
-        $calculator = app(DueDateCalculator::class);
+        $deadlineService = app(DeadlineService::class);
         $profile = $affiliate->socialSecurityProfile;
         $paymentDay = $profile?->payment_day;
         if ($paymentDay === null && $affiliate->document_number) {
-            $paymentDay = $calculator->paymentDayFromDocument($affiliate->document_number);
+            $paymentDay = $deadlineService->paymentBusinessDayFromDocument($affiliate->document_number);
         }
         if ($paymentDay !== null) {
             $now = Carbon::today();
-            $nextDue = $calculator->dueDateForPeriodByPaymentDay($now->year, $now->month, (int) $paymentDay);
+            $nextDue = $deadlineService->dueDateForPeriodByPaymentDay($now->year, $now->month, (int) $paymentDay);
             if ($nextDue->isPast()) {
                 $nextMonth = $now->copy()->addMonth();
-                $nextDue = $calculator->dueDateForPeriodByPaymentDay($nextMonth->year, $nextMonth->month, (int) $paymentDay);
+                $nextDue = $deadlineService->dueDateForPeriodByPaymentDay($nextMonth->year, $nextMonth->month, (int) $paymentDay);
             }
             $pilaNextDueDate = $nextDue->format('Y-m-d');
             $pilaNextDueLabel = $nextDue->format('d/m/Y');

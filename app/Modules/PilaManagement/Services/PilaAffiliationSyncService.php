@@ -7,7 +7,7 @@ use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\SocialSecurity\Models\ClientType;
 use App\Modules\SocialSecurity\Models\ContributorType;
 use App\Modules\SocialSecurity\Models\SocialSecurityProfile;
-use App\Modules\SocialSecurity\Services\DueDateCalculator;
+use App\Modules\PilaManagement\Services\DeadlineService;
 
 class PilaAffiliationSyncService
 {
@@ -40,7 +40,7 @@ class PilaAffiliationSyncService
         // por ahora, si no hay payment_day, derivarlo del documento del afiliado como antes.
         $paymentDay = $profile?->payment_day;
         if ($paymentDay === null && $affiliate->document_number) {
-            $paymentDay = app(DueDateCalculator::class)->paymentDayFromDocument($affiliate->document_number);
+            $paymentDay = app(DeadlineService::class)->paymentBusinessDayFromDocument($affiliate->document_number);
         }
         $payload['payment_day'] = $paymentDay;
 

@@ -9,6 +9,7 @@ use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use App\Modules\SocialSecurity\Models\Payroll;
 use App\Modules\SocialSecurity\Models\PayrollTracking;
 use App\Modules\SocialSecurity\Models\SocialSecurityProfile;
+use App\Modules\PilaManagement\Services\DeadlineService;
 use Carbon\Carbon;
 use InvalidArgumentException;
 
@@ -21,7 +22,7 @@ class PayrollService
     public function __construct(
         private ContributionCalculator $calculator,
         private ContributionParametersResolver $paramsResolver,
-        private DueDateCalculator $dueDateCalculator,
+        private DeadlineService $deadlineService,
         private IndependentContractIbcService $independentContractIbcService,
     ) {}
 
@@ -51,10 +52,10 @@ class PayrollService
         if ($profile?->payment_day !== null) {
             $paymentDay = (int) $profile->payment_day;
         } elseif ($documentNumber !== '') {
-            $paymentDay = $this->dueDateCalculator->paymentDayFromDocument($documentNumber);
+            $paymentDay = $this->deadlineService->paymentBusinessDayFromDocument($documentNumber);
         }
 
-        $dueDate = $this->dueDateCalculator->dueDateForPeriodByPaymentDay($year, $month, $paymentDay);
+        $dueDate = $this->deadlineService->dueDateForPeriodByPaymentDay($year, $month, $paymentDay);
 
         return Payroll::create([
             'affiliate_id' => $affiliate->id,

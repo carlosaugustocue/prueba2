@@ -9,7 +9,6 @@ use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\PilaManagement\Models\PilaEmployer;
 use App\Modules\PilaManagement\Services\DeadlineService;
-use App\Modules\SocialSecurity\Services\DueDateCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -139,22 +138,7 @@ class PilaModelScopesAndDeadlineTest extends TestCase
         $this->assertSame($expected, $affiliation->deadline->toDateString());
     }
 
-    public function test_due_date_calculator_delegates_to_deadline_service(): void
-    {
-        $calc = app(DueDateCalculator::class);
-        $svc = app(DeadlineService::class);
-
-        $doc = '901776975-4';
-
-        $this->assertSame(
-            $svc->paymentBusinessDayFromDocument($doc),
-            $calc->paymentDayFromDocument($doc)
-        );
-
-        $this->assertSame(
-            $svc->dueDateForPeriod(2026, 1, $doc)->toDateString(),
-            $calc->dueDateForPeriod(2026, 1, $doc)->toDateString()
-        );
-    }
+    // Nota: `DueDateCalculator` se dejó como compatibilidad. En este sprint eliminamos
+    // sus consumidores y usamos `DeadlineService` como fuente única.
 }
 
