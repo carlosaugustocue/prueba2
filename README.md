@@ -196,3 +196,5 @@ WHATSAPP_ACCESS_TOKEN=tu_access_token
 ## 📝 Licencia
 
 Software propietario - © 2025 Serviconli
+
+Estado: antes del refactor (commit de control).
