@@ -45,6 +45,7 @@ class Affiliate extends Model
         'notes',
         'gender',
         'status',
+        'appointment_eligible',
         'created_by',
         'updated_by',
     ];
@@ -91,6 +92,7 @@ class Affiliate extends Model
             'relationship_type' => RelationshipType::class,
             'birth_date' => 'date',
             'document_issue_date' => 'date',
+            'appointment_eligible' => 'boolean',
         ];
     }
 
@@ -190,6 +192,14 @@ class Affiliate extends Model
                     ->orWhereHas('clientType', fn (Builder $ct) => $ct->where('code', 'SERVICONLI'));
             });
         });
+    }
+
+    /**
+     * Afiliados habilitados para gestionar citas (dato operativo).
+     */
+    public function scopeEligibleForAppointments(Builder $query): Builder
+    {
+        return $query->where('appointment_eligible', true);
     }
 
     public function authorizations(): HasMany
