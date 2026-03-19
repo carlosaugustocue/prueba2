@@ -2,7 +2,7 @@
 
 namespace App\Modules\SocialSecurity\Services;
 
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Enums\AffiliateStatus;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
@@ -28,7 +28,7 @@ class PayrollBatchService
     public function generateMonthlyPayrolls(int $year, int $month): array
     {
         $affiliates = Affiliate::where('status', AffiliateStatus::ACTIVO)
-            ->where('patient_type', PatientType::COTIZANTE)
+            ->where('patient_type', AffiliateType::COTIZANTE)
             ->whereHas('socialSecurityProfile')
             ->with('socialSecurityProfile')
             ->get();

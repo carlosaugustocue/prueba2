@@ -5,7 +5,7 @@ namespace App\Modules\Affiliates\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Modules\Affiliates\Enums\DocumentType;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Enums\RelationshipType;
 use App\Modules\Affiliates\Models\Affiliate;
 
@@ -40,7 +40,7 @@ class UpdateAffiliateRequest extends FormRequest
             'eps_id' => ['nullable', 'required_if:patient_type,beneficiario', 'exists:eps,id'],
             'patient_type' => [
                 'required',
-                Rule::enum(PatientType::class),
+                Rule::enum(AffiliateType::class),
                 function ($attribute, $value, $fail) use ($affiliate) {
                     if ($value === 'beneficiario' && $affiliate->beneficiaries()->count() > 0) {
                         $fail('No puede cambiar a beneficiario porque tiene beneficiarios asociados.');

@@ -13,7 +13,7 @@ use App\Modules\Affiliates\Models\Eps;
 use App\Modules\Affiliates\Enums\DocumentType;
 use App\Modules\Authorizations\Models\Authorization;
 use App\Modules\Authorizations\Enums\AuthorizationStatus;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Auth\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -91,7 +91,7 @@ class AppointmentRequestController extends Controller
             'priorities' => Priority::toArray(),
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'documentTypes' => DocumentType::toArray(),
-            'patientTypes' => PatientType::toArray(),
+            'patientTypes' => AffiliateType::toArray(),
         ]);
     }
 
@@ -189,7 +189,7 @@ class AppointmentRequestController extends Controller
             'priorities' => Priority::toArray(),
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'documentTypes' => DocumentType::toArray(),
-            'patientTypes' => PatientType::toArray(),
+            'patientTypes' => AffiliateType::toArray(),
             'fromRequest' => $fromRequest,
         ]);
     }

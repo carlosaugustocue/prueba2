@@ -5,7 +5,7 @@ namespace App\Modules\PilaManagement\Services;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Enums\AffiliateStatus;
 use App\Modules\Affiliates\Enums\DocumentType;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Models\Eps;
 use App\Modules\PilaManagement\Models\PilaCotizanteType;
 use App\Modules\PilaManagement\Models\PilaEmployer;
@@ -473,7 +473,7 @@ class AffiliateImportService
                 $payload = [
                     'document_type' => $docType,
                     'document_number' => $docNumber,
-                    'patient_type' => PatientType::COTIZANTE,
+                    'patient_type' => AffiliateType::COTIZANTE,
                     'first_name' => $firstName,
                     'second_name' => $secondName,
                     'last_name' => $lastName,

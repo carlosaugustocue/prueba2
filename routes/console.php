@@ -12,7 +12,7 @@ use App\Modules\SocialSecurity\Services\DueDateCalculator;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Models\AffiliateTask;
 use App\Modules\Affiliates\Enums\DocumentType;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Models\Eps;
 use App\Modules\SocialSecurity\Models\Afp;
 use App\Modules\SocialSecurity\Models\Arp;
@@ -474,7 +474,7 @@ Artisan::command('ss:import-affiliates-from-datasegura {path?}', function (?stri
             'whatsapp' => $phone,
             'email' => $email,
             'status' => $status,
-            'patient_type' => PatientType::COTIZANTE,
+            'patient_type' => AffiliateType::COTIZANTE,
         ];
 
         if ($affiliate) {

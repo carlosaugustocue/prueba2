@@ -18,7 +18,7 @@ use App\Modules\Affiliates\Models\Eps;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Resources\AffiliateResource;
 use App\Modules\Affiliates\Enums\DocumentType;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -70,7 +70,7 @@ class AppointmentController extends Controller
             'priorities' => Priority::toArray(),
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'documentTypes' => DocumentType::toArray(),
-            'patientTypes' => PatientType::toArray(),
+            'patientTypes' => AffiliateType::toArray(),
             'preselectedAffiliate' => $preselectedAffiliate,
         ]);
     }

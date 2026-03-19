@@ -4,7 +4,7 @@ namespace Tests\Feature\PilaManagement;
 
 use App\Modules\Affiliates\Enums\AffiliateStatus;
 use App\Modules\Affiliates\Enums\DocumentType;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\PilaManagement\Models\PilaAffiliation;
 use App\Modules\PilaManagement\Models\PilaEmployer;
@@ -34,7 +34,7 @@ class PilaModelScopesAndDeadlineTest extends TestCase
             'document_number' => '10001',
             'first_name' => 'Juan',
             'last_name' => 'Uno',
-            'patient_type' => PatientType::COTIZANTE,
+            'patient_type' => AffiliateType::COTIZANTE,
             'status' => AffiliateStatus::ACTIVO,
         ]);
 
@@ -43,7 +43,7 @@ class PilaModelScopesAndDeadlineTest extends TestCase
             'document_number' => '10002',
             'first_name' => 'Juan',
             'last_name' => 'Dos',
-            'patient_type' => PatientType::COTIZANTE,
+            'patient_type' => AffiliateType::COTIZANTE,
             'status' => AffiliateStatus::ACTIVO,
         ]);
 
@@ -92,7 +92,7 @@ class PilaModelScopesAndDeadlineTest extends TestCase
             'document_number' => '20001',
             'first_name' => 'Maria',
             'last_name' => 'Perez',
-            'patient_type' => PatientType::COTIZANTE,
+            'patient_type' => AffiliateType::COTIZANTE,
             'status' => AffiliateStatus::ACTIVO,
         ]);
 
@@ -123,7 +123,7 @@ class PilaModelScopesAndDeadlineTest extends TestCase
             'document_number' => '30001',
             'first_name' => 'Pedro',
             'last_name' => 'Gomez',
-            'patient_type' => PatientType::COTIZANTE,
+            'patient_type' => AffiliateType::COTIZANTE,
             'status' => AffiliateStatus::ACTIVO,
         ]);
 

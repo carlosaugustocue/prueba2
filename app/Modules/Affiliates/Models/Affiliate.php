@@ -12,7 +12,7 @@ use App\Modules\Core\Traits\HasUuid;
 use App\Modules\Core\Traits\Searchable;
 use App\Modules\Affiliates\Enums\AffiliateStatus;
 use App\Modules\Affiliates\Enums\DocumentType;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Enums\RelationshipType;
 
 class Affiliate extends Model
@@ -87,7 +87,7 @@ class Affiliate extends Model
         return [
             'status' => AffiliateStatus::class,
             'document_type' => DocumentType::class,
-            'patient_type' => PatientType::class,
+            'patient_type' => AffiliateType::class,
             'relationship_type' => RelationshipType::class,
             'birth_date' => 'date',
             'document_issue_date' => 'date',

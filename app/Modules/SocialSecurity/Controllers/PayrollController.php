@@ -3,7 +3,7 @@
 namespace App\Modules\SocialSecurity\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\SocialSecurity\Enums\PayrollStatus;
 use App\Modules\SocialSecurity\Models\Payroll;
@@ -88,7 +88,7 @@ class PayrollController extends Controller
         $currentMonth = (int) now()->format('n');
 
         $affiliates = Affiliate::whereHas('socialSecurityProfile')
-            ->where('patient_type', PatientType::COTIZANTE)
+            ->where('patient_type', AffiliateType::COTIZANTE)
             ->with(['socialSecurityProfile.payer:id,name,document_number', 'socialSecurityProfile.contributorType:id,code,name'])
             ->orderBy('first_name')
             ->limit(500)

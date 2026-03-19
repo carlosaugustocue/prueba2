@@ -26,7 +26,7 @@ use App\Modules\Affiliates\Enums\DocumentType;
 use App\Modules\Authorizations\Models\Authorization;
 use App\Modules\Authorizations\Enums\AuthorizationStatus;
 use App\Modules\Authorizations\Resources\AuthorizationResource;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Enums\RelationshipType;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -51,7 +51,7 @@ class AffiliateController extends Controller
             'filters' => $request->only(['search', 'eps_id', 'patient_type', 'per_page']),
             'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
             'documentTypes' => DocumentType::toArray(),
-            'patientTypes' => PatientType::toArray(),
+            'patientTypes' => AffiliateType::toArray(),
             'relationshipTypes' => RelationshipType::toArray(),
         ]);
     }

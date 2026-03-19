@@ -5,7 +5,7 @@ namespace App\Modules\Affiliates\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Modules\Affiliates\Enums\DocumentType;
-use App\Modules\Affiliates\Enums\PatientType;
+use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Enums\RelationshipType;
 use App\Modules\Affiliates\Models\Affiliate;
 
@@ -35,7 +35,7 @@ class CreateAffiliateRequest extends FormRequest
             'city' => ['nullable', 'string', 'max:100'],
             'department' => ['nullable', 'string', 'max:100'],
             'eps_id' => ['nullable', 'required_if:patient_type,beneficiario', 'exists:eps,id'],
-            'patient_type' => ['required', Rule::enum(PatientType::class)],
+            'patient_type' => ['required', Rule::enum(AffiliateType::class)],
             'holder_id' => [
                 'nullable',
                 'required_if:patient_type,beneficiario',
