@@ -21,6 +21,7 @@ use App\Modules\SocialSecurity\Services\DueDateCalculator;
 use App\Modules\Affiliates\Services\AffiliateService;
 use App\Modules\Affiliates\Requests\CreateAffiliateRequest;
 use App\Modules\Affiliates\Requests\UpdateAffiliateRequest;
+use App\Modules\Affiliates\Requests\RegisterAffiliateWithPilaRequest;
 use App\Modules\Affiliates\Resources\AffiliateResource;
 use App\Modules\Affiliates\Enums\DocumentType;
 use App\Modules\Authorizations\Models\Authorization;
@@ -28,16 +29,23 @@ use App\Modules\Authorizations\Enums\AuthorizationStatus;
 use App\Modules\Authorizations\Resources\AuthorizationResource;
 use App\Modules\Affiliates\Enums\AffiliateType;
 use App\Modules\Affiliates\Enums\RelationshipType;
+use App\Modules\PilaManagement\Models\PilaCotizanteType;
+use App\Modules\PilaManagement\Models\PilaRiskClass;
+use App\Modules\PilaManagement\Services\AffiliateRegistrationWizardService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AffiliateController extends Controller
 {
-    public function __construct(protected AffiliateService $affiliateService) {}
+    public function __construct(
+        protected AffiliateService $affiliateService,
+        protected AffiliateRegistrationWizardService $wizardService,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -58,38 +66,91 @@ class AffiliateController extends Controller
 
     public function create(Request $request): Response
     {
-        $preselectedHolder = null;
-        if ($request->has('holder_id')) {
-            $preselectedHolder = Affiliate::where('id', $request->holder_id)
-                ->where('patient_type', 'cotizante')
-                ->with(['socialSecurityProfile.eps', 'pilaAffiliation'])
-                ->first(['id', 'first_name', 'second_name', 'last_name', 'second_last_name', 'document_number', 'document_type', 'phone', 'whatsapp', 'address']);
-        }
+        // Catálogos de la afiliación PILA para el wizard (se reutiliza la misma lógica que en PilaAffiliations).
+        $riskClasses = PilaRiskClass::query()
+            ->where('is_active', true)
+            ->orderBy('level')
+            ->get(['id', 'level', 'class_name', 'description', 'rate'])
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'label' => $r->level === 0
+                    ? '0 — No aplica'
+                    : sprintf('%d — %s (%s%%)', (int) $r->level, (string) $r->class_name, number_format((float) ($r->rate * 100), 3, '.', '')),
+            ])
+            ->values();
 
-        $holderEpsId = $preselectedHolder?->pilaAffiliation?->eps_id ?? $preselectedHolder?->socialSecurityProfile?->eps_id;
-        $holderEps = $preselectedHolder?->socialSecurityProfile?->eps ?? ($holderEpsId ? Eps::find($holderEpsId) : null);
+        $cotizanteTypes = PilaCotizanteType::query()
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get(['id', 'code', 'name'])
+            ->map(fn ($t) => [
+                'id' => $t->id,
+                'label' => "{$t->code} — {$t->name}",
+            ])
+            ->values();
 
-        return Inertia::render('Affiliates/Create', [
-            'epsList' => Eps::active()->orderBy('name')->get(['id', 'name', 'code']),
+        $epsOptions = Eps::active()->orderBy('name')->get(['id', 'name', 'code'])->map(fn ($e) => [
+            'id' => $e->id,
+            'label' => $e->name,
+            'description' => $e->code,
+        ])->values();
+        $afpOptions = Afp::active()->orderBy('name')->get(['id', 'name', 'code'])->map(fn ($e) => [
+            'id' => $e->id,
+            'label' => $e->name,
+            'description' => $e->code,
+        ])->values();
+        $arpOptions = Arp::active()->orderBy('name')->get(['id', 'name', 'code'])->map(fn ($e) => [
+            'id' => $e->id,
+            'label' => $e->name,
+            'description' => $e->code,
+        ])->values();
+        $ccfOptions = Ccf::active()->orderBy('name')->get(['id', 'name', 'code'])->map(fn ($e) => [
+            'id' => $e->id,
+            'label' => $e->name,
+            'description' => $e->code,
+        ])->values();
+
+        $pilaOperatorOptions = PaymentOperator::active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code'])
+            ->map(fn ($op) => [
+                'value' => $op->code ?: Str::lower(Str::slug($op->name, '')),
+                'label' => $op->name,
+            ])
+            ->values();
+
+        $paymentStatusOptions = collect((array) config('pila.affiliation.payment_statuses', []))
+            ->map(fn ($v) => ['value' => $v, 'label' => __("pila.payment_status.$v")])
+            ->values();
+        $paymentPeriodicityOptions = collect((array) config('pila.affiliation.payment_periodicities', []))
+            ->map(fn ($v) => ['value' => $v, 'label' => __("pila.payment_periodicity.$v")])
+            ->values();
+        $billingTypeOptions = collect((array) config('pila.affiliation.billing_types', []))
+            ->map(fn ($v) => ['value' => $v, 'label' => __("pila.billing_type.$v")])
+            ->values();
+
+        return Inertia::render('Affiliates/WizardCreate', [
             'documentTypes' => DocumentType::toArray(),
-            'relationshipTypes' => RelationshipType::toArray(),
-            'preselectedHolder' => $preselectedHolder ? [
-                'id' => $preselectedHolder->id,
-                'full_name' => $preselectedHolder->full_name,
-                'document_number' => $preselectedHolder->document_number,
-                'document_type_abbreviation' => $preselectedHolder->document_type?->abbreviation(),
-                'eps_id' => $holderEpsId,
-                'phone' => $preselectedHolder->phone,
-                'whatsapp' => $preselectedHolder->whatsapp,
-                'address' => $preselectedHolder->address,
-            ] : null,
+            'epsOptions' => $epsOptions,
+            'afpOptions' => $afpOptions,
+            'arpOptions' => $arpOptions,
+            'ccfOptions' => $ccfOptions,
+            'riskClassOptions' => $riskClasses,
+            'cotizanteTypeOptions' => $cotizanteTypes,
+            'pilaOperatorOptions' => $pilaOperatorOptions,
+            'paymentStatusOptions' => $paymentStatusOptions,
+            'paymentPeriodicityOptions' => $paymentPeriodicityOptions,
+            'billingTypeOptions' => $billingTypeOptions,
         ]);
     }
 
-    public function store(CreateAffiliateRequest $request): RedirectResponse
+    public function store(RegisterAffiliateWithPilaRequest $request): RedirectResponse
     {
-        $affiliate = $this->affiliateService->create($request->validated());
-        return redirect()->route('affiliates.show', $affiliate)->with('success', 'Afiliado registrado correctamente.');
+        $pilaAffiliation = $this->wizardService->registerCotizanteWithPila($request->validated());
+
+        return redirect()
+            ->to('/pila/affiliations/' . $pilaAffiliation->id)
+            ->with('success', 'Afiliado y afiliación PILA registrados correctamente.');
     }
 
     public function show(Affiliate $affiliate): Response
