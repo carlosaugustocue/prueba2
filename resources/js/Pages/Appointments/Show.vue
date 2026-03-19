@@ -394,7 +394,7 @@ const savePhoneCommunication = () => {
 
                 <!-- Columna derecha (1/3) -->
                 <div class="space-y-6">
-                    <!-- Paciente -->
+                    <!-- Afiliado -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                             <div class="flex items-center gap-2">

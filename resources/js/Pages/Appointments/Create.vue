@@ -390,7 +390,7 @@ const submit = () => {
                             </div>
                         </div>
 
-                        <!-- Búsqueda de paciente -->
+                        <!-- Búsqueda de afiliado -->
                         <div v-else class="space-y-3">
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -794,8 +794,8 @@ v-for="affiliate in affiliateResults"
                             <div>
                                 <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                                     <MessageSquare class="h-4 w-4 text-gray-400" />
-                                    Especificaciones para el Paciente
-                                    <span class="text-xs text-gray-400 font-normal">(Se envían al paciente)</span>
+                                    Especificaciones para el afiliado
+                                    <span class="text-xs text-gray-400 font-normal">(Se envían al afiliado)</span>
                                 </label>
                                 <textarea 
                                     v-model="form.specifications" 
