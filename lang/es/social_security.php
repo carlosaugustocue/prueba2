@@ -11,6 +11,7 @@ return [
     'affiliate_status' => [
         'ACTIVO' => 'Activo',
         'INACTIVO' => 'Inactivo',
+        'SUSPENDIDO' => 'Suspendido',
     ],
 
     // --- Estados de planilla ---

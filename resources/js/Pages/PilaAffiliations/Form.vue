@@ -11,6 +11,9 @@ const props = defineProps({
     afpOptions: Array,
     arpOptions: Array,
     ccfOptions: Array,
+    paymentStatusOptions: Array,
+    paymentPeriodicityOptions: Array,
+    billingTypeOptions: Array,
     submitLabel: String,
 });
 </script>
@@ -40,6 +43,19 @@ const props = defineProps({
                 <label class="block text-sm font-medium text-gray-700 mb-1">Operador PILA</label>
                 <input v-model="form.pila_operator" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="arus / simple / ..." />
                 <p v-if="form.errors.pila_operator" class="mt-1 text-sm text-red-600">{{ form.errors.pila_operator }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Última novedad</label>
+                <input v-model="form.last_novelty_type" type="text" maxlength="10" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="ING / RET / ..." />
+                <p v-if="form.errors.last_novelty_type" class="mt-1 text-sm text-red-600">{{ form.errors.last_novelty_type }}</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha última novedad</label>
+                <input v-model="form.last_novelty_date" type="date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+                <p v-if="form.errors.last_novelty_date" class="mt-1 text-sm text-red-600">{{ form.errors.last_novelty_date }}</p>
             </div>
         </div>
 
@@ -104,17 +120,26 @@ const props = defineProps({
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Periodicidad</label>
-                <input v-model="form.payment_periodicity" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="actual / vencido" />
+                <select v-model="form.payment_periodicity" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                    <option value="">Seleccionar...</option>
+                    <option v-for="o in paymentPeriodicityOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+                </select>
                 <p v-if="form.errors.payment_periodicity" class="mt-1 text-sm text-red-600">{{ form.errors.payment_periodicity }}</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tipo comprobante</label>
-                <input v-model="form.billing_type" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="recibo_caja / factura_electronica" />
+                <select v-model="form.billing_type" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                    <option value="">Seleccionar...</option>
+                    <option v-for="o in billingTypeOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+                </select>
                 <p v-if="form.errors.billing_type" class="mt-1 text-sm text-red-600">{{ form.errors.billing_type }}</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Estado pago</label>
-                <input v-model="form.payment_status" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="current / overdue / anticipated" />
+                <select v-model="form.payment_status" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                    <option value="">Seleccionar...</option>
+                    <option v-for="o in paymentStatusOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+                </select>
                 <p v-if="form.errors.payment_status" class="mt-1 text-sm text-red-600">{{ form.errors.payment_status }}</p>
             </div>
         </div>

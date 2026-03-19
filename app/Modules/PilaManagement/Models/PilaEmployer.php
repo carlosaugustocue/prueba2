@@ -2,8 +2,11 @@
 
 namespace App\Modules\PilaManagement\Models;
 
+use App\Modules\Patients\Models\Affiliate;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class PilaEmployer extends Model
 {
@@ -42,6 +45,28 @@ class PilaEmployer extends Model
     public function portalCredentials(): HasMany
     {
         return $this->hasMany(PortalCredential::class, 'employer_id');
+    }
+
+    public function affiliations(): HasMany
+    {
+        return $this->hasMany(PilaAffiliation::class, 'employer_id');
+    }
+
+    public function affiliates(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Affiliate::class,
+            PilaAffiliation::class,
+            'employer_id',   // Foreign key on pila_affiliations...
+            'id',            // Foreign key on affiliates...
+            'id',            // Local key on pila_employers...
+            'affiliate_id'   // Local key on pila_affiliations...
+        );
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 }
 

@@ -13,6 +13,9 @@ const props = defineProps({
     afpOptions: Array,
     arpOptions: Array,
     ccfOptions: Array,
+    paymentStatusOptions: Array,
+    paymentPeriodicityOptions: Array,
+    billingTypeOptions: Array,
 });
 
 const form = useForm({
@@ -20,6 +23,8 @@ const form = useForm({
     employer_id: '',
     cotizante_type_id: '',
     pila_operator: '',
+    last_novelty_type: '',
+    last_novelty_date: '',
     ibc: '',
     pays_parafiscales: false,
     self_employed: false,
@@ -61,6 +66,9 @@ const submit = () => form.post('/pila/affiliations');
                     :afpOptions="afpOptions"
                     :arpOptions="arpOptions"
                     :ccfOptions="ccfOptions"
+                    :paymentStatusOptions="paymentStatusOptions"
+                    :paymentPeriodicityOptions="paymentPeriodicityOptions"
+                    :billingTypeOptions="billingTypeOptions"
                     submitLabel="Crear"
                     @submit="submit"
                 />

@@ -31,5 +31,33 @@ return [
         // Se mantiene en config para evitar magic strings y permitir ajustes normativos.
         'allowed_document_types' => ['NIT', 'CC', 'CE'],
     ],
+
+    // Valores operativos provenientes del Excel (fuente primaria en esta versión).
+    // Se mantienen en config para evitar hardcodeo en UI/Requests.
+    'affiliation' => [
+        'payment_statuses' => ['current', 'overdue', 'anticipated'],
+        'payment_periodicities' => ['mensual', 'bimestral', 'trimestral', 'semestral', 'anual', 'otro'],
+        'billing_types' => ['recibo_caja', 'factura_electronica', 'transferencia', 'consignacion', 'otro'],
+        'novelties' => [
+            'ING' => 'Ingreso',
+            'RET' => 'Retiro',
+            'LMA' => 'Lic. maternidad',
+            'IGE' => 'Incapacidad',
+            'VAC' => 'Vacaciones',
+            'SLN' => 'Susp. sin pago',
+            'VSP' => 'Susp. con pago',
+            'TDE' => 'Traslado EPS',
+        ],
+        // Valores permitidos para `pila_affiliations.pila_operator`.
+        // Nota: los valores se guardan tal cual en BD, por eso se lista el catálogo real.
+        'pila_operators' => [
+            'arus' => 'Arus',
+            'simple' => 'Simple',
+            'asopagos' => 'Asopagos',
+            'aportesenlinea' => 'Aportes en línea',
+            'soi' => 'SOI',
+            'miplanilla' => 'Mi planilla',
+        ],
+    ],
 ];
 

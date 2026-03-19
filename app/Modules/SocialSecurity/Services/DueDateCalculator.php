@@ -2,6 +2,7 @@
 
 namespace App\Modules\SocialSecurity\Services;
 
+use App\Modules\PilaManagement\Services\DeadlineService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -17,28 +18,10 @@ use Illuminate\Support\Facades\DB;
  */
 class DueDateCalculator
 {
-    /**
-     * Mapeo últimos 2 dígitos del NIT/documento → número de día hábil (2 a 16).
-     * Tabla oficial PILA - Decreto 1990 de 2016.
-     * Cada fila: [min, max, día hábil].
-     */
-    private const DIGITS_TO_BUSINESS_DAY = [
-        [0, 7, 2],
-        [8, 14, 3],
-        [15, 21, 4],
-        [22, 28, 5],
-        [29, 35, 6],
-        [36, 42, 7],
-        [43, 49, 8],
-        [50, 56, 9],
-        [57, 63, 10],
-        [64, 69, 11],
-        [70, 75, 12],
-        [76, 81, 13],
-        [82, 87, 14],
-        [88, 93, 15],
-        [94, 99, 16],
-    ];
+    public function __construct(
+        private readonly ?DeadlineService $deadlineService = null
+    ) {
+    }
 
     /**
      * Obtiene el número de día hábil de vencimiento (2-16) según los dos últimos dígitos del documento.
@@ -49,18 +32,7 @@ class DueDateCalculator
      */
     public function paymentDayFromDocument(string $documentNumber): int
     {
-        $digits = $this->lastTwoDigits($documentNumber);
-        if ($digits === null) {
-            return 2; // valor por defecto conservador
-        }
-
-        foreach (self::DIGITS_TO_BUSINESS_DAY as [$min, $max, $day]) {
-            if ($digits >= $min && $digits <= $max) {
-                return $day;
-            }
-        }
-
-        return 2;
+        return $this->svc()->paymentBusinessDayFromDocument($documentNumber);
     }
 
     /**
@@ -74,9 +46,7 @@ class DueDateCalculator
      */
     public function dueDateForPeriod(int $year, int $month, string $documentNumber): CarbonInterface
     {
-        $paymentDay = $this->paymentDayFromDocument($documentNumber);
-
-        return $this->dueDateForPeriodByPaymentDay($year, $month, $paymentDay);
+        return $this->svc()->dueDateForPeriod($year, $month, $documentNumber);
     }
 
     /**
@@ -90,12 +60,7 @@ class DueDateCalculator
      */
     public function dueDateForPeriodByPaymentDay(int $year, int $month, int $paymentDay): CarbonInterface
     {
-        $paymentDay = max(2, min(16, $paymentDay));
-        $nextMonth = Carbon::createFromDate($year, $month, 1)->addMonth();
-        $yearNext = (int) $nextMonth->format('Y');
-        $monthNext = (int) $nextMonth->format('m');
-
-        return $this->nthBusinessDayOfMonth($yearNext, $monthNext, $paymentDay);
+        return $this->svc()->dueDateForPeriodByPaymentDay($year, $month, $paymentDay);
     }
 
     /**
@@ -109,21 +74,7 @@ class DueDateCalculator
      */
     public function nthBusinessDayOfMonth(int $year, int $month, int $n): CarbonInterface
     {
-        $n = max(1, min(16, $n));
-        $date = Carbon::createFromDate($year, $month, 1);
-        $count = 0;
-
-        while ($count < $n) {
-            if ($this->isBusinessDay($date)) {
-                $count++;
-                if ($count === $n) {
-                    return $date->copy();
-                }
-            }
-            $date->addDay();
-        }
-
-        return $date->copy();
+        return $this->svc()->nthBusinessDayOfMonth($year, $month, $n);
     }
 
     /**
@@ -142,23 +93,8 @@ class DueDateCalculator
         return ! $dates;
     }
 
-    /**
-     * Extrae los dos últimos dígitos del documento (0-99).
-     * Se consideran solo caracteres numéricos; si el documento tiene menos de 2 dígitos, se usa lo disponible.
-     *
-     * @return int|null Valor 0-99, o null si no hay dígitos
-     */
-    private function lastTwoDigits(string $documentNumber): ?int
+    private function svc(): DeadlineService
     {
-        $digitsOnly = preg_replace('/\D/', '', $documentNumber);
-        if ($digitsOnly === '') {
-            return null;
-        }
-        $len = strlen($digitsOnly);
-        if ($len >= 2) {
-            return (int) substr($digitsOnly, -2);
-        }
-
-        return (int) $digitsOnly;
+        return $this->deadlineService ?? app(DeadlineService::class);
     }
 }
